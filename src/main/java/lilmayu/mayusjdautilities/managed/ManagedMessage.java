@@ -89,6 +89,7 @@ public class ManagedMessage {
         if (guild == null) {
             throw new InvalidGuildIDException(guildID);
         }
+        guildValid = true;
 
         messageChannel = guild.getTextChannelById(messageChannelID);
         if (messageChannel == null) {

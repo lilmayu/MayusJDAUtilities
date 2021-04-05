@@ -1,15 +1,13 @@
 package lilmayu.mayusjdautilities.managed;
 
 import com.google.gson.JsonObject;
-import lilmayu.mayusjdautilities.exceptions.FailedToGetTextChannelGuildException;
-import lilmayu.mayusjdautilities.exceptions.InvalidGuildIDException;
-import lilmayu.mayusjdautilities.exceptions.InvalidJsonException;
-import lilmayu.mayusjdautilities.exceptions.InvalidMessageIDException;
+import lilmayu.mayusjdautilities.exceptions.*;
 import lombok.Getter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 
 public class ManagedMessage {
 
@@ -38,6 +36,11 @@ public class ManagedMessage {
 
     public ManagedMessage(String name, Guild guild, MessageChannel messageChannel, Message message) {
         this.name = name;
+
+        if (guild == null) {
+            throw new FailedToCreateManagedMessage("ManagedMessage can't be in DM!");
+        }
+
         this.guildID = guild.getIdLong();
         this.guild = guild;
         this.messageChannelID = messageChannel.getIdLong();
@@ -86,7 +89,6 @@ public class ManagedMessage {
         if (guild == null) {
             throw new InvalidGuildIDException(guildID);
         }
-        guildValid = true;
 
         messageChannel = guild.getTextChannelById(messageChannelID);
         if (messageChannel == null) {
@@ -94,9 +96,10 @@ public class ManagedMessage {
         }
         messageChannelValid = true;
 
-        message = messageChannel.retrieveMessageById(messageID).complete();
-        if (message == null) {
-            throw new InvalidMessageIDException(guild, messageChannel, messageID);
+        try {
+            message = messageChannel.retrieveMessageById(messageID).complete();
+        } catch (ErrorResponseException exception) {
+            throw new InvalidMessageIDException(exception, guild, messageChannel, messageID);
         }
         messageValid = true;
         resolved = true;
@@ -123,9 +126,9 @@ public class ManagedMessage {
         string += "guildValid=" + guildValid + ";";
         string += "messageChannelValid=" + messageChannelValid + ";";
         string += "messageValid=" + messageValid + ";";
-        string += "guild=" + guild.toString() + ";";
-        string += "messageChannel=" + messageChannel.toString() + ";";
-        string += "message=" + message.toString() + ";";
+        string += "guild=" + guild + ";";
+        string += "messageChannel=" + messageChannel + ";";
+        string += "message=" + message + ";";
 
         return string + "}";
     }

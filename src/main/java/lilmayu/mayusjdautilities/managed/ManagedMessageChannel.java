@@ -172,8 +172,8 @@ public class ManagedMessageChannel {
         string += "guildValid=" + guildValid + ";";
         string += "messageChannelValid=" + messageChannelValid + ";";
         string += "user=" + user + ";";
-        string += "guild=" + guild.toString() + ";";
-        string += "messageChannel=" + messageChannel.toString() + ";";
+        string += "guild=" + guild + ";";
+        string += "messageChannel=" + messageChannel + ";";
 
         return string + "}";
     }

@@ -16,14 +16,23 @@ repositories {
 
 dependencies {
     // JDA
-    compile ('net.dv8tion:JDA:4.2.1_253') {
+    implementation ('net.dv8tion:JDA:4.2.1_253') {
         exclude module: 'opus-java'
     }
 
     // GSon
-    compile 'com.google.code.gson:gson:2.8.6'
+    implementation 'com.google.code.gson:gson:2.8.6'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.12'
     annotationProcessor 'org.projectlombok:lombok:1.18.12'
+}
+
+task compileProgram(type: Jar) {
+    from { configurations.compile.findAll { !it.name.endsWith('pom') }.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
 }

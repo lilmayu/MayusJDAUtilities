@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+}
+
+group 'lilmayu'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+    maven {
+        name 'm2-dv8tion'
+        url 'https://m2.dv8tion.net/releases'
+    }
+}
+
+dependencies {
+    // JDA
+    compile ('net.dv8tion:JDA:4.2.1_253') {
+        exclude module: 'opus-java'
+    }
+
+    // GSon
+    compile 'com.google.code.gson:gson:2.8.6'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.12'
+    annotationProcessor 'org.projectlombok:lombok:1.18.12'
+}

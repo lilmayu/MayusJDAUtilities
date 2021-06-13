@@ -12,13 +12,20 @@ repositories {
         name 'm2-dv8tion'
         url 'https://m2.dv8tion.net/releases'
     }
+    jcenter()
 }
 
 dependencies {
     // JDA
-    implementation ('net.dv8tion:JDA:4.2.1_253') {
+    implementation ("net.dv8tion:JDA:4.3.0_277") {
         exclude module: 'opus-java'
     }
+
+    // JDA Utilities
+    implementation 'com.jagrosh:jda-utilities-command:3.0.5'
+
+    // Guava event bus
+    //implementation ("com.google.guava:guava:29.0-jre")
 
     // GSon
     implementation 'com.google.code.gson:gson:2.8.6'

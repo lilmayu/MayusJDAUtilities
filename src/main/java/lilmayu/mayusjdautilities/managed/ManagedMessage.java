@@ -1,9 +1,14 @@
 package lilmayu.mayusjdautilities.managed;
 
 import com.google.gson.JsonObject;
-import lilmayu.mayusjdautilities.exceptions.*;
+import lilmayu.mayusjdautilities.exceptions.FailedToGetTextChannelGuildException;
+import lilmayu.mayusjdautilities.exceptions.InvalidGuildIDException;
+import lilmayu.mayusjdautilities.exceptions.InvalidJsonException;
+import lilmayu.mayusjdautilities.exceptions.InvalidMessageIDException;
 import lombok.Getter;
+import lombok.Setter;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
@@ -13,19 +18,25 @@ public class ManagedMessage {
 
     // Name
     private @Getter final String name;
+
     // IDs
     private final @Getter long guildID;
     private final @Getter long messageChannelID;
+
     // Discord Data
     private @Getter Guild guild;
     private @Getter Message message;
     private @Getter MessageChannel messageChannel;
     private @Getter long messageID;
+
     // Checks
     private @Getter boolean guildValid = false;
     private @Getter boolean messageChannelValid = false;
     private @Getter boolean messageValid = false;
     private @Getter boolean resolved = false;
+
+    // Others
+    private @Getter @Setter MessageBuilder defaultMessage;
 
     public ManagedMessage(String name, long guildID, long messageChannelID, long messageID) {
         this.name = name;
@@ -38,15 +49,21 @@ public class ManagedMessage {
         this.name = name;
 
         if (guild == null) {
-            throw new FailedToCreateManagedMessage("ManagedMessage can't be in DM!");
+            throw new NullPointerException("Guild cannot be null!");
         }
-
         this.guildID = guild.getIdLong();
         this.guild = guild;
+
+        if (messageChannel == null) {
+            throw new NullPointerException("MessageChannel cannot be null!");
+        }
         this.messageChannelID = messageChannel.getIdLong();
         this.messageChannel = messageChannel;
-        this.messageID = message.getIdLong();
-        this.message = message;
+
+        if (message != null) {
+            this.messageID = message.getIdLong();
+            this.message = message;
+        }
     }
 
     public static ManagedMessage fromJsonObject(JsonObject jsonObject) {
@@ -100,9 +117,14 @@ public class ManagedMessage {
         try {
             message = messageChannel.retrieveMessageById(messageID).complete();
         } catch (ErrorResponseException exception) {
-            throw new InvalidMessageIDException(exception, guild, messageChannel, messageID);
+            if (defaultMessage != null) {
+                messageChannel.sendMessage(defaultMessage.build()).complete();
+            } else {
+                throw new InvalidMessageIDException(exception, guild, messageChannel, messageID);
+            }
         }
         messageValid = true;
+
         resolved = true;
         return true;
     }

@@ -15,14 +15,18 @@ public class ManagedMessageChannel {
     private @Getter final long userID;
     private @Getter final long guildID;
     private @Getter final long messageChannelID;
+
     // User
     private @Getter final boolean isUser;
+
     // Name
     private @Getter @Setter String name;
+
     // Discord Data
     private @Getter User user;
     private @Getter Guild guild;
     private @Getter MessageChannel messageChannel;
+
     // Checks
     private @Getter boolean userValid = false;
     private @Getter boolean guildValid = false;
@@ -49,6 +53,11 @@ public class ManagedMessageChannel {
 
     public ManagedMessageChannel(String name, User user) {
         this.name = name;
+
+        if (user == null) {
+            throw new NullPointerException("User cannot be null!");
+        }
+
         this.userID = user.getIdLong();
         this.user = user;
         this.isUser = true;
@@ -59,8 +68,16 @@ public class ManagedMessageChannel {
 
     public ManagedMessageChannel(String name, Guild guild, MessageChannel messageChannel) {
         this.name = name;
+
+        if (guild == null) {
+            throw new NullPointerException("Guild cannot be null!");
+        }
         this.guildID = guild.getIdLong();
         this.guild = guild;
+
+        if (messageChannel == null) {
+            throw new NullPointerException("MessageChannel cannot be null!");
+        }
         this.messageChannelID = messageChannel.getIdLong();
         this.messageChannel = messageChannel;
 

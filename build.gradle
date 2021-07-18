@@ -13,6 +13,7 @@ repositories {
         url 'https://m2.dv8tion.net/releases'
     }
     jcenter()
+    flatDir { dirs 'libs'}
 }
 
 dependencies {
@@ -24,11 +25,14 @@ dependencies {
     // JDA Utilities
     implementation 'com.jagrosh:jda-utilities-command:3.0.5'
 
-    // Guava event bus
-    //implementation ("com.google.guava:guava:29.0-jre")
-
     // GSon
     implementation 'com.google.code.gson:gson:2.8.6'
+
+    // Mayu's Library
+    implementation name: 'MayusLibrary-0.1'
+
+    // Mayu's Json Utilities
+    implementation name: 'MayusJsonUtils-1.1.1'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.12'

@@ -1,160 +1,92 @@
 package lilmayu.mayusjdautilities.commands;
 
-import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
-import lilmayu.mayusjdautilities.helpers.ArgumentHelper;
-import lilmayu.mayusjdautilities.objects.CommandType;
-import lilmayu.mayusjdautilities.utils.GeneralUtils;
-import lilmayu.mayusjdautilities.utils.SystemEmotes;
-import lombok.Getter;
+import lilmayu.mayusjdautilities.arguments.ArgumentParser;
+import lilmayu.mayusjdautilities.commands.types.BaseCommandType;
+import lilmayu.mayusjdautilities.commands.types.GeneralCommandType;
+import lilmayu.mayusjdautilities.data.MayuCoreData;
+import lilmayu.mayusjdautilities.settings.LanguageSettings;
+import lilmayu.mayusjdautilities.utils.ColorUtils;
+import lilmayu.mayusjdautilities.utils.DiscordUtils;
+import lilmayu.mayusjdautilities.utils.MessageUtils;
+import lilmayu.mayuslibrary.utils.ArrayUtils;
+import lilmayu.mayuslibrary.utils.StringUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class MayuHelpCommand extends MayuCommand {
 
-    private static @Getter List<MayuCommand> commands = new ArrayList<>();
-
-    private String titleText = "Help";
-    private String descriptionText = "For more information, please use `help [command]`";
+    // -- Constructs -- //
 
     public MayuHelpCommand() {
         this.name = "help";
-        this.aliases = new String[]{"help", "pomoc"};
-        this.guildOnly = false;
-
-        this.description = "Mayu's JDA Utilities Help Command";
+        this.description = LanguageSettings.HelpCommand.getCommandDescription();
         this.syntax = "help [command]";
-        this.examples = new String[]{
-                "help - Will send all visible commands",
-                "help ping - Will send information about command"
-        };
-
-        commands.add(this);
-    }
-
-    public MayuCommand setTitle(String title) {
-        this.titleText = title;
-        return this;
-    }
-
-    public MayuCommand setDescription(String descriptionText) {
-        this.descriptionText = descriptionText;
-        return this;
+        this.examples = new String[]{"help", "help ping"};
+        this.commandType = new GeneralCommandType();
     }
 
     @Override
     protected void execute(CommandEvent event) {
-        ArgumentHelper argumentHelper = new ArgumentHelper(event.getArgs());
+        ArgumentParser argumentParser = new ArgumentParser(event.getArgs());
 
-        if (argumentHelper.hasAnyArguments()) {
-            MayuCommand mayuCommand = getMayuCommandByName(argumentHelper.getArgumentByIndex(0).getValue());
-            event.reply(makeCommandHelp(mayuCommand).build());
+        EmbedBuilder embedBuilder = DiscordUtils.getDefaultEmbed();
+        embedBuilder.setTitle(LanguageSettings.HelpCommand.getTitle());
+        embedBuilder.setDescription(LanguageSettings.HelpCommand.getEmbedHelpCommandHomeDescription());
+        embedBuilder.setColor(ColorUtils.getDefaultColor());
+
+        boolean canSend = true;
+
+        if (argumentParser.hasAnyArguments()) {
+            String commandName = argumentParser.getArgumentAtIndex(0).getValue();
+            canSend = makeCommandSpecificHelp(embedBuilder, commandName);
         } else {
-            event.reply(makeGeneralHelp().build());
-        }
-    }
-
-    private EmbedBuilder makeGeneralHelp() {
-        EmbedBuilder embedBuilder = GeneralUtils.makeDefaultEmbed();
-
-        embedBuilder.setTitle(titleText);
-        embedBuilder.setDescription(descriptionText);
-
-        for (CommandType commandType : CommandType.values()) {
-            MayuCommand[] mayuCommands = getCommandsByType(commandType);
-            if (mayuCommands.length != 0) {
-                embedBuilder.addField(commandType.toString(), GeneralUtils.makePrettyList(mayuCommands), false);
+            for (BaseCommandType commandType : MayuCoreData.getCommandTypes()) {
+                String prettyList = ArrayUtils.makePrettyList(MayuCoreData.getMayuCommandsWithType(commandType).toArray());
+                if (!prettyList.equals("")) {
+                    embedBuilder.addField(StringUtils.prettyString(commandType.getName()), prettyList, false);
+                }
             }
         }
 
-        return embedBuilder;
-    }
-
-    private EmbedBuilder makeCommandHelp(MayuCommand command) {
-        EmbedBuilder embedBuilder = GeneralUtils.makeDefaultEmbed();
-
-        if (command == null) {
-            embedBuilder.setDescription(SystemEmotes.ERROR + " | Sorry, this command is not registered, is hidden, or does not exist!");
+        if (canSend) {
+            event.reply(embedBuilder.build());
         } else {
-            if (command.isHidden()) {
-                embedBuilder.setDescription(SystemEmotes.ERROR + " | Sorry, this command is not registered, is hidden, or does not exist!");
-            } else {
-                embedBuilder.setTitle("Command - " + command.getName());
-                embedBuilder.setDescription(command.description);
-
-                embedBuilder.addField("Command type", command.commandType.toString(), false);
-                embedBuilder.addField("Syntax", "`" + command.syntax + "`", false);
-                embedBuilder.addField("Examples", makeList(command.examples, true), false);
-                embedBuilder.addField("Aliases", makeList(command.getAliases(), true), false);
-
-                embedBuilder.addField("Advanced", makeList(new String[]{
-                        (command.getRequiredRole() == null ? "None" : command.getRequiredRole()),
-                        "Guild only: " + command.isGuildOnly(),
-                        "Cooldown: " + command.getCooldown(),
-                        "Sub-commands: " + makeCommandChildrenList(command)
-                }, true), false);
-            }
+            MessageUtils.send(MessageUtils.UnknownCommand.asEmbedBuilder(), event.getChannel());
         }
-
-        return embedBuilder;
     }
 
-    private MayuCommand[] getCommandsByType(CommandType commandType) {
-        List<MayuCommand> mayuCommandList = new ArrayList<>();
+    private boolean makeCommandSpecificHelp(EmbedBuilder embedBuilder, String commandName) {
+        MayuCommand mayuCommand = MayuCoreData.getMayuCommand(commandName);
 
-        for (MayuCommand command : commands) {
-            if (command.commandType == commandType) {
-                mayuCommandList.add(command);
-            }
+        if (mayuCommand == null) {
+            return false;
         }
 
-        return mayuCommandList.toArray(new MayuCommand[]{});
-    }
+        embedBuilder.setTitle("Command ─ " + mayuCommand.getName());
+        embedBuilder.setDescription(mayuCommand.description);
 
+        embedBuilder.addField("Command Type", StringUtils.prettyString(mayuCommand.commandType.getName()), true);
+        embedBuilder.addField("Syntax", "`" + mayuCommand.syntax + "`", false);
 
-    private String makeList(String[] array, boolean code) {
-        String list = "";
-
-        if (array == null || array.length == 0) {
-            return "N/A";
+        String aliases = "```" + ArrayUtils.makeVerticalList(mayuCommand.getAliases()) + "```";
+        if (aliases.equals("``````")) {
+            aliases = "N/A";
         }
-
-        for (String string : array) {
-            list += string + "\n";
+        String examples = "```" + ArrayUtils.makeVerticalList(mayuCommand.examples) + "```";
+        if (examples.equals("``````")) {
+            examples = "N/A";
         }
+        embedBuilder.addField("Aliases", aliases, false);
+        embedBuilder.addField("Examples", examples, false);
 
-        if (code) {
-            list = "```" + list + "```";
-        }
-        return list;
-    }
+        String[] advancedInformation = new String[]{
+                "Guild-Only...: " + mayuCommand.isGuildOnly(),
+                "Cooldown.....: " + mayuCommand.getCooldown() + "s",
+                "Required role: " + (mayuCommand.getRequiredRole() == null ? "N/A" : mayuCommand.getRequiredRole()),
+                "Sub-commands.: " + ArrayUtils.makePrettyList(mayuCommand.getChildren())
+        };
+        embedBuilder.addField("Advanced", "```" + ArrayUtils.makeVerticalList(advancedInformation) + "```", false);
 
-    private String makeCommandChildrenList(Command command) {
-        String list = "\n";
-
-        if (command.getChildren().length == 0) {
-            list = "N/A";
-        } else {
-            for (Command subCommand : command.getChildren()) {
-                list += " - " + subCommand.getName() + "\n";
-            }
-        }
-
-        return list;
-    }
-
-    private MayuCommand getMayuCommandByName(String commandName) {
-        for (MayuCommand mayuCommand : commands) {
-            if (mayuCommand.getName().equalsIgnoreCase(commandName))
-                return mayuCommand;
-        }
-        return null;
-    }
-
-    public static void registerCommand(MayuCommand mayuCommand) {
-        if (mayuCommand != null)
-            commands.add(mayuCommand);
+        return true;
     }
 }

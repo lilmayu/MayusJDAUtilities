@@ -5,7 +5,9 @@ import lilmayu.mayusjdautilities.exceptions.FailedToGetTextChannelGuildException
 import lilmayu.mayusjdautilities.exceptions.InvalidGuildIDException;
 import lilmayu.mayusjdautilities.exceptions.InvalidJsonException;
 import lilmayu.mayusjdautilities.exceptions.InvalidMessageIDException;
+import lilmayu.mayusjdautilities.utils.DiscordUtils;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.MessageBuilder;
@@ -17,17 +19,17 @@ import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 public class ManagedMessage {
 
     // Name
-    private @Getter final String name;
+    private final @Getter String name;
 
     // IDs
-    private final @Getter long guildID;
-    private final @Getter long messageChannelID;
+    private @Getter @Setter long guildID;
+    private @Getter @Setter long messageChannelID;
+    private @Getter @Setter long messageID;
 
     // Discord Data
     private @Getter Guild guild;
     private @Getter Message message;
     private @Getter MessageChannel messageChannel;
-    private @Getter long messageID;
 
     // Checks
     private @Getter boolean guildValid = false;
@@ -36,7 +38,13 @@ public class ManagedMessage {
     private @Getter boolean resolved = false;
 
     // Others
-    private @Getter @Setter MessageBuilder defaultMessage;
+    private @Getter @Setter MessageBuilder defaultMessage = new MessageBuilder().setEmbed(DiscordUtils.getDefaultEmbed().setTimestamp(null).build());
+
+    // -- Constructs -- //
+
+    public ManagedMessage(String name) {
+        this.name = name;
+    }
 
     public ManagedMessage(String name, long guildID, long messageChannelID, long messageID) {
         this.name = name;
@@ -45,26 +53,22 @@ public class ManagedMessage {
         this.messageID = messageID;
     }
 
-    public ManagedMessage(String name, Guild guild, MessageChannel messageChannel, Message message) {
+    public ManagedMessage(String name, @NonNull Guild guild, @NonNull MessageChannel messageChannel) {
         this.name = name;
 
-        if (guild == null) {
-            throw new NullPointerException("Guild cannot be null!");
-        }
-        this.guildID = guild.getIdLong();
-        this.guild = guild;
-
-        if (messageChannel == null) {
-            throw new NullPointerException("MessageChannel cannot be null!");
-        }
-        this.messageChannelID = messageChannel.getIdLong();
-        this.messageChannel = messageChannel;
-
-        if (message != null) {
-            this.messageID = message.getIdLong();
-            this.message = message;
-        }
+        setGuild(guild);
+        setMessageChannel(messageChannel);
     }
+
+    public ManagedMessage(String name, @NonNull Guild guild, @NonNull MessageChannel messageChannel, Message message) {
+        this.name = name;
+
+        setGuild(guild);
+        setMessageChannel(messageChannel);
+        setMessage(message);
+    }
+
+    // -- JSON stuff -- //
 
     public static ManagedMessage fromJsonObject(JsonObject jsonObject) {
         String name = null;
@@ -91,12 +95,14 @@ public class ManagedMessage {
         return jsonObject;
     }
 
+    // -- Main Logic -- //
+
     public boolean updateEntries(JDA jda) {
         return updateEntries(jda, false);
     }
 
     public boolean updateEntries(JDA jda, boolean force) {
-        if (checkEntries()) {
+        if (areEntriesValid()) {
             if (!force) {
                 return true;
             }
@@ -118,7 +124,7 @@ public class ManagedMessage {
             message = messageChannel.retrieveMessageById(messageID).complete();
         } catch (ErrorResponseException exception) {
             if (defaultMessage != null) {
-                messageChannel.sendMessage(defaultMessage.build()).complete();
+                setMessage(messageChannel.sendMessage(defaultMessage.build()).complete());
             } else {
                 throw new InvalidMessageIDException(exception, guild, messageChannel, messageID);
             }
@@ -129,30 +135,68 @@ public class ManagedMessage {
         return true;
     }
 
-    public boolean checkEntries() {
+    public boolean areEntriesValid() {
         return guildID != 0 && guild != null && messageChannelID != 0 && messageChannel != null && messageID != 0 && message != null;
     }
 
-    public void setMessage(Message message) {
+    /**
+     * @return True if message was sent / edited
+     */
+    public boolean sendOrEditMessage(MessageBuilder messageBuilder) {
+        if (message == null) {
+            if (messageChannel != null) {
+                setMessage(messageChannel.sendMessage(messageBuilder.build()).complete());
+                return true;
+            }
+        } else {
+            message.editMessage(messageBuilder.build()).complete();
+            return true;
+        }
+        return false;
+    }
+
+    // -- Setters -- //
+
+    public ManagedMessage setMessage(Message message) {
+        if (message == null) {
+            this.message = null;
+            this.messageID = 0;
+            this.messageValid = false;
+            return this;
+        }
+
         this.message = message;
         this.messageID = message.getIdLong();
+        this.messageValid = true;
+
+        return this;
     }
+
+    public ManagedMessage setGuild(@NonNull Guild guild) {
+        this.guild = guild;
+        this.guildID = guild.getIdLong();
+        this.guildValid = true;
+
+        this.messageValid = false;
+        this.messageChannelValid = false;
+
+        return this;
+    }
+
+    public ManagedMessage setMessageChannel(@NonNull MessageChannel messageChannel) {
+        this.messageChannel = messageChannel;
+        this.messageChannelID = messageChannel.getIdLong();
+        this.messageChannelValid = true;
+
+        this.messageValid = false;
+
+        return this;
+    }
+
+    // -- Java -- //
 
     @Override
     public String toString() {
-        String string = "{";
-
-        string += "guildID=" + guildID + ";";
-        string += "messageChannelID=" + messageChannelID + ";";
-        string += "messageID=" + messageID + ";";
-        string += "resolved=" + resolved + ";";
-        string += "guildValid=" + guildValid + ";";
-        string += "messageChannelValid=" + messageChannelValid + ";";
-        string += "messageValid=" + messageValid + ";";
-        string += "guild=" + guild + ";";
-        string += "messageChannel=" + messageChannel + ";";
-        string += "message=" + message + ";";
-
-        return string + "}";
+        return "ManagedMessage{" + "name='" + name + '\'' + ", guildID=" + guildID + ", messageChannelID=" + messageChannelID + ", guild=" + guild + ", message=" + message + ", messageChannel=" + messageChannel + ", messageID=" + messageID + ", guildValid=" + guildValid + ", messageChannelValid=" + messageChannelValid + ", messageValid=" + messageValid + ", resolved=" + resolved + ", defaultMessage=" + defaultMessage + '}';
     }
 }

@@ -140,18 +140,35 @@ public class ManagedMessage {
     }
 
     /**
+     * Some exceptions will not be re-thrown. If message cannot be edited, it will try to send new one.
      * @return True if message was sent / edited
      */
     public boolean sendOrEditMessage(MessageBuilder messageBuilder) {
         if (message == null) {
             if (messageChannel != null) {
-                setMessage(messageChannel.sendMessage(messageBuilder.build()).complete());
+                try {
+                    message = messageChannel.retrieveMessageById(messageID).complete();
+                } catch (Exception ignored) {
+                }
+
+                if (message != null) {
+                    message.editMessage(messageBuilder.build()).complete();
+                    setMessage(message);
+                } else {
+                    setMessage(messageChannel.sendMessage(messageBuilder.build()).complete());
+                }
+
                 return true;
             }
         } else {
-            message.editMessage(messageBuilder.build()).complete();
+            try {
+                message.editMessage(messageBuilder.build()).complete();
+            } catch (Exception ignored) {
+                setMessage(messageChannel.sendMessage(messageBuilder.build()).complete());
+            }
             return true;
         }
+
         return false;
     }
 

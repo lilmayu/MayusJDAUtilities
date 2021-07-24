@@ -5,6 +5,7 @@ import lilmayu.mayusjdautilities.actions.evenets.InteractionEvent;
 import net.dv8tion.jda.api.events.interaction.ButtonClickEvent;
 import net.dv8tion.jda.api.events.interaction.SelectionMenuEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import java.util.ArrayList;
@@ -63,7 +64,10 @@ public class MayuCoreListener extends ListenerAdapter {
 
             if (success) {
                 if (intractableMessage.isDeleteMessageAfterInteraction()) {
-                    intractableMessage.getMessage().delete().complete();
+                    try {
+                        intractableMessage.getMessage().delete().complete();
+                    } catch (ErrorResponseException ignored) {
+                    }
                     removeIntractableMessage(intractableMessage);
                 }
                 return;

@@ -1,10 +1,15 @@
 package lilmayu.mayusjdautilities.utils;
 
+import lilmayu.mayusjdautilities.actions.InteractiveMessage;
+import lilmayu.mayusjdautilities.actions.objects.MessageInteraction;
+import lilmayu.mayusjdautilities.commands.MayuCommand;
 import lilmayu.mayusjdautilities.settings.LanguageSettings;
 import lilmayu.mayuslibrary.utils.objects.ParsedStackTraceElement;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.MessageBuilder;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.interactions.components.Button;
 
 import java.awt.*;
 import java.io.PrintWriter;
@@ -45,6 +50,56 @@ public class MessageUtils {
 
     public static EmbedBuilder successfulEmbed(String text) {
         return quickEmbed(ColorUtils.getSuccessfulColor(), SystemEmotes.SUCCESSFUL + " Success", text);
+    }
+
+    // -- Closable -- //
+
+    public static Message errorClosable(String text, MessageChannel messageChannel) {
+        InteractiveMessage interactiveMessage = new InteractiveMessage(new MessageBuilder(error(text)));
+        interactiveMessage.addInteraction(MessageInteraction.asButton(Button.danger("close", "Close")), interactiveMessage::delete);
+        return interactiveMessage.sendMessage(messageChannel);
+    }
+
+    public static Message errorClosableEmbed(String text, MessageChannel messageChannel) {
+        InteractiveMessage interactiveMessage = new InteractiveMessage(new MessageBuilder(errorEmbed(text)));
+        interactiveMessage.addInteraction(MessageInteraction.asButton(Button.danger("close", "Close")), interactiveMessage::delete);
+        return interactiveMessage.sendMessage(messageChannel);
+    }
+
+    public static Message warningClosable(String text, MessageChannel messageChannel) {
+        InteractiveMessage interactiveMessage = new InteractiveMessage(new MessageBuilder(warning(text)));
+        interactiveMessage.addInteraction(MessageInteraction.asButton(Button.danger("close", "Close")), interactiveMessage::delete);
+        return interactiveMessage.sendMessage(messageChannel);
+    }
+
+    public static Message warningClosableEmbed(String text, MessageChannel messageChannel) {
+        InteractiveMessage interactiveMessage = new InteractiveMessage(new MessageBuilder(warningEmbed(text)));
+        interactiveMessage.addInteraction(MessageInteraction.asButton(Button.danger("close", "Close")), interactiveMessage::delete);
+        return interactiveMessage.sendMessage(messageChannel);
+    }
+
+    public static Message informationClosable(String text, MessageChannel messageChannel) {
+        InteractiveMessage interactiveMessage = new InteractiveMessage(new MessageBuilder(information(text)));
+        interactiveMessage.addInteraction(MessageInteraction.asButton(Button.danger("close", "Close")), interactiveMessage::delete);
+        return interactiveMessage.sendMessage(messageChannel);
+    }
+
+    public static Message informationClosableEmbed(String text, MessageChannel messageChannel) {
+        InteractiveMessage interactiveMessage = new InteractiveMessage(new MessageBuilder(informationEmbed(text)));
+        interactiveMessage.addInteraction(MessageInteraction.asButton(Button.danger("close", "Close")), interactiveMessage::delete);
+        return interactiveMessage.sendMessage(messageChannel);
+    }
+
+    public static Message successfulClosable(String text, MessageChannel messageChannel) {
+        InteractiveMessage interactiveMessage = new InteractiveMessage(new MessageBuilder(successful(text)));
+        interactiveMessage.addInteraction(MessageInteraction.asButton(Button.danger("close", "Close")), interactiveMessage::delete);
+        return interactiveMessage.sendMessage(messageChannel);
+    }
+
+    public static Message successfulClosableEmbed(String text, MessageChannel messageChannel) {
+        InteractiveMessage interactiveMessage = new InteractiveMessage(new MessageBuilder(successfulEmbed(text)));
+        interactiveMessage.addInteraction(MessageInteraction.asButton(Button.danger("close", "Close")), interactiveMessage::delete);
+        return interactiveMessage.sendMessage(messageChannel);
     }
 
     // -- Others -- //
@@ -99,6 +154,14 @@ public class MessageUtils {
 
         public static EmbedBuilder asEmbedBuilder() {
             return errorEmbed(LanguageSettings.Messages.getInvalidSyntax());
+        }
+
+        public static String asText(MayuCommand mayuCommand) {
+            return error(LanguageSettings.Messages.getInvalidSyntaxHint().replace("{syntax}", mayuCommand.syntax)); // TODO: Special metoda
+        }
+
+        public static EmbedBuilder asEmbedBuilder(MayuCommand mayuCommand) {
+            return errorEmbed(LanguageSettings.Messages.getInvalidSyntaxHint().replace("{syntax}", mayuCommand.syntax));
         }
     }
 

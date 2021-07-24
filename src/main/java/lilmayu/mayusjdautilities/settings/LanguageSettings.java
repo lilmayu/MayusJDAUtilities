@@ -10,6 +10,7 @@ public class LanguageSettings {
     public static class Messages {
 
         private static @Getter @Setter String invalidSyntax = "Invalid syntax! Please, see `help` command.";
+        private static @Getter @Setter String invalidSyntaxHint = "Invalid syntax! Syntax for this command is `{syntax}`.";
         private static @Getter @Setter String unknownCommand = "Unknown command! Please, use `help` command.";
 
         private static @Getter @Setter String exceptionOccurredMessage = "Exception occurred! See stack trace above.";

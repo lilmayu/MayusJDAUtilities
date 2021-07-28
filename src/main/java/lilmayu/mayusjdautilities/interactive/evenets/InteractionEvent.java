@@ -1,6 +1,6 @@
-package lilmayu.mayusjdautilities.actions.evenets;
+package lilmayu.mayusjdautilities.interactive.evenets;
 
-import lilmayu.mayusjdautilities.actions.InteractionType;
+import lilmayu.mayusjdautilities.interactive.InteractionType;
 import lombok.Getter;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.ButtonClickEvent;

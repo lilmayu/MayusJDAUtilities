@@ -1,10 +1,12 @@
 package lilmayu.mayusjdautilities.managed;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import lilmayu.mayusjdautilities.exceptions.FailedToGetTextChannelGuildException;
 import lilmayu.mayusjdautilities.exceptions.InvalidGuildIDException;
 import lilmayu.mayusjdautilities.exceptions.InvalidJsonException;
 import lilmayu.mayusjdautilities.exceptions.InvalidMessageIDException;
+import lilmayu.mayusjdautilities.interactive.InteractiveMessage;
 import lilmayu.mayusjdautilities.utils.DiscordUtils;
 import lilmayu.mayusjsonutils.data.ISavable;
 import lilmayu.mayusjsonutils.objects.MayuJson;
@@ -83,12 +85,12 @@ public class ManagedMessage implements ISavable {
     // -- JSON stuff -- //
 
     public void fromJsonObject(JsonObject jsonObject) {
-        long guildID, messageChannelID, messageID;
         try {
-            this.name = jsonObject.get("name").getAsString();
-            this.guildID = jsonObject.get("guildID").getAsLong();
-            this.messageChannelID = jsonObject.get("messageChannelID").getAsLong();
-            this.messageID = jsonObject.get("messageID").getAsLong();
+            MayuJson mayuJson = new MayuJson(jsonObject);
+            this.name = mayuJson.getOrNull("name").getAsString();
+            this.guildID = mayuJson.getOrCreate("guildID", new JsonPrimitive(0)).getAsLong();
+            this.messageChannelID = mayuJson.getOrCreate("messageChannelID", new JsonPrimitive(0)).getAsLong();
+            this.messageID = mayuJson.getOrCreate("messageID", new JsonPrimitive(0)).getAsLong();
         } catch (NullPointerException exception) {
             throw new InvalidJsonException("Invalid json for ManagedMessage with name: " + name, jsonObject);
         }

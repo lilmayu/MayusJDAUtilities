@@ -1,7 +1,7 @@
-package lilmayu.mayusjdautilities.actions;
+package lilmayu.mayusjdautilities.interactive;
 
-import lilmayu.mayusjdautilities.actions.evenets.InteractionEvent;
-import lilmayu.mayusjdautilities.actions.objects.MessageInteraction;
+import lilmayu.mayusjdautilities.interactive.evenets.InteractionEvent;
+import lilmayu.mayusjdautilities.interactive.objects.MessageInteraction;
 import lilmayu.mayusjdautilities.data.MayuCoreListener;
 import lilmayu.mayusjdautilities.exceptions.CannotAddInteractionException;
 import lombok.Getter;

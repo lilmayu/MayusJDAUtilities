@@ -1,4 +1,4 @@
-package lilmayu.mayusjdautilities.actions;
+package lilmayu.mayusjdautilities.interactive;
 
 public enum InteractionType {
     REACTION,

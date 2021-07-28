@@ -1,6 +1,6 @@
 package lilmayu.mayusjdautilities.exceptions;
 
-import lilmayu.mayusjdautilities.actions.objects.MessageInteraction;
+import lilmayu.mayusjdautilities.interactive.objects.MessageInteraction;
 import lombok.Getter;
 
 public class CannotAddInteractionException extends RuntimeException {

@@ -1,7 +1,7 @@
 package lilmayu.mayusjdautilities.data;
 
-import lilmayu.mayusjdautilities.actions.InteractiveMessage;
-import lilmayu.mayusjdautilities.actions.evenets.InteractionEvent;
+import lilmayu.mayusjdautilities.interactive.InteractiveMessage;
+import lilmayu.mayusjdautilities.interactive.evenets.InteractionEvent;
 import net.dv8tion.jda.api.events.interaction.ButtonClickEvent;
 import net.dv8tion.jda.api.events.interaction.SelectionMenuEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;

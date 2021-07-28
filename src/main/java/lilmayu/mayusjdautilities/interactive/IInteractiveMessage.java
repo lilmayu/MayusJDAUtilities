@@ -1,6 +1,6 @@
-package lilmayu.mayusjdautilities.actions;
+package lilmayu.mayusjdautilities.interactive;
 
-import lilmayu.mayusjdautilities.actions.evenets.InteractionEvent;
+import lilmayu.mayusjdautilities.interactive.evenets.InteractionEvent;
 
 public interface IInteractiveMessage {
 

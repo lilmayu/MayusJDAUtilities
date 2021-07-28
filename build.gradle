@@ -13,7 +13,7 @@ repositories {
         url 'https://m2.dv8tion.net/releases'
     }
     jcenter()
-    flatDir { dirs 'libs'}
+    flatDir { dirs 'libs' }
 }
 
 dependencies {
@@ -30,7 +30,7 @@ dependencies {
     implementation name: 'MayusLibrary-0.1'
 
     // Mayu's Json Utilities
-    implementation name: 'MayusJsonUtils-1.1.1'
+    implementation name: 'MayusJsonUtils-1.2'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.12'

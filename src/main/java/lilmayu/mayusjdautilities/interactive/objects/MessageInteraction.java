@@ -1,6 +1,6 @@
-package lilmayu.mayusjdautilities.actions.objects;
+package lilmayu.mayusjdautilities.interactive.objects;
 
-import lilmayu.mayusjdautilities.actions.InteractionType;
+import lilmayu.mayusjdautilities.interactive.InteractionType;
 import lombok.NonNull;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Emote;

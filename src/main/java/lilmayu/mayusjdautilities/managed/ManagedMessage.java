@@ -6,6 +6,8 @@ import lilmayu.mayusjdautilities.exceptions.InvalidGuildIDException;
 import lilmayu.mayusjdautilities.exceptions.InvalidJsonException;
 import lilmayu.mayusjdautilities.exceptions.InvalidMessageIDException;
 import lilmayu.mayusjdautilities.utils.DiscordUtils;
+import lilmayu.mayusjsonutils.data.ISavable;
+import lilmayu.mayusjsonutils.objects.MayuJson;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -16,10 +18,10 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 
-public class ManagedMessage {
+public class ManagedMessage implements ISavable {
 
     // Name
-    private final @Getter String name;
+    private @Getter String name;
 
     // IDs
     private @Getter @Setter long guildID;
@@ -46,6 +48,16 @@ public class ManagedMessage {
         this.name = name;
     }
 
+    public ManagedMessage(JsonObject jsonObject) {
+        fromJsonObject(jsonObject);
+    }
+
+    public ManagedMessage(String name, long guildID, long messageChannelID) {
+        this.name = name;
+        this.guildID = guildID;
+        this.messageChannelID = messageChannelID;
+    }
+
     public ManagedMessage(String name, long guildID, long messageChannelID, long messageID) {
         this.name = name;
         this.guildID = guildID;
@@ -70,15 +82,13 @@ public class ManagedMessage {
 
     // -- JSON stuff -- //
 
-    public static ManagedMessage fromJsonObject(JsonObject jsonObject) {
-        String name = null;
+    public void fromJsonObject(JsonObject jsonObject) {
         long guildID, messageChannelID, messageID;
         try {
-            name = jsonObject.get("name").getAsString();
-            guildID = jsonObject.get("guildID").getAsLong();
-            messageChannelID = jsonObject.get("messageChannelID").getAsLong();
-            messageID = jsonObject.get("messageID").getAsLong();
-            return new ManagedMessage(name, guildID, messageChannelID, messageID);
+            this.name = jsonObject.get("name").getAsString();
+            this.guildID = jsonObject.get("guildID").getAsLong();
+            this.messageChannelID = jsonObject.get("messageChannelID").getAsLong();
+            this.messageID = jsonObject.get("messageID").getAsLong();
         } catch (NullPointerException exception) {
             throw new InvalidJsonException("Invalid json for ManagedMessage with name: " + name, jsonObject);
         }

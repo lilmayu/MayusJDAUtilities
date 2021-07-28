@@ -2,6 +2,7 @@ package lilmayu.mayusjdautilities.managed;
 
 import com.google.gson.JsonObject;
 import lilmayu.mayusjdautilities.exceptions.*;
+import lilmayu.mayusjsonutils.data.ISavable;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -10,7 +11,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.User;
 
-public class ManagedMessageChannel {
+public class ManagedMessageChannel implements ISavable {
 
     // IDs
     private @Getter long userID;
@@ -76,20 +77,16 @@ public class ManagedMessageChannel {
 
     // -- JSON stuff -- //
 
-    public static ManagedMessageChannel fromJsonObject(JsonObject jsonObject) {
-        String name = null;
-        long userID, guildID, messageChannelID;
+    public void fromJsonObject(JsonObject jsonObject) {
         try {
-            name = jsonObject.get("name").getAsString();
-            boolean isUser = jsonObject.get("isUser").getAsBoolean();
+            this.name = jsonObject.get("name").getAsString();
+            this.isUser = jsonObject.get("isUser").getAsBoolean();
 
             if (isUser) {
-                userID = jsonObject.get("userID").getAsLong();
-                return new ManagedMessageChannel(name, userID);
+                this.userID = jsonObject.get("userID").getAsLong();
             } else {
-                guildID = jsonObject.get("guildID").getAsLong();
-                messageChannelID = jsonObject.get("messageChannelID").getAsLong();
-                return new ManagedMessageChannel(name, guildID, messageChannelID);
+                this.guildID = jsonObject.get("guildID").getAsLong();
+                this.messageChannelID = jsonObject.get("messageChannelID").getAsLong();
             }
         } catch (NullPointerException nullPointerException) {
             throw new InvalidJsonException("Invalid json for ManagedMessageChannel with name: " + name, jsonObject);
@@ -198,19 +195,6 @@ public class ManagedMessageChannel {
 
     @Override
     public String toString() {
-        return "ManagedMessageChannel{" +
-                "userID=" + userID +
-                ", guildID=" + guildID +
-                ", messageChannelID=" + messageChannelID +
-                ", isUser=" + isUser +
-                ", name='" + name + '\'' +
-                ", user=" + user +
-                ", guild=" + guild +
-                ", messageChannel=" + messageChannel +
-                ", userValid=" + userValid +
-                ", guildValid=" + guildValid +
-                ", messageChannelValid=" + messageChannelValid +
-                ", resolved=" + resolved +
-                '}';
+        return "ManagedMessageChannel{" + "userID=" + userID + ", guildID=" + guildID + ", messageChannelID=" + messageChannelID + ", isUser=" + isUser + ", name='" + name + '\'' + ", user=" + user + ", guild=" + guild + ", messageChannel=" + messageChannel + ", userValid=" + userValid + ", guildValid=" + guildValid + ", messageChannelValid=" + messageChannelValid + ", resolved=" + resolved + '}';
     }
 }

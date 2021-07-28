@@ -1,7 +1,7 @@
 package lilmayu.mayusjdautilities.utils;
 
-import lilmayu.mayusjdautilities.actions.InteractiveMessage;
-import lilmayu.mayusjdautilities.actions.objects.MessageInteraction;
+import lilmayu.mayusjdautilities.interactive.InteractiveMessage;
+import lilmayu.mayusjdautilities.interactive.objects.MessageInteraction;
 import lilmayu.mayusjdautilities.commands.MayuCommand;
 import lilmayu.mayusjdautilities.settings.LanguageSettings;
 import lilmayu.mayuslibrary.utils.objects.ParsedStackTraceElement;

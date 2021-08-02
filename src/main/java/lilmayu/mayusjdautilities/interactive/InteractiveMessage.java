@@ -15,10 +15,7 @@ import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import net.dv8tion.jda.api.interactions.components.selections.SelectionMenu;
 import net.dv8tion.jda.api.requests.restaction.MessageAction;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class InteractiveMessage implements IInteractiveMessage {
 
@@ -29,7 +26,7 @@ public class InteractiveMessage implements IInteractiveMessage {
     private @Getter boolean whitelistUsers = false;
     private @Getter boolean deleteMessageAfterInteraction = true;
 
-    private @Getter Map<MessageInteraction, Runnable> interactions = new HashMap<>();
+    private @Getter Map<MessageInteraction, Runnable> interactions = new LinkedHashMap<>();
 
     /**
      * Creates Intractable message, you should use this when NOT using Selection Menu (for Selection Menu, see {@link #InteractiveMessage(MessageBuilder, SelectionMenu.Builder)}
@@ -54,7 +51,7 @@ public class InteractiveMessage implements IInteractiveMessage {
     /**
      * Adds Interaction to Intractable Message
      *
-     * @param messageInteraction Interaction object, which is made wit {@link MessageInteraction#asEmoji(String, JDA)} )} / {@link MessageInteraction#asEmote(Emote)} / {@link MessageInteraction#asButton(Button)} / {@link MessageInteraction#asSelectOption(SelectOption)}
+     * @param messageInteraction Interaction object, which is made wit {@link MessageInteraction#asEmoji(String, JDA)} / {@link MessageInteraction#asEmote(Emote)} / {@link MessageInteraction#asButton(Button)} / {@link MessageInteraction#asSelectOption(SelectOption)}
      * @param onInteracted      Runnable which will be called when user interacted with specific interaction
      *
      * @return Returns itself - great for chaining

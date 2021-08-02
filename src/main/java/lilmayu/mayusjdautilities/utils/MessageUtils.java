@@ -1,10 +1,12 @@
 package lilmayu.mayusjdautilities.utils;
 
+import lilmayu.mayusjdautilities.commands.MayuCommand;
+import lilmayu.mayusjdautilities.interactive.InteractionType;
 import lilmayu.mayusjdautilities.interactive.InteractiveMessage;
 import lilmayu.mayusjdautilities.interactive.objects.MessageInteraction;
-import lilmayu.mayusjdautilities.commands.MayuCommand;
 import lilmayu.mayusjdautilities.settings.LanguageSettings;
 import lilmayu.mayuslibrary.utils.objects.ParsedStackTraceElement;
+import lombok.Getter;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Message;
@@ -15,14 +17,15 @@ import java.awt.*;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 public class MessageUtils {
-
-    // -- General -- //
 
     public static String error(String text) {
         return SystemEmotes.ERROR + " | " + text;
     }
+
+    // -- General -- //
 
     public static EmbedBuilder errorEmbed(String text) {
         return quickEmbed(ColorUtils.getErrorColor(), SystemEmotes.ERROR + " Error", text);
@@ -102,11 +105,11 @@ public class MessageUtils {
         return interactiveMessage.sendMessage(messageChannel);
     }
 
-    // -- Others -- //
-
     private static EmbedBuilder quickEmbed(Color color, String title, String text) {
         return DiscordUtils.getDefaultEmbed().setColor(color).setTitle(title).setDescription(text);
     }
+
+    // -- Others -- //
 
     private static String formatExceptionInformationField(Throwable throwable) {
         ParsedStackTraceElement parsedStackTraceElement = new ParsedStackTraceElement(throwable.getStackTrace()[0]);
@@ -125,15 +128,16 @@ public class MessageUtils {
     public static void sendExceptionMessage(MessageChannel messageChannel, Throwable throwable) {
         MessageBuilder messageBuilder = new MessageBuilder();
 
-        messageBuilder.setEmbed(errorEmbed(LanguageSettings.Messages.getExceptionOccurredMessage())
-                .addField(LanguageSettings.Other.getInformation(), formatExceptionInformationField(throwable), false).build());
+        messageBuilder.setEmbed(errorEmbed(LanguageSettings.Messages.getExceptionOccurredMessage()).addField(LanguageSettings.Other
+                .getInformation(), formatExceptionInformationField(throwable), false).build());
 
         StringWriter stringWriter = new StringWriter();
         PrintWriter printWriter = new PrintWriter(stringWriter);
         throwable.printStackTrace(printWriter);
 
         messageChannel.sendMessage(messageBuilder.build())
-                .addFile(stringWriter.toString().getBytes(StandardCharsets.UTF_8), "exception.txt").complete();
+                .addFile(stringWriter.toString().getBytes(StandardCharsets.UTF_8), "exception.txt")
+                .complete();
     }
 
     public static void send(String text, MessageChannel messageChannel) {
@@ -142,6 +146,121 @@ public class MessageUtils {
 
     public static void send(EmbedBuilder embedBuilder, MessageChannel messageChannel) {
         messageChannel.sendMessage(embedBuilder.build()).complete();
+    }
+
+    public static class Builder {
+
+        private @Getter InteractiveMessage interactiveMessage = new InteractiveMessage(new MessageBuilder("Loading..."));
+
+        private @Getter Type type;
+        private @Getter String content;
+        private @Getter int deleteAfter;
+        private @Getter boolean closable;
+        private @Getter boolean embed;
+
+        public static Builder create() {
+            return new Builder();
+        }
+
+        public Builder setType(Type type) {
+            this.type = type;
+
+            return this;
+        }
+
+        public Builder setContent(String content) {
+            this.content = content;
+
+            return this;
+        }
+
+        public Builder setDeleteAfter(int seconds) {
+            this.deleteAfter = seconds;
+
+            return this;
+        }
+
+        public Builder setEmbed(boolean embed) {
+            this.embed = embed;
+
+            return this;
+        }
+
+        public Builder setClosable(boolean closable) {
+            this.closable = closable;
+
+            return this;
+        }
+
+        public Builder addInteraction(MessageInteraction messageInteraction, Runnable runnable) {
+            interactiveMessage.addInteraction(messageInteraction, runnable);
+
+            return this;
+        }
+
+        public MessageBuilder buildAsMessageBuilder() {
+            return generateMessageBuilder();
+        }
+
+        public Message send(MessageChannel messageChannel) {
+            interactiveMessage.setMessageBuilder(generateMessageBuilder());
+
+            if (closable) {
+                if (interactiveMessage.getInteractions(InteractionType.SELECTION_MENU).size() == 0 && interactiveMessage
+                        .getInteractions(InteractionType.BUTTON)
+                        .size() < 25) {
+                    interactiveMessage.addInteraction(MessageInteraction.asButton(Button.danger("close", "Close")), interactiveMessage::delete);
+                }
+            }
+
+            Message message = interactiveMessage.sendMessage(messageChannel);
+
+            if (deleteAfter > 0) {
+                message.delete().queueAfter(deleteAfter, TimeUnit.SECONDS, success -> {
+                    // Ignore
+                }, failure -> {
+                    // Ignore
+                });
+            }
+
+            return message;
+        }
+
+        private MessageBuilder generateMessageBuilder() {
+            MessageBuilder messageBuilder = new MessageBuilder();
+
+            if (embed) {
+                switch (type) {
+                    case INFORMATION:
+                        messageBuilder.setEmbeds(informationEmbed(content).build());
+                        break;
+                    case ERROR:
+                        messageBuilder.setEmbeds(errorEmbed(content).build());
+                        break;
+                    case SUCCESSFUL:
+                        messageBuilder.setEmbeds(successfulEmbed(content).build());
+                        break;
+                }
+            } else {
+                switch (type) {
+                    case INFORMATION:
+                        messageBuilder.setContent(information(content));
+                        break;
+                    case ERROR:
+                        messageBuilder.setContent(error(content));
+                        break;
+                    case SUCCESSFUL:
+                        messageBuilder.setContent(successful(content));
+                        break;
+                }
+            }
+
+            return messageBuilder;
+        }
+
+        public enum Type {
+            INFORMATION, ERROR, SUCCESSFUL
+        }
     }
 
     // -- Language Specific -- //
@@ -157,7 +276,8 @@ public class MessageUtils {
         }
 
         public static String asText(MayuCommand mayuCommand) {
-            return error(LanguageSettings.Messages.getInvalidSyntaxHint().replace("{syntax}", mayuCommand.syntax)); // TODO: Special metoda
+            return error(LanguageSettings.Messages.getInvalidSyntaxHint()
+                    .replace("{syntax}", mayuCommand.syntax)); // TODO: Special metoda
         }
 
         public static EmbedBuilder asEmbedBuilder(MayuCommand mayuCommand) {

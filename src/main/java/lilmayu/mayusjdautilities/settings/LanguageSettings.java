@@ -30,5 +30,6 @@ public class LanguageSettings {
 
     public static class Other {
         private static @Getter @Setter String information = "Information";
+        private static @Getter @Setter String close = "Close";
     }
 }

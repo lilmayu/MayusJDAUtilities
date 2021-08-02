@@ -1,16 +1,13 @@
 package lilmayu.mayusjdautilities.utils;
 
-import lombok.Getter;
 import lombok.Setter;
 import net.dv8tion.jda.api.EmbedBuilder;
 
-import java.awt.*;
 import java.time.Instant;
 
 public class DiscordUtils {
 
-    private static @Setter EmbedBuilder defaultEmbed = new EmbedBuilder()
-            .setFooter("Powered by Mayu's JDA Utilities")
+    private static @Setter EmbedBuilder defaultEmbed = new EmbedBuilder().setFooter("Powered by Mayu's JDA Utilities")
             .setTimestamp(Instant.now())
             .setTitle("Loading...")
             .setDescription("Please wait.");

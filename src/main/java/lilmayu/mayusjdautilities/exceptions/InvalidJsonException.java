@@ -11,4 +11,9 @@ public class InvalidJsonException extends RuntimeException {
         super(message);
         this.jsonObject = jsonObject;
     }
+
+    public InvalidJsonException(String message, JsonObject jsonObject, Exception exception) {
+        super(message, exception);
+        this.jsonObject = jsonObject;
+    }
 }

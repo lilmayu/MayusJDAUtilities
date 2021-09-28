@@ -3,28 +3,27 @@ plugins {
 }
 
 group 'lilmayu'
-version '1.0-SNAPSHOT'
+version '2.0_pre0'
 
 repositories {
     mavenCentral()
-    maven { url 'https://jitpack.io' }
     maven {
         name 'm2-dv8tion'
         url 'https://m2.dv8tion.net/releases'
     }
-    jcenter()
+    maven { url "https://m2.chew.pro/releases" }
     flatDir { dirs 'libs' }
 }
 
 dependencies {
     // JDA
-    implementation "net.dv8tion:JDA:4.3.0_297"
+    implementation "net.dv8tion:JDA:4.3.0_331"
 
-    // JDA Utilities
-    implementation 'com.jagrosh:jda-utilities-command:3.0.5'
+    // JDA Chewtils
+    implementation 'pw.chew:jda-chewtils:1.22.0'
 
     // GSon
-    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'com.google.code.gson:gson:2.8.8'
 
     // Mayu's Library
     implementation name: 'MayusLibrary-0.1'
@@ -33,11 +32,11 @@ dependencies {
     implementation name: 'MayusJsonUtils-1.2'
 
     // Lombok
-    compileOnly 'org.projectlombok:lombok:1.18.12'
-    annotationProcessor 'org.projectlombok:lombok:1.18.12'
+    compileOnly 'org.projectlombok:lombok:1.18.20'
+    annotationProcessor 'org.projectlombok:lombok:1.18.20'
 }
 
-task compileProgram(type: Jar) {
+task compileLibrary(type: Jar) {
     from { configurations.compile.findAll { !it.name.endsWith('pom') }.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }

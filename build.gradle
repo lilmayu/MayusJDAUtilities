@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'lilmayu'
-version '2.0_pre0'
+version '2.0_pre1'
 
 repositories {
     mavenCentral()

@@ -64,11 +64,7 @@ public class MayuCoreListener extends ListenerAdapter {
 
             if (success) {
                 if (intractableMessage.isDeleteMessageAfterInteraction()) {
-                    try {
-                        intractableMessage.getMessage().delete().complete();
-                    } catch (ErrorResponseException ignored) {
-                    }
-                    removeIntractableMessage(intractableMessage);
+                    intractableMessage.delete();
                 }
                 return;
             }

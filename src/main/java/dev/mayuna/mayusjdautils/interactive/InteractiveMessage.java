@@ -3,121 +3,120 @@ package dev.mayuna.mayusjdautils.interactive;
 import dev.mayuna.mayusjdautils.data.MayuCoreListener;
 import dev.mayuna.mayusjdautils.exceptions.CannotAddInteractionException;
 import dev.mayuna.mayusjdautils.interactive.evenets.InteractionEvent;
-import dev.mayuna.mayusjdautils.interactive.objects.MessageInteraction;
+import dev.mayuna.mayusjdautils.interactive.objects.Interaction;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.Button;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import net.dv8tion.jda.api.interactions.components.selections.SelectionMenu;
 import net.dv8tion.jda.api.requests.restaction.MessageAction;
+import net.dv8tion.jda.api.requests.restaction.WebhookMessageUpdateAction;
 
 import java.util.*;
 
 public class InteractiveMessage {
 
+    // Data
     private final @Getter List<User> whitelistedUsers = new ArrayList<>();
+    private final @Getter Map<Interaction, Runnable> interactions = new LinkedHashMap<>();
     private @Getter @Setter MessageBuilder messageBuilder;
-    private @Getter Message message;
     private @Getter @Setter SelectionMenu.Builder selectionMenuBuilder;
+
+    // Settings
     private @Getter boolean whitelistUsers = false;
     private @Getter boolean deleteMessageAfterInteraction = true;
 
-    private @Getter Map<MessageInteraction, Runnable> interactions = new LinkedHashMap<>();
+    // Discord
+    private @Getter Message message;
 
-    /**
-     * Creates Intractable message, you should use this when NOT using Selection Menu (for Selection Menu, see {@link #InteractiveMessage(MessageBuilder, SelectionMenu.Builder)}
-     *
-     * @param messageBuilder Default message
-     */
-    public InteractiveMessage(MessageBuilder messageBuilder) {
+    // -- Creators -- //
+
+    private InteractiveMessage() {
+        messageBuilder = new MessageBuilder();
+    }
+
+    private InteractiveMessage(@NonNull MessageBuilder messageBuilder) {
         this.messageBuilder = messageBuilder;
     }
 
-    /**
-     * Creates Intractable Message, this constructor is mainly for Select Menu. If you don't plan using Select Menu, see {@link #InteractiveMessage(MessageBuilder)}
-     *
-     * @param messageBuilder       Default Message
-     * @param selectionMenuBuilder Default Selection Builder -> For placeholder name, etc
-     */
-    public InteractiveMessage(MessageBuilder messageBuilder, SelectionMenu.Builder selectionMenuBuilder) {
+    private InteractiveMessage(@NonNull SelectionMenu.Builder selectionMenuBuilder) {
+        messageBuilder = new MessageBuilder();
+        this.selectionMenuBuilder = selectionMenuBuilder;
+    }
+
+    private InteractiveMessage(@NonNull MessageBuilder messageBuilder, @NonNull SelectionMenu.Builder selectionMenuBuilder) {
         this.messageBuilder = messageBuilder;
         this.selectionMenuBuilder = selectionMenuBuilder;
     }
 
+    public static InteractiveMessage create() {
+        return new InteractiveMessage();
+    }
+
+    public static InteractiveMessage create(@NonNull MessageBuilder messageBuilder) {
+        return new InteractiveMessage(messageBuilder);
+    }
+
+    public static InteractiveMessage create(@NonNull SelectionMenu.Builder selectionMenuBuilder) {
+        return new InteractiveMessage(selectionMenuBuilder);
+    }
+
+    public static InteractiveMessage create(@NonNull MessageBuilder messageBuilder, @NonNull SelectionMenu.Builder selectionMenuBuilder) {
+        return new InteractiveMessage(messageBuilder, selectionMenuBuilder);
+    }
+
+    public static InteractiveMessage createSelectionMenu() {
+        return new InteractiveMessage(SelectionMenu.create(String.valueOf(new Random().nextInt())));
+    }
+
+    public static InteractiveMessage createSelectionMenu(@NonNull MessageBuilder messageBuilder) {
+        return new InteractiveMessage(messageBuilder, SelectionMenu.create(String.valueOf(new Random().nextInt())));
+    }
+
+    // -- Main stuff -- //
+
     /**
      * Adds Interaction to Intractable Message
      *
-     * @param messageInteraction Interaction object, which is made wit {@link MessageInteraction#asEmoji(String, JDA)} / {@link MessageInteraction#asEmote(Emote)} / {@link MessageInteraction#asButton(Button)} / {@link MessageInteraction#asSelectOption(SelectOption)}
-     * @param onInteracted       Runnable which will be called when user interacted with specific interaction
+     * @param interaction  Interaction object, which is made wit {@link Interaction#asEmoji(String, JDA)} / {@link Interaction#asEmote(Emote)} / {@link Interaction#asButton(Button)} / {@link Interaction#asSelectOption(SelectOption)}
+     * @param onInteracted Runnable which will be called when user interacted with specific interaction
      *
      * @return Returns itself - great for chaining
      *
      * @throws CannotAddInteractionException This exception is thrown, if you exceed limit of interactions per message (Reaction -> 20, Button/Select Option -> 25). Or if you are trying to add Button to Select Menu message and vice-versa.
      */
-    public InteractiveMessage addInteraction(MessageInteraction messageInteraction, Runnable onInteracted) throws CannotAddInteractionException {
-        Map<MessageInteraction, Runnable> interactionsButtons = getInteractions(InteractionType.BUTTON);
-        Map<MessageInteraction, Runnable> interactionsSelectOptions = getInteractions(InteractionType.SELECTION_MENU);
+    public InteractiveMessage addInteraction(Interaction interaction, Runnable onInteracted) throws CannotAddInteractionException {
+        Map<Interaction, Runnable> interactionsButtons = getInteractions(InteractionType.BUTTON);
+        Map<Interaction, Runnable> interactionsSelectOptions = getInteractions(InteractionType.SELECTION_MENU);
 
-        if (interactionsButtons.size() != 0 && messageInteraction.getInteractionType() == InteractionType.SELECTION_MENU) {
-            throw new CannotAddInteractionException("Cannot add Select Option interaction! Message can only have Buttons or Select Menu.", messageInteraction);
+        if (interactionsButtons.size() != 0 && interaction.getInteractionType() == InteractionType.SELECTION_MENU) {
+            throw new CannotAddInteractionException("Cannot add Select Option interaction! Message can only have Buttons or Select Menu.", interaction);
         }
 
-        if (interactionsSelectOptions.size() != 0 && messageInteraction.getInteractionType() == InteractionType.BUTTON) {
-            throw new CannotAddInteractionException("Cannot add Button interaction! Message can only have Buttons or Select Menu.", messageInteraction);
+        if (interactionsSelectOptions.size() != 0 && interaction.getInteractionType() == InteractionType.BUTTON) {
+            throw new CannotAddInteractionException("Cannot add Button interaction! Message can only have Buttons or Select Menu.", interaction);
         }
 
         if (interactionsButtons.size() == 25) {
-            throw new CannotAddInteractionException("Cannot add Button interaction! Maximum number of buttons for message is 25.", messageInteraction);
+            throw new CannotAddInteractionException("Cannot add Button interaction! Maximum number of buttons for message is 25.", interaction);
         }
 
         if (interactionsSelectOptions.size() == 25) {
-            throw new CannotAddInteractionException("Cannot add Select Option interaction! Maximum number of select options for message is 25.", messageInteraction);
+            throw new CannotAddInteractionException("Cannot add Select Option interaction! Maximum number of select options for message is 25.", interaction);
         }
 
         if (getInteractions(InteractionType.REACTION).size() == 20) {
-            throw new CannotAddInteractionException("Cannot add Reaction interaction! Maximum number of reactions for message is 20.", messageInteraction);
+            throw new CannotAddInteractionException("Cannot add Reaction interaction! Maximum number of reactions for message is 20.", interaction);
         }
 
-        interactions.put(messageInteraction, onInteracted);
+        interactions.put(interaction, onInteracted);
         return this;
-    }
-
-    /**
-     * Sets flag for Intractable Message, if it should ignore non-whitelisted users in using interactions
-     *
-     * @param whitelistUsers Boolean flag, if it should care about whitelist of users; Default value is false
-     *
-     * @return Returns itself - great for chaining
-     */
-    public InteractiveMessage setWhitelistUsers(boolean whitelistUsers) {
-        this.whitelistUsers = whitelistUsers;
-        return this;
-    }
-
-    public InteractiveMessage addWhitelistUser(User user) {
-        this.whitelistedUsers.add(user);
-        return this;
-    }
-
-    public InteractiveMessage setDeleteMessageAfterInteraction(boolean deleteMessageAfterInteraction) {
-        this.deleteMessageAfterInteraction = deleteMessageAfterInteraction;
-        return this;
-    }
-
-    public Map<MessageInteraction, Runnable> getInteractions(InteractionType interactionType) {
-        Map<MessageInteraction, Runnable> interactions = new HashMap<>();
-
-        for (Map.Entry<MessageInteraction, Runnable> entry : this.interactions.entrySet()) {
-            if (entry.getKey().getInteractionType() == interactionType) {
-                interactions.put(entry.getKey(), entry.getValue());
-            }
-        }
-
-        return interactions;
     }
 
     /**
@@ -127,20 +126,20 @@ public class InteractiveMessage {
      *
      * @return Sent message
      */
-    public Message sendMessage(MessageChannel messageChannel) {
-        List<MessageInteraction> reactions = new ArrayList<>();
+    public Message sendMessage(@NonNull MessageChannel messageChannel) {
+        List<Interaction> reactions = new ArrayList<>();
         List<Button> buttons = new ArrayList<>();
         List<SelectOption> selectOptions = new ArrayList<>();
 
-        for (Map.Entry<MessageInteraction, Runnable> entry : interactions.entrySet()) {
-            MessageInteraction messageInteraction = entry.getKey();
+        for (Map.Entry<Interaction, Runnable> entry : interactions.entrySet()) {
+            Interaction interaction = entry.getKey();
 
-            if (messageInteraction.isEmoji() || messageInteraction.isEmote()) {
-                reactions.add(messageInteraction);
-            } else if (messageInteraction.isButton()) {
-                buttons.add(messageInteraction.getButton());
-            } else if (messageInteraction.isSelectOption()) {
-                selectOptions.add(messageInteraction.getSelectOption());
+            if (interaction.isEmoji() || interaction.isEmote()) {
+                reactions.add(interaction);
+            } else if (interaction.isButton()) {
+                buttons.add(interaction.getButton());
+            } else if (interaction.isSelectOption()) {
+                selectOptions.add(interaction.getSelectOption());
             }
         }
 
@@ -176,7 +175,7 @@ public class InteractiveMessage {
 
         Message message = messageAction.complete();
 
-        for (MessageInteraction reaction : reactions) {
+        for (Interaction reaction : reactions) {
             if (reaction.isEmote()) {
                 message.addReaction(reaction.getEmote()).complete();
             } else if (reaction.isEmoji()) {
@@ -189,24 +188,137 @@ public class InteractiveMessage {
         return message;
     }
 
-    private boolean isApplicable(MessageInteraction messageInteraction, InteractionEvent interactionEvent) {
+    /**
+     * Edits original message in supplied {@link InteractionHook} object. Reactions are not added since Ephemeral messages do not support them.
+     *
+     * @param hook Non-null InteractionHook object
+     *
+     * @return Sent ephemeral message
+     */
+    public Message sendMessageAsEphemeral(@NonNull InteractionHook hook) {
+        List<Interaction> reactions = new ArrayList<>();
+        List<Button> buttons = new ArrayList<>();
+        List<SelectOption> selectOptions = new ArrayList<>();
+
+        for (Map.Entry<Interaction, Runnable> entry : interactions.entrySet()) {
+            Interaction interaction = entry.getKey();
+
+            if (interaction.isEmoji() || interaction.isEmote()) {
+                reactions.add(interaction);
+            } else if (interaction.isButton()) {
+                buttons.add(interaction.getButton());
+            } else if (interaction.isSelectOption()) {
+                selectOptions.add(interaction.getSelectOption());
+            }
+        }
+
+        WebhookMessageUpdateAction<Message> messageUpdateAction = hook.editOriginal(messageBuilder.build());
+
+        // Buttons / SelectMenu
+        List<ActionRow> actionRows = new ArrayList<>();
+
+        if (buttons.size() != 0) {
+            List<Button> fiveButtons = new ArrayList<>();
+
+            for (Button button : buttons) {
+                if (fiveButtons.size() == 5) {
+                    actionRows.add(ActionRow.of(fiveButtons));
+
+                    fiveButtons = new ArrayList<>();
+                }
+
+                fiveButtons.add(button);
+            }
+
+            if (!fiveButtons.isEmpty()) {
+                actionRows.add(ActionRow.of(fiveButtons));
+            }
+        } else {
+            if (selectionMenuBuilder != null) {
+                selectionMenuBuilder.addOptions(selectOptions);
+                actionRows.add(ActionRow.of(selectionMenuBuilder.build()));
+            }
+        }
+
+        messageUpdateAction = messageUpdateAction.setActionRows(actionRows);
+
+        Message message = messageUpdateAction.complete();
+        this.message = message;
+
+        MayuCoreListener.addIntractableMessage(this);
+        return message;
+    }
+
+    /**
+     * Deletes Intractable Message from Discord and internals of Mayu's JDA Utilities
+     */
+    public void delete() {
+        MayuCoreListener.removeIntractableMessage(this);
+        if (message != null) {
+            if (!message.isEphemeral()) {
+                message.delete().queue(success -> {}, failure -> {});
+            }
+        }
+    }
+
+    // -- Setters -- //
+
+    /**
+     * Sets flag for Intractable Message, if it should ignore non-whitelisted users in using interactions
+     *
+     * @param whitelistUsers Boolean flag, if it should care about whitelist of users; Default value is false
+     *
+     * @return Returns itself - great for chaining
+     */
+    public InteractiveMessage setWhitelistUsers(boolean whitelistUsers) {
+        this.whitelistUsers = whitelistUsers;
+        return this;
+    }
+
+    public InteractiveMessage addWhitelistUser(User user) {
+        this.whitelistedUsers.add(user);
+        return this;
+    }
+
+    public InteractiveMessage setDeleteMessageAfterInteraction(boolean deleteMessageAfterInteraction) {
+        this.deleteMessageAfterInteraction = deleteMessageAfterInteraction;
+        return this;
+    }
+
+    // -- Utils -- //
+
+    public Map<Interaction, Runnable> getInteractions(InteractionType interactionType) {
+        Map<Interaction, Runnable> interactions = new HashMap<>();
+
+        for (Map.Entry<Interaction, Runnable> entry : this.interactions.entrySet()) {
+            if (entry.getKey().getInteractionType() == interactionType) {
+                interactions.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return interactions;
+    }
+
+    // -- Other -- //
+
+    private boolean isApplicable(Interaction interaction, InteractionEvent interactionEvent) {
         switch (interactionEvent.getInteractionType()) {
             case REACTION:
-                if (messageInteraction.getInteractionType() != InteractionType.REACTION) {
+                if (interaction.getInteractionType() != InteractionType.REACTION) {
                     return false;
                 }
 
                 MessageReaction.ReactionEmote reactionEmote = interactionEvent.getReactionAddEvent().getReaction().getReactionEmote();
 
-                if (reactionEmote.isEmote() && messageInteraction.isEmote()) {
-                    return reactionEmote.getEmote().getIdLong() == messageInteraction.getEmote().getIdLong();
-                } else if (reactionEmote.isEmoji() && messageInteraction.isEmoji()) {
-                    return reactionEmote.getEmoji().equals(messageInteraction.getEmoji());
+                if (reactionEmote.isEmote() && interaction.isEmote()) {
+                    return reactionEmote.getEmote().getIdLong() == interaction.getEmote().getIdLong();
+                } else if (reactionEmote.isEmoji() && interaction.isEmoji()) {
+                    return reactionEmote.getEmoji().equals(interaction.getEmoji());
                 }
 
                 return false;
             case BUTTON:
-                if (messageInteraction.getInteractionType() != InteractionType.BUTTON) {
+                if (interaction.getInteractionType() != InteractionType.BUTTON) {
                     return false;
                 }
 
@@ -217,7 +329,7 @@ public class InteractiveMessage {
                 }
 
                 String clickedButtonID = clickedButton.getId();
-                String messageInteractionID = messageInteraction.getButton().getId();
+                String messageInteractionID = interaction.getButton().getId();
 
                 if (clickedButtonID == null || messageInteractionID == null) {
                     return false;
@@ -225,7 +337,7 @@ public class InteractiveMessage {
 
                 return clickedButtonID.equals(messageInteractionID);
             case SELECTION_MENU:
-                if (messageInteraction.getInteractionType() != InteractionType.SELECTION_MENU) {
+                if (interaction.getInteractionType() != InteractionType.SELECTION_MENU) {
                     return false;
                 }
 
@@ -236,7 +348,7 @@ public class InteractiveMessage {
                 }
 
                 for (SelectOption selectedOption : selectOptions) {
-                    if (selectedOption.getValue().equals(messageInteraction.getSelectOption().getValue())) {
+                    if (selectedOption.getValue().equals(interaction.getSelectOption().getValue())) {
                         return true;
                     }
                 }
@@ -244,16 +356,6 @@ public class InteractiveMessage {
                 return false;
             default:
                 return false;
-        }
-    }
-
-    /**
-     * Deletes Intractable Message from Discord and internals of Mayu's JDA Utilities
-     */
-    public void delete() {
-        MayuCoreListener.removeIntractableMessage(this);
-        if (message != null) {
-            message.delete().complete();
         }
     }
 
@@ -299,11 +401,11 @@ public class InteractiveMessage {
             }
         }
 
-        for (Map.Entry<MessageInteraction, Runnable> entry : interactions.entrySet()) {
-            MessageInteraction messageInteraction = entry.getKey();
+        for (Map.Entry<Interaction, Runnable> entry : interactions.entrySet()) {
+            Interaction interaction = entry.getKey();
 
-            if (interactionEvent.getInteractionType() == messageInteraction.getInteractionType()) {
-                if (isApplicable(messageInteraction, interactionEvent)) {
+            if (interactionEvent.getInteractionType() == interaction.getInteractionType()) {
+                if (isApplicable(interaction, interactionEvent)) {
                     entry.getValue().run();
                     return true;
                 }
@@ -312,4 +414,5 @@ public class InteractiveMessage {
 
         return false;
     }
+
 }

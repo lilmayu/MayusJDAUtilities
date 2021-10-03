@@ -8,25 +8,25 @@ import net.dv8tion.jda.api.entities.MessageReaction;
 import net.dv8tion.jda.api.interactions.components.Button;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 
-public class MessageInteraction {
+public class Interaction {
 
     private MessageReaction.ReactionEmote reactionEmote;
     private Button button;
     private SelectOption selectOption;
 
-    private MessageInteraction(String emoji, JDA jda) {
+    private Interaction(String emoji, JDA jda) {
         this.reactionEmote = MessageReaction.ReactionEmote.fromUnicode(emoji, jda);
     }
 
-    private MessageInteraction(Emote emote) {
+    private Interaction(Emote emote) {
         this.reactionEmote = MessageReaction.ReactionEmote.fromCustom(emote);
     }
 
-    private MessageInteraction(Button button) {
+    private Interaction(Button button) {
         this.button = button;
     }
 
-    private MessageInteraction(SelectOption selectOption) {
+    private Interaction(SelectOption selectOption) {
         this.selectOption = selectOption;
     }
 
@@ -36,8 +36,8 @@ public class MessageInteraction {
      * @param jda JDA object
      * @return MessageInteraction object, which can be added into InteractiveMessage
      */
-    public static MessageInteraction asEmoji(@NonNull String emoji, @NonNull JDA jda) {
-        return new MessageInteraction(emoji, jda);
+    public static Interaction asEmoji(@NonNull String emoji, @NonNull JDA jda) {
+        return new Interaction(emoji, jda);
     }
 
     /**
@@ -45,8 +45,8 @@ public class MessageInteraction {
      * @param emote Emote
      * @return MessageInteraction object, which can be added into InteractiveMessage
      */
-    public static MessageInteraction asEmote(@NonNull Emote emote) {
-        return new MessageInteraction(emote);
+    public static Interaction asEmote(@NonNull Emote emote) {
+        return new Interaction(emote);
     }
 
     /**
@@ -54,8 +54,8 @@ public class MessageInteraction {
      * @param button Button, see JDA's wiki for how to construct Button
      * @return MessageInteraction object, which can be added into InteractiveMessage
      */
-    public static MessageInteraction asButton(@NonNull Button button) {
-        return new MessageInteraction(button);
+    public static Interaction asButton(@NonNull Button button) {
+        return new Interaction(button);
     }
 
     /**
@@ -63,8 +63,8 @@ public class MessageInteraction {
      * @param selectOption Select Option, see JDA's wiki for how to construct Select Option
      * @return MessageInteraction object, which can be added into InteractiveMessage
      */
-    public static MessageInteraction asSelectOption(SelectOption selectOption) {
-        return new MessageInteraction(selectOption);
+    public static Interaction asSelectOption(SelectOption selectOption) {
+        return new Interaction(selectOption);
     }
 
     public boolean isEmoji() {

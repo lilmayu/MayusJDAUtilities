@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'lilmayu'
-version '2.0_pre1'
+version '2.0_pre2'
 
 repositories {
     mavenCentral()
@@ -32,8 +32,8 @@ dependencies {
     implementation name: 'MayusJsonUtils-1.2'
 
     // Lombok
-    compileOnly 'org.projectlombok:lombok:1.18.20'
-    annotationProcessor 'org.projectlombok:lombok:1.18.20'
+    compileOnly 'org.projectlombok:lombok:1.18.22'
+    annotationProcessor 'org.projectlombok:lombok:1.18.22'
 }
 
 task compileLibrary(type: Jar) {

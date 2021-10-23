@@ -9,6 +9,7 @@ import lombok.Setter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
 
 public class ManagedMessageChannel implements ISavable {
@@ -37,6 +38,14 @@ public class ManagedMessageChannel implements ISavable {
 
     // -- Constructs -- //
 
+    public ManagedMessageChannel(String name) {
+        this.name = name;
+    }
+
+    public ManagedMessageChannel(JsonObject jsonObject) {
+        fromJsonObject(jsonObject);
+    }
+
     public ManagedMessageChannel(String name, long userID) {
         this.name = name;
         this.userID = userID;
@@ -62,6 +71,15 @@ public class ManagedMessageChannel implements ISavable {
 
         this.guildID = 0;
         this.messageChannelID = 0;
+    }
+
+    public ManagedMessageChannel(String name, @NonNull TextChannel textChannel) {
+        this.name = name;
+        setGuild(textChannel.getGuild());
+        setMessageChannel(textChannel);
+
+        this.userID = 0;
+        this.isUser = false;
     }
 
     public ManagedMessageChannel(String name, @NonNull Guild guild, @NonNull MessageChannel messageChannel) {

@@ -19,6 +19,7 @@ import net.dv8tion.jda.api.requests.restaction.MessageAction;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageUpdateAction;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class InteractiveMessage {
 
@@ -27,6 +28,7 @@ public class InteractiveMessage {
     private final @Getter Map<Interaction, Runnable> interactions = new LinkedHashMap<>();
     private @Getter @Setter MessageBuilder messageBuilder;
     private @Getter @Setter SelectionMenu.Builder selectionMenuBuilder;
+    private @Getter @Setter int deleteAfterSeconds = 0;
 
     // Settings
     private @Getter boolean whitelistUsers = false;
@@ -126,76 +128,30 @@ public class InteractiveMessage {
      *
      * @return Sent message
      */
-    public Message sendMessage(@NonNull MessageChannel messageChannel) {
-        List<Interaction> reactions = new ArrayList<>();
-        List<Button> buttons = new ArrayList<>();
-        List<SelectOption> selectOptions = new ArrayList<>();
-
-        for (Map.Entry<Interaction, Runnable> entry : interactions.entrySet()) {
-            Interaction interaction = entry.getKey();
-
-            if (interaction.isEmoji() || interaction.isEmote()) {
-                reactions.add(interaction);
-            } else if (interaction.isButton()) {
-                buttons.add(interaction.getButton());
-            } else if (interaction.isSelectOption()) {
-                selectOptions.add(interaction.getSelectOption());
-            }
-        }
-
-        MessageAction messageAction = messageChannel.sendMessage(messageBuilder.build());
-
-        // Buttons / SelectMenu
-        List<ActionRow> actionRows = new ArrayList<>();
-
-        if (buttons.size() != 0) {
-            List<Button> fiveButtons = new ArrayList<>();
-
-            for (Button button : buttons) {
-                if (fiveButtons.size() == 5) {
-                    actionRows.add(ActionRow.of(fiveButtons));
-
-                    fiveButtons = new ArrayList<>();
-                }
-
-                fiveButtons.add(button);
-            }
-
-            if (!fiveButtons.isEmpty()) {
-                actionRows.add(ActionRow.of(fiveButtons));
-            }
-        } else {
-            if (selectionMenuBuilder != null) {
-                selectionMenuBuilder.addOptions(selectOptions);
-                actionRows.add(ActionRow.of(selectionMenuBuilder.build()));
-            }
-        }
-
-        messageAction = messageAction.setActionRows(actionRows);
-
-        Message message = messageAction.complete();
-
-        for (Interaction reaction : reactions) {
-            if (reaction.isEmote()) {
-                message.addReaction(reaction.getEmote()).complete();
-            } else if (reaction.isEmoji()) {
-                message.addReaction(reaction.getEmoji()).complete();
-            }
-        }
-
-        this.message = message;
-        MayuCoreListener.addIntractableMessage(this);
-        return message;
+    public Message send(@NonNull MessageChannel messageChannel) {
+        return sendEx(messageChannel, null, null);
     }
 
     /**
      * Edits original message in supplied {@link InteractionHook} object. Reactions are not added since Ephemeral messages do not support them.
      *
-     * @param hook Non-null InteractionHook object
+     * @param interactionHook Non-null InteractionHook object
      *
      * @return Sent ephemeral message
      */
-    public Message sendMessageAsEphemeral(@NonNull InteractionHook hook) {
+    public Message send(@NonNull InteractionHook interactionHook) {
+        return sendEx(null, interactionHook, null);
+    }
+
+    public Message edit(@NonNull Message message) {
+        return sendEx(null, null, message);
+    }
+
+    public Message edit(@NonNull InteractionHook interactionHook) {
+        return sendEx(null, interactionHook, null);
+    }
+
+    private Message sendEx(MessageChannel messageChannel, InteractionHook interactionHook, Message editMessage) {
         List<Interaction> reactions = new ArrayList<>();
         List<Button> buttons = new ArrayList<>();
         List<SelectOption> selectOptions = new ArrayList<>();
@@ -212,9 +168,17 @@ public class InteractiveMessage {
             }
         }
 
-        WebhookMessageUpdateAction<Message> messageUpdateAction = hook.editOriginal(messageBuilder.build());
+        MessageAction normalMessageAction = null;
+        WebhookMessageUpdateAction<Message> hookMessageAction = null;
 
-        // Buttons / SelectMenu
+        if (messageChannel != null) {
+            normalMessageAction = messageChannel.sendMessage(messageBuilder.build());
+        } else if (interactionHook != null) {
+            hookMessageAction = interactionHook.editOriginal(messageBuilder.build());
+        } else if (editMessage != null) {
+            normalMessageAction = editMessage.editMessage(messageBuilder.build());
+        }
+
         List<ActionRow> actionRows = new ArrayList<>();
 
         if (buttons.size() != 0) {
@@ -230,9 +194,7 @@ public class InteractiveMessage {
                 fiveButtons.add(button);
             }
 
-            if (!fiveButtons.isEmpty()) {
-                actionRows.add(ActionRow.of(fiveButtons));
-            }
+            actionRows.add(ActionRow.of(fiveButtons));
         } else {
             if (selectionMenuBuilder != null) {
                 selectionMenuBuilder.addOptions(selectOptions);
@@ -240,12 +202,37 @@ public class InteractiveMessage {
             }
         }
 
-        messageUpdateAction = messageUpdateAction.setActionRows(actionRows);
+        Message message = null;
 
-        Message message = messageUpdateAction.complete();
+        if (normalMessageAction != null) {
+            normalMessageAction = normalMessageAction.setActionRows(actionRows);
+            message = normalMessageAction.complete();
+
+            if (editMessage == null) {
+                for (Interaction reaction : reactions) {
+                    if (reaction.isEmote()) {
+                        message.addReaction(reaction.getEmote()).complete();
+                    } else if (reaction.isEmoji()) {
+                        message.addReaction(reaction.getEmoji()).complete();
+                    }
+                }
+            }
+
+            if (deleteAfterSeconds != 0) {
+                message.delete().queueAfter(deleteAfterSeconds, TimeUnit.SECONDS, success -> {
+                    MayuCoreListener.removeIntractableMessage(this);
+                }, failure -> {
+                    MayuCoreListener.removeIntractableMessage(this);
+                });
+            }
+        } else if (interactionHook != null) {
+            hookMessageAction = hookMessageAction.setActionRows(actionRows);
+            message = hookMessageAction.complete();
+        }
+
         this.message = message;
-
         MayuCoreListener.addIntractableMessage(this);
+
         return message;
     }
 

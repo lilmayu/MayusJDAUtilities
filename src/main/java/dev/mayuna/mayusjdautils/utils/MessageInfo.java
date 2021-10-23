@@ -1,5 +1,9 @@
 package dev.mayuna.mayusjdautils.utils;
 
+import dev.mayuna.mayusjdautils.interactive.InteractionType;
+import dev.mayuna.mayusjdautils.interactive.InteractiveMessage;
+import dev.mayuna.mayusjdautils.interactive.objects.Interaction;
+import dev.mayuna.mayusjdautils.lang.LanguageSettings;
 import lombok.Getter;
 import lombok.Setter;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -7,8 +11,17 @@ import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.interactions.InteractionHook;
+import net.dv8tion.jda.api.interactions.components.Button;
+import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
+import net.dv8tion.jda.api.interactions.components.selections.SelectionMenu;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import static dev.mayuna.mayusjdautils.data.MayuCoreListener.GENERIC_BUTTON_CLOSE_ID;
 
 public class MessageInfo {
 
@@ -50,18 +63,54 @@ public class MessageInfo {
         return quickEmbed(Colors.getSuccessColor(), useSystemEmotes ? SystemEmotes.SUCCESS + " Success" : "✅ Success", content);
     }
 
+    // -- Closable Messages -- //
+
+    public static Builder closable(Type type, String content, int closeAfterSeconds) {
+        return Builder.create().setType(type).setContent(content).setClosable(true).setCloseAfterSeconds(closeAfterSeconds);
+    }
+
     // -- Builder -- //
+
+    private static EmbedBuilder quickEmbed(Color color, String title, String text) {
+        return DiscordUtils.getDefaultEmbed().setColor(color).setTitle(title).setDescription(text);
+    }
+
+    // -- Other -- //
+
+    // -- Colors -- //
+
+    public enum Type {
+        ERROR, WARNING, INFORMATION, SUCCESS, CUSTOM
+    }
+
+    public static class Colors {
+
+        private static @Getter @Setter Color defaultColor = new Color(0xFF0087);
+
+        private static @Getter @Setter Color errorColor = new Color(0xE04642);
+        private static @Getter @Setter Color informationColor = new Color(0x4C95D8);
+        private static @Getter @Setter Color warningColor = new Color(0xEBC730);
+        private static @Getter @Setter Color successColor = new Color(0x42D074);
+    }
 
     public static class Builder {
 
-        private @Getter String content;
+        private final @Getter List<User> interactionWhitelist = new ArrayList<>();
+        // Huge
+        private final @Getter InteractiveMessage interactiveMessage = InteractiveMessage.create();
         private @Getter Type type;
         private @Getter boolean embed;
         private @Getter boolean closable;
-        private @Getter User closableBy;
-        private @Getter long closeAfterMillis;
+        // Data
+        private @Getter String content;
+        private @Getter int closeAfterSeconds;
+        private @Getter SelectionMenu.Builder selectionMenuBuilder;
 
-        public Builder create() {
+        // Overrides
+        private @Getter EmbedBuilder customEmbedBuilder;
+        private @Getter Color customColor;
+
+        public static Builder create() {
             return new Builder();
         }
 
@@ -85,81 +134,130 @@ public class MessageInfo {
             return this;
         }
 
-        public Builder setClosableBy(User user) {
-            this.closableBy = user;
+        public Builder addOnInteractionWhitelist(User user) {
+            this.interactionWhitelist.add(user);
             return this;
         }
 
-        public Builder closeAfterMillis(long millis) {
-            this.closeAfterMillis = millis;
+        public Builder setCloseAfterSeconds(int seconds) {
+            this.closeAfterSeconds = seconds;
             return this;
+        }
+
+        public Builder setOverrideEmbed(EmbedBuilder embedBuilder) {
+            this.customEmbedBuilder = embedBuilder;
+            this.type = Type.CUSTOM;
+            return this;
+        }
+
+        /**
+         * You can use pre-defined colors in {@link Colors}
+         *
+         * @param color Color
+         *
+         * @return Builder
+         */
+        public Builder setOverrideColor(Color color) {
+            this.customColor = color;
+            return this;
+        }
+
+        public Builder setSelectionMenuBuilder(SelectionMenu.Builder selectionMenuBuilder) {
+            this.selectionMenuBuilder = selectionMenuBuilder;
+            return this;
+        }
+
+        public Builder generateSelectionMenuBuilder(String placeholder) {
+            this.selectionMenuBuilder = SelectionMenu.create(Integer.toString(new Random().nextInt())).setPlaceholder(placeholder);
+            return this;
+        }
+
+        public Builder addInteraction(Interaction interaction, Runnable runnable) {
+            interactiveMessage.addInteraction(interaction, runnable);
+            return this;
+        }
+
+        private void prepareMessage() {
+            MessageBuilder messageBuilder = new MessageBuilder();
+
+            if (type != Type.CUSTOM) {
+                if (embed) {
+                    EmbedBuilder embedBuilder = new EmbedBuilder();
+
+                    switch (type) {
+                        case ERROR:
+                            embedBuilder = errorEmbed(content);
+                            break;
+                        case WARNING:
+                            embedBuilder = warningEmbed(content);
+                            break;
+                        case INFORMATION:
+                            embedBuilder = informationEmbed(content);
+                            break;
+                        case SUCCESS:
+                            embedBuilder = successEmbed(content);
+                            break;
+                    }
+
+                    if (customColor != null) {
+                        embedBuilder.setColor(customColor);
+                    }
+
+                    messageBuilder.setEmbeds(embedBuilder.build());
+                } else {
+                    switch (type) {
+                        case ERROR:
+                            messageBuilder.setContent(error(content));
+                            break;
+                        case WARNING:
+                            messageBuilder.setContent(warning(content));
+                            break;
+                        case INFORMATION:
+                            messageBuilder.setContent(information(content));
+                            break;
+                        case SUCCESS:
+                            messageBuilder.setContent(success(content));
+                            break;
+                    }
+                }
+            } else {
+                if (customColor != null) {
+                    customEmbedBuilder.setColor(customColor);
+                }
+
+                messageBuilder.setEmbeds(customEmbedBuilder.build());
+            }
+
+            interactiveMessage.setMessageBuilder(messageBuilder);
+            interactiveMessage.setSelectionMenuBuilder(selectionMenuBuilder);
+            interactiveMessage.setDeleteAfterSeconds(closeAfterSeconds);
+
+            if (!interactionWhitelist.isEmpty()) {
+                interactiveMessage.setWhitelistUsers(true);
+                interactionWhitelist.forEach(interactiveMessage::addWhitelistUser);
+            }
+
+            if (closable) {
+                if (interactiveMessage.getInteractions(InteractionType.BUTTON).size() < 25 || interactiveMessage.getInteractions(InteractionType.SELECTION_MENU).size() < 25) {
+                    if (interactiveMessage.getSelectionMenuBuilder() == null) {
+                        interactiveMessage.addInteraction(Interaction.asButton(Button.danger(GENERIC_BUTTON_CLOSE_ID, LanguageSettings.Other.getClose())), interactiveMessage::delete);
+                    } else {
+                        interactiveMessage.addInteraction(Interaction.asSelectOption(SelectOption.of(LanguageSettings.Other.getClose(), GENERIC_BUTTON_CLOSE_ID)),
+                                interactiveMessage::delete);
+                    }
+                }
+            }
         }
 
         public Message send(MessageChannel messageChannel) {
-            MessageBuilder messageBuilder = new MessageBuilder();
-
-            if (embed) {
-                EmbedBuilder embedBuilder = new EmbedBuilder();
-
-                switch (type) {
-                    case ERROR:
-                        embedBuilder = errorEmbed(content);
-                        break;
-                    case WARNING:
-                        embedBuilder = warningEmbed(content);
-                        break;
-                    case INFORMATION:
-                        embedBuilder = informationEmbed(content);
-                        break;
-                    case SUCCESS:
-                        embedBuilder = successEmbed(content);
-                        break;
-                }
-
-                messageBuilder.setEmbeds(embedBuilder.build());
-            } else {
-                switch (type) {
-                    case ERROR:
-                        messageBuilder.setContent(error(content));
-                        break;
-                    case WARNING:
-                        messageBuilder.setContent(warning(content));
-                        break;
-                    case INFORMATION:
-                        messageBuilder.setContent(information(content));
-                        break;
-                    case SUCCESS:
-                        messageBuilder.setContent(success(content));
-                        break;
-                }
-            }
-
-            // TODO: interaction
-
-            return messageChannel.sendMessage(messageBuilder.build()).complete(); // todo: delete after
+            prepareMessage();
+            return interactiveMessage.send(messageChannel);
         }
-    }
 
-    // -- Other -- //
-
-    // -- Colors -- //
-
-    public static class Colors {
-
-        private static @Getter @Setter Color defaultColor = new Color(0xFF0087);
-
-        private static @Getter @Setter Color errorColor = new Color(0xE04642);
-        private static @Getter @Setter Color informationColor = new Color(0x4C95D8);
-        private static @Getter @Setter Color warningColor = new Color(0xEBC730);
-        private static @Getter @Setter Color successColor = new Color(0x42D074);
-    }
-
-    public enum Type {
-        ERROR, WARNING, INFORMATION, SUCCESS;
-    }
-
-    private static EmbedBuilder quickEmbed(Color color, String title, String text) {
-        return DiscordUtils.getDefaultEmbed().setColor(color).setTitle(title).setDescription(text);
+        public Message send(InteractionHook interactionHook) {
+            prepareMessage();
+            return interactiveMessage.send(interactionHook);
+        }
     }
 
 }

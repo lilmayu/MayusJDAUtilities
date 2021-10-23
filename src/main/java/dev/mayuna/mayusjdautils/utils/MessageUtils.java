@@ -61,49 +61,49 @@ public class MessageUtils {
     public static Message errorClosable(String text, MessageChannel messageChannel) {
         InteractiveMessage interactiveMessage = InteractiveMessage.create(new MessageBuilder(error(text)));
         interactiveMessage.addInteraction(Interaction.asButton(Button.danger("close", LanguageSettings.Other.getClose())), interactiveMessage::delete);
-        return interactiveMessage.sendMessage(messageChannel);
+        return interactiveMessage.send(messageChannel);
     }
 
     public static Message errorClosableEmbed(String text, MessageChannel messageChannel) {
         InteractiveMessage interactiveMessage = InteractiveMessage.create(new MessageBuilder(errorEmbed(text)));
         interactiveMessage.addInteraction(Interaction.asButton(Button.danger("close", LanguageSettings.Other.getClose())), interactiveMessage::delete);
-        return interactiveMessage.sendMessage(messageChannel);
+        return interactiveMessage.send(messageChannel);
     }
 
     public static Message warningClosable(String text, MessageChannel messageChannel) {
         InteractiveMessage interactiveMessage = InteractiveMessage.create(new MessageBuilder(warning(text)));
         interactiveMessage.addInteraction(Interaction.asButton(Button.danger("close", LanguageSettings.Other.getClose())), interactiveMessage::delete);
-        return interactiveMessage.sendMessage(messageChannel);
+        return interactiveMessage.send(messageChannel);
     }
 
     public static Message warningClosableEmbed(String text, MessageChannel messageChannel) {
         InteractiveMessage interactiveMessage = InteractiveMessage.create(new MessageBuilder(warningEmbed(text)));
         interactiveMessage.addInteraction(Interaction.asButton(Button.danger("close", LanguageSettings.Other.getClose())), interactiveMessage::delete);
-        return interactiveMessage.sendMessage(messageChannel);
+        return interactiveMessage.send(messageChannel);
     }
 
     public static Message informationClosable(String text, MessageChannel messageChannel) {
         InteractiveMessage interactiveMessage = InteractiveMessage.create(new MessageBuilder(information(text)));
         interactiveMessage.addInteraction(Interaction.asButton(Button.danger("close", LanguageSettings.Other.getClose())), interactiveMessage::delete);
-        return interactiveMessage.sendMessage(messageChannel);
+        return interactiveMessage.send(messageChannel);
     }
 
     public static Message informationClosableEmbed(String text, MessageChannel messageChannel) {
         InteractiveMessage interactiveMessage = InteractiveMessage.create(new MessageBuilder(informationEmbed(text)));
         interactiveMessage.addInteraction(Interaction.asButton(Button.danger("close", LanguageSettings.Other.getClose())), interactiveMessage::delete);
-        return interactiveMessage.sendMessage(messageChannel);
+        return interactiveMessage.send(messageChannel);
     }
 
     public static Message successfulClosable(String text, MessageChannel messageChannel) {
         InteractiveMessage interactiveMessage = InteractiveMessage.create(new MessageBuilder(successful(text)));
         interactiveMessage.addInteraction(Interaction.asButton(Button.danger("close", LanguageSettings.Other.getClose())), interactiveMessage::delete);
-        return interactiveMessage.sendMessage(messageChannel);
+        return interactiveMessage.send(messageChannel);
     }
 
     public static Message successfulClosableEmbed(String text, MessageChannel messageChannel) {
         InteractiveMessage interactiveMessage = InteractiveMessage.create(new MessageBuilder(successfulEmbed(text)));
         interactiveMessage.addInteraction(Interaction.asButton(Button.danger("close", LanguageSettings.Other.getClose())), interactiveMessage::delete);
-        return interactiveMessage.sendMessage(messageChannel);
+        return interactiveMessage.send(messageChannel);
     }
 
     private static EmbedBuilder quickEmbed(Color color, String title, String text) {
@@ -112,7 +112,7 @@ public class MessageUtils {
 
     // -- Others -- //
 
-    private static String formatExceptionInformationField(Throwable throwable) {
+    public static String formatExceptionInformationField(Throwable throwable) {
         ParsedStackTraceElement parsedStackTraceElement = new ParsedStackTraceElement(throwable.getStackTrace()[0]);
 
         String string = "```";
@@ -214,7 +214,7 @@ public class MessageUtils {
                 }
             }
 
-            Message message = interactiveMessage.sendMessage(messageChannel);
+            Message message = interactiveMessage.send(messageChannel);
 
             if (deleteAfter > 0) {
                 message.delete().queueAfter(deleteAfter, TimeUnit.SECONDS, success -> {

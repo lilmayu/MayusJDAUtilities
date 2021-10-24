@@ -7,8 +7,8 @@ import dev.mayuna.mayusjdautils.exceptions.InvalidGuildIDException;
 import dev.mayuna.mayusjdautils.exceptions.InvalidJsonException;
 import dev.mayuna.mayusjdautils.exceptions.InvalidMessageIDException;
 import dev.mayuna.mayusjdautils.utils.DiscordUtils;
-import lilmayu.mayusjsonutils.data.ISavable;
-import lilmayu.mayusjsonutils.objects.MayuJson;
+import dev.mayuna.mayusjsonutils.data.Savable;
+import dev.mayuna.mayusjsonutils.objects.MayuJson;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -19,7 +19,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 
-public class ManagedMessage implements ISavable {
+public class ManagedMessage implements Savable {
 
     // Name
     private @Getter String name;

@@ -2,14 +2,14 @@ package dev.mayuna.mayusjdautils.managed;
 
 import com.google.gson.JsonObject;
 import dev.mayuna.mayusjdautils.exceptions.InvalidJsonException;
-import lilmayu.mayusjsonutils.data.ISavable;
-import lilmayu.mayusjsonutils.objects.MayuJson;
+import dev.mayuna.mayusjsonutils.data.Savable;
+import dev.mayuna.mayusjsonutils.objects.MayuJson;
 import lombok.Getter;
 import lombok.NonNull;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.User;
 
-public abstract class ManagedUser implements ISavable {
+public abstract class ManagedUser implements Savable {
 
     // Data
     private @Getter User user;

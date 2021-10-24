@@ -2,8 +2,10 @@ plugins {
     id 'java'
 }
 
+apply plugin: 'maven-publish'
+
 group 'dev.mayuna'
-version '2.0.1'
+version '2.0.1.1'
 
 repositories {
     mavenCentral()
@@ -12,24 +14,41 @@ repositories {
         url 'https://m2.dv8tion.net/releases'
     }
     maven { url "https://m2.chew.pro/releases" }
+
     flatDir { dirs 'libs' }
+
+    maven {
+        url "https://maven.pkg.github.com/lilmayu/MayusJsonUtilities"
+        credentials {
+            username = GPR_USER_PERSONAL
+            password = GPR_TOKEN_PERSONAL
+        }
+    }
+
+    maven {
+        url "https://maven.pkg.github.com/lilmayu/MayusLibrary"
+        credentials {
+            username = GPR_USER_PERSONAL
+            password = GPR_TOKEN_PERSONAL
+        }
+    }
 }
 
 dependencies {
     // JDA
-    implementation "net.dv8tion:JDA:4.3.0_339"
+    compileOnly "net.dv8tion:JDA:4.3.0_339"
 
     // JDA Chewtils
-    implementation 'pw.chew:jda-chewtils:1.22.0'
+    compileOnly 'pw.chew:jda-chewtils:1.22.0'
 
     // GSon
-    implementation 'com.google.code.gson:gson:2.8.8'
+    compileOnly 'com.google.code.gson:gson:2.8.8'
 
     // Mayu's Library
-    implementation name: 'MayusLibrary-1.0.1'
+    implementation 'dev.mayuna:mayus-library:1.0.1'
 
     // Mayu's Json Utilities
-    implementation name: 'MayusJsonUtils-1.2'
+    implementation 'dev.mayuna:mayus-json-utilities:1.3'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.22'
@@ -43,4 +62,23 @@ task compileLibrary(type: Jar) {
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "mayus-jda-utilities"
+            url = uri("https://maven.pkg.github.com/lilmayu/MayusJDAUtilities")
+            credentials {
+                username = GPR_USER_PERSONAL
+                password = GPR_TOKEN_PERSONAL
+            }
+        }
+    }
+
+    publications {
+        gpr(MavenPublication) {
+            from(components.java)
+        }
+    }
 }

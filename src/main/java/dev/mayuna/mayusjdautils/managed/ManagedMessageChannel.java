@@ -2,7 +2,7 @@ package dev.mayuna.mayusjdautils.managed;
 
 import com.google.gson.JsonObject;
 import dev.mayuna.mayusjdautils.exceptions.*;
-import lilmayu.mayusjsonutils.data.ISavable;
+import dev.mayuna.mayusjsonutils.data.Savable;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -12,7 +12,7 @@ import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
 
-public class ManagedMessageChannel implements ISavable {
+public class ManagedMessageChannel implements Savable {
 
     // IDs
     private @Getter long userID;

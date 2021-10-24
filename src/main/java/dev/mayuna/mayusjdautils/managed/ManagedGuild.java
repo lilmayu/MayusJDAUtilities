@@ -2,15 +2,14 @@ package dev.mayuna.mayusjdautils.managed;
 
 import com.google.gson.JsonObject;
 import dev.mayuna.mayusjdautils.exceptions.InvalidJsonException;
-import lilmayu.mayusjsonutils.data.ISavable;
-import lilmayu.mayusjsonutils.objects.MayuJson;
+import dev.mayuna.mayusjsonutils.data.Savable;
+import dev.mayuna.mayusjsonutils.objects.MayuJson;
 import lombok.Getter;
 import lombok.NonNull;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.User;
 
-public abstract class ManagedGuild implements ISavable {
+public abstract class ManagedGuild implements Savable {
 
     // Data
     private @Getter Guild guild;
@@ -77,6 +76,7 @@ public abstract class ManagedGuild implements ISavable {
      * Checks if guild exists. This method calls {@link #updateEntries(JDA, boolean)} with force flag set to true
      *
      * @param jda Non-null {@link JDA} object
+     *
      * @return true if guild exists
      */
     public boolean doesGuildExist(@NonNull JDA jda) {
@@ -87,6 +87,7 @@ public abstract class ManagedGuild implements ISavable {
      * Updates entries. This method calls {@link #updateEntries(JDA, boolean)} with force flag set to false
      *
      * @param jda Non-null {@link JDA} object
+     *
      * @return true if Guild is valid or if JDA could get non-null Guild from Discord
      */
     public boolean updateEntries(@NonNull JDA jda) {
@@ -96,8 +97,9 @@ public abstract class ManagedGuild implements ISavable {
     /**
      * Updates entries
      *
-     * @param jda Non-null {@link JDA} object
+     * @param jda   Non-null {@link JDA} object
      * @param force True if it should ignore return value from {@link #isGuildValid()} and update entries even if Guild is valid
+     *
      * @return true if Guild is valid or if JDA could get non-null Guild from Discord
      */
     public boolean updateEntries(@NonNull JDA jda, boolean force) {

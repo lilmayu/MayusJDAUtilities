@@ -1,9 +1,12 @@
 package dev.mayuna.mayusjdautils.utils;
 
+import dev.mayuna.mayusjdautils.commands.MayuCommand;
+import dev.mayuna.mayusjdautils.data.MayuCoreListener;
 import dev.mayuna.mayusjdautils.interactive.InteractionType;
 import dev.mayuna.mayusjdautils.interactive.InteractiveMessage;
 import dev.mayuna.mayusjdautils.interactive.objects.Interaction;
 import dev.mayuna.mayusjdautils.lang.LanguageSettings;
+import lilmayu.mayuslibrary.utils.objects.ParsedStackTraceElement;
 import lombok.Getter;
 import lombok.Setter;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -17,17 +20,16 @@ import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import net.dv8tion.jda.api.interactions.components.selections.SelectionMenu;
 
 import java.awt.*;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import static dev.mayuna.mayusjdautils.data.MayuCoreListener.GENERIC_BUTTON_CLOSE_ID;
-
 public class MessageInfo {
 
     public static boolean useSystemEmotes = false;
-
-    // -- Basic Strings -- //
 
     public static String error(String content) {
         return useSystemEmotes ? SystemEmotes.ERROR + " | " + content : "❌ | " + content;
@@ -45,52 +47,60 @@ public class MessageInfo {
         return useSystemEmotes ? SystemEmotes.SUCCESS + " | " + content : "✅ | " + content;
     }
 
-    // -- Basic Embed Builders -- //
-
     public static EmbedBuilder errorEmbed(String content) {
-        return quickEmbed(Colors.getErrorColor(), useSystemEmotes ? SystemEmotes.ERROR + " Error" : "❌ Error", content);
+        return quickEmbed(ColorUtils.getError(), useSystemEmotes ? SystemEmotes.ERROR + " Error" : "❌ Error", content);
     }
 
     public static EmbedBuilder warningEmbed(String content) {
-        return quickEmbed(Colors.getWarningColor(), useSystemEmotes ? SystemEmotes.WARNING + " Warning" : "❗ Warning", content);
+        return quickEmbed(ColorUtils.getWarning(), useSystemEmotes ? SystemEmotes.WARNING + " Warning" : "❗ Warning", content);
     }
 
     public static EmbedBuilder informationEmbed(String content) {
-        return quickEmbed(Colors.getInformationColor(), useSystemEmotes ? SystemEmotes.INFORMATION + " Information" : "❔ Information", content);
+        return quickEmbed(ColorUtils.getInformation(), useSystemEmotes ? SystemEmotes.INFORMATION + " Information" : "❔ Information", content);
     }
 
     public static EmbedBuilder successEmbed(String content) {
-        return quickEmbed(Colors.getSuccessColor(), useSystemEmotes ? SystemEmotes.SUCCESS + " Success" : "✅ Success", content);
+        return quickEmbed(ColorUtils.getSuccess(), useSystemEmotes ? SystemEmotes.SUCCESS + " Success" : "✅ Success", content);
     }
-
-    // -- Closable Messages -- //
 
     public static Builder closable(Type type, String content, int closeAfterSeconds) {
         return Builder.create().setType(type).setContent(content).setClosable(true).setCloseAfterSeconds(closeAfterSeconds);
     }
 
-    // -- Builder -- //
-
     private static EmbedBuilder quickEmbed(Color color, String title, String text) {
         return DiscordUtils.getDefaultEmbed().setColor(color).setTitle(title).setDescription(text);
     }
 
-    // -- Other -- //
+    public static String formatExceptionInformationField(Throwable throwable) {
+        ParsedStackTraceElement parsedStackTraceElement = new ParsedStackTraceElement(throwable.getStackTrace()[0]);
 
-    // -- Colors -- //
+        String string = "```md";
+
+        string += "Exception: " + throwable + "\n";
+        string += " - Class.: " + parsedStackTraceElement.getClassName() + "\n";
+        string += " - Method: #" + parsedStackTraceElement.getMethodName() + "()\n";
+        string += " - File..: " + parsedStackTraceElement.getFileName() + "\n";
+        string += " - Line..: " + parsedStackTraceElement.getLineNumber() + "\n";
+
+        return string + "```";
+    }
+
+    public static void sendExceptionMessage(MessageChannel messageChannel, Throwable throwable) {
+        MessageBuilder messageBuilder = new MessageBuilder();
+
+        messageBuilder.setEmbed(errorEmbed(LanguageSettings.Messages.getExceptionOccurredMessage()).addField(LanguageSettings.Other.getInformation(),
+                formatExceptionInformationField(throwable),
+                false).build());
+
+        StringWriter stringWriter = new StringWriter();
+        PrintWriter printWriter = new PrintWriter(stringWriter);
+        throwable.printStackTrace(printWriter);
+
+        messageChannel.sendMessage(messageBuilder.build()).addFile(stringWriter.toString().getBytes(StandardCharsets.UTF_8), "exception.txt").complete();
+    }
 
     public enum Type {
         ERROR, WARNING, INFORMATION, SUCCESS, CUSTOM
-    }
-
-    public static class Colors {
-
-        private static @Getter @Setter Color defaultColor = new Color(0xFF0087);
-
-        private static @Getter @Setter Color errorColor = new Color(0xE04642);
-        private static @Getter @Setter Color informationColor = new Color(0x4C95D8);
-        private static @Getter @Setter Color warningColor = new Color(0xEBC730);
-        private static @Getter @Setter Color successColor = new Color(0x42D074);
     }
 
     public static class Builder {
@@ -151,7 +161,7 @@ public class MessageInfo {
         }
 
         /**
-         * You can use pre-defined colors in {@link Colors}
+         * You can use pre-defined colors in {@link ColorUtils}
          *
          * @param color Color
          *
@@ -240,9 +250,10 @@ public class MessageInfo {
             if (closable) {
                 if (interactiveMessage.getInteractions(InteractionType.BUTTON).size() < 25 || interactiveMessage.getInteractions(InteractionType.SELECTION_MENU).size() < 25) {
                     if (interactiveMessage.getSelectionMenuBuilder() == null) {
-                        interactiveMessage.addInteraction(Interaction.asButton(Button.danger(GENERIC_BUTTON_CLOSE_ID, LanguageSettings.Other.getClose())), interactiveMessage::delete);
+                        interactiveMessage.addInteraction(Interaction.asButton(Button.danger(MayuCoreListener.GENERIC_BUTTON_CLOSE_ID, LanguageSettings.Other.getClose())),
+                                interactiveMessage::delete);
                     } else {
-                        interactiveMessage.addInteraction(Interaction.asSelectOption(SelectOption.of(LanguageSettings.Other.getClose(), GENERIC_BUTTON_CLOSE_ID)),
+                        interactiveMessage.addInteraction(Interaction.asSelectOption(SelectOption.of(LanguageSettings.Other.getClose(), MayuCoreListener.GENERIC_BUTTON_CLOSE_ID)),
                                 interactiveMessage::delete);
                     }
                 }
@@ -260,4 +271,33 @@ public class MessageInfo {
         }
     }
 
+    public static class InvalidSyntax {
+
+        public static String asText() {
+            return error(LanguageSettings.Messages.getInvalidSyntax());
+        }
+
+        public static EmbedBuilder asEmbedBuilder() {
+            return errorEmbed(LanguageSettings.Messages.getInvalidSyntax());
+        }
+
+        public static String asText(MayuCommand mayuCommand) {
+            return error(LanguageSettings.Messages.getInvalidSyntaxHint().replace("{syntax}", mayuCommand.syntax));
+        }
+
+        public static EmbedBuilder asEmbedBuilder(MayuCommand mayuCommand) {
+            return errorEmbed(LanguageSettings.Messages.getInvalidSyntaxHint().replace("{syntax}", mayuCommand.syntax));
+        }
+    }
+
+    public static class UnknownCommand {
+
+        public static String asText() {
+            return error(LanguageSettings.Messages.getUnknownCommand());
+        }
+
+        public static EmbedBuilder asEmbedBuilder() {
+            return errorEmbed(LanguageSettings.Messages.getUnknownCommand());
+        }
+    }
 }

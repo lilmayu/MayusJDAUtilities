@@ -6,7 +6,7 @@ import dev.mayuna.mayusjdautils.data.MayuCoreData;
 import dev.mayuna.mayusjdautils.lang.LanguageSettings;
 import dev.mayuna.mayusjdautils.utils.ColorUtils;
 import dev.mayuna.mayusjdautils.utils.DiscordUtils;
-import dev.mayuna.mayusjdautils.utils.MessageUtils;
+import dev.mayuna.mayusjdautils.utils.MessageInfo;
 import lilmayu.mayuslibrary.utils.ArrayUtils;
 import lilmayu.mayuslibrary.utils.StringUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -64,7 +64,7 @@ public class MayuHelpCommand extends MayuCommand {
         if (canSend) {
             event.getHook().editOriginalEmbeds(embedBuilder.build()).queue();
         } else {
-            MessageUtils.send(MessageUtils.UnknownCommand.asEmbedBuilder(), event.getChannel());
+            event.getChannel().sendMessage(MessageInfo.UnknownCommand.asEmbedBuilder().build()).complete();
         }
     }
 

@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'lilmayu'
-version '2.0_pre2'
+version '2.0'
 
 repositories {
     mavenCentral()
@@ -17,7 +17,7 @@ repositories {
 
 dependencies {
     // JDA
-    implementation "net.dv8tion:JDA:4.3.0_331"
+    implementation "net.dv8tion:JDA:4.3.0_339"
 
     // JDA Chewtils
     implementation 'pw.chew:jda-chewtils:1.22.0'

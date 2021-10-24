@@ -13,7 +13,6 @@
 </p>
 
 ## Information
-- Licence: `LGPL 3.0`
 - Author: [Mayuna](https://mayuna.dev)
 - Download: [GitHub Releases](https://github.com/lilmayu/MayusJDAUtilities/releases)
 

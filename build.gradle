@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'lilmayu'
-version '2.0'
+version '2.0.1'
 
 repositories {
     mavenCentral()
@@ -26,7 +26,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.8'
 
     // Mayu's Library
-    implementation name: 'MayusLibrary-0.1'
+    implementation name: 'MayusLibrary-1.0.1'
 
     // Mayu's Json Utilities
     implementation name: 'MayusJsonUtils-1.2'

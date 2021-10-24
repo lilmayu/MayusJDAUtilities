@@ -1,7 +1,7 @@
 package dev.mayuna.mayusjdautils.arguments;
 
 import dev.mayuna.mayusjdautils.utils.DiscordUtils;
-import lilmayu.mayuslibrary.utils.NumberUtils;
+import dev.mayuna.mayuslibrary.utils.NumberUtils;
 import lombok.Getter;
 import lombok.NonNull;
 import net.dv8tion.jda.api.JDA;

@@ -16,6 +16,8 @@ jobs:
     env:
       GPR_USER_PERSONAL: ${{ secrets.GPR_USER_PERSONAL }}
       GPR_TOKEN_PERSONAL: ${{ secrets.GPR_TOKEN_PERSONAL }}
+      ossrhUsername: ${{ secrets.ossrhUsername }}
+      ossrhPassword: ${{ secrets.ossrhPassword }}
 
     steps:
     - uses: actions/checkout@v2
@@ -27,4 +29,4 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew compileLibrary -PGPR_USER_PERSONAL=$GPR_USER_PERSONAL -PGPR_TOKEN_PERSONAL=$GPR_TOKEN_PERSONAL
+      run: ./gradlew compileLibrary -PGPR_USER_PERSONAL=$GPR_USER_PERSONAL -PGPR_TOKEN_PERSONAL=$GPR_TOKEN_PERSONAL -PossrhUsername=$ossrhUsername -PossrhPassword=$ossrhPassword

@@ -16,5 +16,26 @@
 - Author: [Mayuna](https://mayuna.dev)
 - Download: [GitHub Releases](https://github.com/lilmayu/MayusJDAUtilities/releases)
 
+### Maven
+```xml
+<dependency>
+    <groupId>dev.mayuna</groupId>
+    <artifactId>mayus-jda-utilities</artifactId>
+    <version>VERSION</version>
+</dependency>
+```
+### Gradle
+```gradle
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Change 'implementation' to 'compile' in old Gradle versions
+    implementation 'dev.mayuna:mayus-jda-utilities:VERSION'
+}
+```
+- For version number see latest [Maven Repository](https://mvnrepository.com/artifact/dev.mayuna/mayus-jda-utilities) release (should be same with Github Release though)
+
 ## Documentation
 - Soon:tm:

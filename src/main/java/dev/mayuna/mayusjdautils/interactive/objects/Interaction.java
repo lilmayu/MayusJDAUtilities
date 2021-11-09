@@ -32,8 +32,10 @@ public class Interaction {
 
     /**
      * Creates MessageInteraction with Emoji (NOTE: Use unicode for emoji value)
+     *
      * @param emoji Emoji in unicode format
-     * @param jda JDA object
+     * @param jda   JDA object
+     *
      * @return MessageInteraction object, which can be added into InteractiveMessage
      */
     public static Interaction asEmoji(@NonNull String emoji, @NonNull JDA jda) {
@@ -42,7 +44,9 @@ public class Interaction {
 
     /**
      * Creates MessageInteraction with Emote
+     *
      * @param emote Emote
+     *
      * @return MessageInteraction object, which can be added into InteractiveMessage
      */
     public static Interaction asEmote(@NonNull Emote emote) {
@@ -51,7 +55,9 @@ public class Interaction {
 
     /**
      * Creates MessageInteraction with Button
+     *
      * @param button Button, see JDA's wiki for how to construct Button
+     *
      * @return MessageInteraction object, which can be added into InteractiveMessage
      */
     public static Interaction asButton(@NonNull Button button) {
@@ -60,7 +66,9 @@ public class Interaction {
 
     /**
      * Creates MessageInteraction with Select Option
+     *
      * @param selectOption Select Option, see JDA's wiki for how to construct Select Option
+     *
      * @return MessageInteraction object, which can be added into InteractiveMessage
      */
     public static Interaction asSelectOption(SelectOption selectOption) {
@@ -85,6 +93,7 @@ public class Interaction {
 
     /**
      * Gets Emoji
+     *
      * @return Returns null, if MessageInteraction is not Emoji
      */
     public String getEmoji() {
@@ -93,6 +102,7 @@ public class Interaction {
 
     /**
      * Gets Emote
+     *
      * @return Returns null, if MessageInteraction is not Emote
      */
     public Emote getEmote() {
@@ -101,6 +111,7 @@ public class Interaction {
 
     /**
      * Gets Button
+     *
      * @return Returns null, if MessageInteraction is not Button
      */
     public Button getButton() {
@@ -109,6 +120,7 @@ public class Interaction {
 
     /**
      * Gets Select Option
+     *
      * @return Returns null, if MessageInteraction is not Select Option
      */
     public SelectOption getSelectOption() {
@@ -117,6 +129,7 @@ public class Interaction {
 
     /**
      * Gets MessageInteraction's type
+     *
      * @return InteractionType (NOTE: Type "REACTION" is for Emoji and Emote; Type "SELECTION_MENU" is Select Option)
      */
     public InteractionType getInteractionType() {

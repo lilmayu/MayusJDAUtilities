@@ -152,6 +152,7 @@ public class ManagedMessage implements Savable {
 
     /**
      * Some exceptions will not be re-thrown. If message cannot be edited, it will try to send new one.
+     *
      * @return True if message was sent / edited
      */
     public boolean sendOrEditMessage(MessageBuilder messageBuilder) {

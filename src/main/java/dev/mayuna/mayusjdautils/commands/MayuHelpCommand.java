@@ -1,7 +1,7 @@
 package dev.mayuna.mayusjdautils.commands;
 
-import dev.mayuna.mayusjdautils.commands.types.GeneralCommandType;
 import dev.mayuna.mayusjdautils.commands.types.BaseCommandType;
+import dev.mayuna.mayusjdautils.commands.types.GeneralCommandType;
 import dev.mayuna.mayusjdautils.data.MayuCoreData;
 import dev.mayuna.mayusjdautils.lang.LanguageSettings;
 import dev.mayuna.mayusjdautils.utils.ColorUtils;

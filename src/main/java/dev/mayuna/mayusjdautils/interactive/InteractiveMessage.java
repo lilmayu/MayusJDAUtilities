@@ -91,7 +91,7 @@ public class InteractiveMessage {
      *
      * @return Returns itself - great for chaining
      *
-     * @throws CannotAddInteractionException This exception is thrown, if you exceed limit of interactions per message (Reaction -> 20, Button/Select Option -> 25). Or if you are trying to add Button to Select Menu message and vice-versa.
+     * @throws CannotAddInteractionException This exception is thrown, if you exceed limit of interactions per message (Reaction - 20, Button/Select Option - 25). Or if you are trying to add Button to Select Menu message and vice-versa.
      */
     public InteractiveMessage addInteraction(Interaction interaction, Runnable onInteracted) throws CannotAddInteractionException {
         Map<Interaction, Runnable> interactionsButtons = getInteractions(InteractionType.BUTTON);
@@ -145,10 +145,6 @@ public class InteractiveMessage {
 
     public Message edit(@NonNull Message message) {
         return sendEx(null, null, message);
-    }
-
-    public Message edit(@NonNull InteractionHook interactionHook) {
-        return sendEx(null, interactionHook, null);
     }
 
     private Message sendEx(MessageChannel messageChannel, InteractionHook interactionHook, Message editMessage) {

@@ -76,6 +76,7 @@ public abstract class ManagedUser implements Savable {
      * Checks if user exists. This method calls {@link #updateEntries(JDA, boolean)} with force flag set to true
      *
      * @param jda Non-null {@link JDA} object
+     *
      * @return true if user exists
      */
     public boolean doesUserExist(@NonNull JDA jda) {
@@ -86,6 +87,7 @@ public abstract class ManagedUser implements Savable {
      * Updates entries. This method calls {@link #updateEntries(JDA, boolean)} with force flag set to false
      *
      * @param jda Non-null {@link JDA} object
+     *
      * @return true if User is valid or if JDA could get non-null User from Discord
      */
     public boolean updateEntries(@NonNull JDA jda) {
@@ -95,8 +97,9 @@ public abstract class ManagedUser implements Savable {
     /**
      * Updates entries
      *
-     * @param jda Non-null {@link JDA} object
+     * @param jda   Non-null {@link JDA} object
      * @param force True if it should ignore return value from {@link #isUserValid()} and update entries even if User is valid
+     *
      * @return true if User is valid or if JDA could get non-null User from Discord
      */
     public boolean updateEntries(@NonNull JDA jda, boolean force) {

@@ -16,10 +16,17 @@ import java.util.List;
 
 public class MayuCoreListener extends ListenerAdapter {
 
-    private final static List<InteractiveMessage> intractableMessageList = new ArrayList<>();
-
-    public static boolean enableExperimentalInteractionBehavior = false;
     public static final String GENERIC_BUTTON_CLOSE_ID = "generic_close_button";
+    private final static List<InteractiveMessage> intractableMessageList = new ArrayList<>();
+    public static boolean enableExperimentalInteractionBehavior = false;
+
+    public static void addIntractableMessage(InteractiveMessage intractableMessage) {
+        intractableMessageList.add(intractableMessage);
+    }
+
+    public static void removeIntractableMessage(InteractiveMessage intractableMessage) {
+        intractableMessageList.remove(intractableMessage);
+    }
 
     public void onMessageReactionAdd(MessageReactionAddEvent event) {
         if (event.getUser() == null) {
@@ -107,12 +114,5 @@ public class MayuCoreListener extends ListenerAdapter {
                 }
             }
         }
-    }
-    public static void addIntractableMessage(InteractiveMessage intractableMessage) {
-        intractableMessageList.add(intractableMessage);
-    }
-
-    public static void removeIntractableMessage(InteractiveMessage intractableMessage) {
-        intractableMessageList.remove(intractableMessage);
     }
 }

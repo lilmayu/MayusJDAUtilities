@@ -1,8 +1,8 @@
 package dev.mayuna.mayusjdautils.commands;
 
 import com.jagrosh.jdautilities.command.SlashCommand;
-import dev.mayuna.mayusjdautils.commands.types.GeneralCommandType;
 import dev.mayuna.mayusjdautils.commands.types.BaseCommandType;
+import dev.mayuna.mayusjdautils.commands.types.GeneralCommandType;
 
 public abstract class MayuCommand extends SlashCommand {
 

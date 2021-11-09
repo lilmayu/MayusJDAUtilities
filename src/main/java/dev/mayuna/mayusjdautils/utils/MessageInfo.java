@@ -12,9 +12,10 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.InteractionHook;
-import net.dv8tion.jda.api.interactions.components.Button;
+import net.dv8tion.jda.api.interactions.components.ButtonStyle;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import net.dv8tion.jda.api.interactions.components.selections.SelectionMenu;
 
@@ -70,6 +71,23 @@ public class MessageInfo {
         return DiscordUtils.getDefaultEmbed().setColor(color).setTitle(title).setDescription(text);
     }
 
+    public static String formatExceptionStackTrace(Throwable throwable) {
+        StringWriter stringWriter = new StringWriter();
+        PrintWriter printWriter = new PrintWriter(stringWriter);
+        throwable.printStackTrace(printWriter);
+
+        StringBuilder text = new StringBuilder();
+
+        for (String line : stringWriter.toString().split("\n")) {
+            if (text.length() + line.length() > 2048)
+                break;
+
+            text.append(line).append("\n");
+        }
+
+        return text.toString();
+    }
+
     public static String formatExceptionInformationField(Throwable throwable) {
         ParsedStackTraceElement parsedStackTraceElement = new ParsedStackTraceElement(throwable.getStackTrace()[0]);
 
@@ -111,7 +129,9 @@ public class MessageInfo {
         private @Getter boolean embed;
         private @Getter boolean closable;
         // Data
+        private @Getter String customTitle;
         private @Getter String content;
+        private @Getter final List<MessageEmbed.Field> customFields = new ArrayList<>();
         private @Getter int closeAfterSeconds;
         private @Getter SelectionMenu.Builder selectionMenuBuilder;
 
@@ -156,6 +176,16 @@ public class MessageInfo {
         public Builder setOverrideEmbed(EmbedBuilder embedBuilder) {
             this.customEmbedBuilder = embedBuilder;
             this.type = Type.CUSTOM;
+            return this;
+        }
+
+        public Builder setCustomTitle(String customTitle) {
+            this.customTitle = customTitle;
+            return this;
+        }
+
+        public Builder addCustomField(MessageEmbed.Field field) {
+            customFields.add(field);
             return this;
         }
 
@@ -212,6 +242,19 @@ public class MessageInfo {
                         embedBuilder.setColor(customColor);
                     }
 
+                    if (customTitle != null) {
+                        embedBuilder.setTitle(customTitle);
+                    }
+
+                    int fields = embedBuilder.getFields().size();
+                    for (MessageEmbed.Field field : customFields) {
+                        if (fields == 25)
+                            break;
+
+                        embedBuilder.addField(field);
+                        fields++;
+                    }
+
                     messageBuilder.setEmbeds(embedBuilder.build());
                 } else {
                     switch (type) {
@@ -249,8 +292,7 @@ public class MessageInfo {
             if (closable) {
                 if (interactiveMessage.getInteractions(InteractionType.BUTTON).size() < 25 || interactiveMessage.getInteractions(InteractionType.SELECTION_MENU).size() < 25) {
                     if (interactiveMessage.getSelectionMenuBuilder() == null) {
-                        interactiveMessage.addInteraction(Interaction.asButton(Button.danger(MayuCoreListener.GENERIC_BUTTON_CLOSE_ID, LanguageSettings.Other.getClose())),
-                                interactiveMessage::delete);
+                        interactiveMessage.addInteraction(Interaction.asButton(DiscordUtils.generateCloseButton(ButtonStyle.DANGER)), interactiveMessage::delete);
                     } else {
                         interactiveMessage.addInteraction(Interaction.asSelectOption(SelectOption.of(LanguageSettings.Other.getClose(), MayuCoreListener.GENERIC_BUTTON_CLOSE_ID)),
                                 interactiveMessage::delete);
@@ -262,6 +304,11 @@ public class MessageInfo {
         public Message send(MessageChannel messageChannel) {
             prepareMessage();
             return interactiveMessage.send(messageChannel);
+        }
+
+        public Message edit(Message message) {
+            prepareMessage();
+            return interactiveMessage.edit(message);
         }
 
         public Message send(InteractionHook interactionHook) {

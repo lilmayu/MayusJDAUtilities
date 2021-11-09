@@ -1,11 +1,14 @@
 plugins {
     id 'java'
+    id 'io.codearte.nexus-staging' version '0.11.0'
 }
 
+apply plugin: 'maven'
 apply plugin: 'maven-publish'
+apply plugin: 'signing'
 
 group 'dev.mayuna'
-version '2.0.1.1'
+version '2.0.2'
 
 repositories {
     mavenCentral()
@@ -14,24 +17,6 @@ repositories {
         url 'https://m2.dv8tion.net/releases'
     }
     maven { url "https://m2.chew.pro/releases" }
-
-    flatDir { dirs 'libs' }
-
-    maven {
-        url "https://maven.pkg.github.com/lilmayu/MayusJsonUtilities"
-        credentials {
-            username = GPR_USER_PERSONAL
-            password = GPR_TOKEN_PERSONAL
-        }
-    }
-
-    maven {
-        url "https://maven.pkg.github.com/lilmayu/MayusLibrary"
-        credentials {
-            username = GPR_USER_PERSONAL
-            password = GPR_TOKEN_PERSONAL
-        }
-    }
 }
 
 dependencies {
@@ -42,7 +27,7 @@ dependencies {
     compileOnly 'pw.chew:jda-chewtils:1.22.0'
 
     // GSon
-    compileOnly 'com.google.code.gson:gson:2.8.8'
+    compileOnly 'com.google.code.gson:gson:2.8.9'
 
     // Mayu's Library
     implementation 'dev.mayuna:mayus-library:1.0.1'
@@ -81,4 +66,72 @@ publishing {
             from(components.java)
         }
     }
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'mayus-jda-utilities'
+                packaging 'jar'
+                // optionally artifactId can be defined here
+                description 'JDA Utilities which can help with the development of Discord bots'
+                url 'https://mayuna.dev/'
+
+                scm {
+                    connection 'scm:https://github.com/lilmayu/MayusJDAUtilities'
+                    developerConnection 'scm:git:https://github.com/lilmayu/MayusJDAUtilities.git'
+                    url 'https://github.com/lilmayu/MayusJDAUtilities'
+                }
+
+                licenses {
+                    license {
+                        name 'GNU Lesser General Public License v3.0'
+                        url 'https://www.gnu.org/licenses/lgpl-3.0.en.html'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'mayuna'
+                        name 'Marek Lof'
+                        email 'uwulilmayu@gmail.com'
+                    }
+                }
+            }
+        }
+    }
+}
+
+nexusStaging {
+    packageGroup = "dev.mayuna" //optional if packageGroup == project.getGroup()
+}
+
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+signing {
+    sign configurations.archives
 }

@@ -10,7 +10,7 @@ import java.util.List;
 public class ArgumentParser {
 
     // Data
-    private @Getter String arguments;
+    private @Getter final String arguments;
     private @Getter ArgumentSeparator argumentSeparator;
 
     // Parsed
@@ -103,8 +103,8 @@ public class ArgumentParser {
      * Gets with and all arguments after specified index <br>
      * Example: <br>
      * - Argument list "foo bar baz" <br>
-     *  - With index 0 -> "foo bar baz" <br>
-     *  - With index 1 -> "bar baz" <br>
+     * - With index 0 - "foo bar baz" <br>
+     * - With index 1 - "bar baz" <br>
      *
      * @param index With and after which index it should return
      *
@@ -132,7 +132,8 @@ public class ArgumentParser {
      * Gets arguments between two indexes
      *
      * @param startIndex Index from which it should start
-     * @param endIndex index to which it should stop
+     * @param endIndex   index to which it should stop
+     *
      * @return {@link Argument}, can have multiple arguments in itself
      */
     public Argument getAllArgumentsBetweenIndexes(int startIndex, int endIndex) {
@@ -149,6 +150,7 @@ public class ArgumentParser {
      * Sets {@link ArgumentSeparator} flag. You do not have to call {@link #parseArguments()} since this method calls it automatically.
      *
      * @param argumentSeparator {@link ArgumentSeparator} flag
+     *
      * @return Return itself, re-parsed
      */
     public ArgumentParser setArgumentSeparator(ArgumentSeparator argumentSeparator) {

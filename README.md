@@ -10,12 +10,11 @@
 </p>
 <p align="center">
     JDA Utilities which can help with the development of Discord bots
+  <br>
+  Made by <a href="https://mayuna.dev">Mayuna</a>
 </p>
 
-## Information
-- Author: [Mayuna](https://mayuna.dev)
-- Download: [GitHub Releases](https://github.com/lilmayu/MayusJDAUtilities/releases)
-
+## Installation
 ### Maven
 ```xml
 <dependency>
@@ -36,6 +35,7 @@ dependencies {
 }
 ```
 - For version number see latest [Maven Repository](https://mvnrepository.com/artifact/dev.mayuna/mayus-jda-utilities) release (should be same with Github Release though)
+- You can also use [GitHub Releases](https://github.com/lilmayu/MayusJDAUtilities/releases) or [GitHub Packages](https://github.com/lilmayu/MayusJDAUtilities/packages/)
 
 ## Documentation
 - Soon:tm:

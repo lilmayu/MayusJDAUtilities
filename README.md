@@ -39,7 +39,8 @@ dependencies {
 
 ## Documentation
 ### Interactive Message
-![Showcase](https://user-images.githubusercontent.com/52459400/142770573-2d4dd7ca-241c-4c38-90ab-df96e737128e.mp4)
+[Video Showcase](https://user-images.githubusercontent.com/52459400/142770573-2d4dd7ca-241c-4c38-90ab-df96e737128e.mp4)
+
 You need to register MayuCoreListener class within JDA event listeners
 ```java
 var jdaBuilder = JDABuilder.createDefault("token").addEventListeners(new MayuCoreListener());

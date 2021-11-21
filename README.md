@@ -38,29 +38,6 @@ dependencies {
 - You can also use [GitHub Releases](https://github.com/lilmayu/MayusJDAUtilities/releases) or [GitHub Packages](https://github.com/lilmayu/MayusJDAUtilities/packages/)
 
 ## Documentation
-
-### Downloading
-- Libraries are compiled with Java 8
-- Gradle (for older versions, replace "implementation" with "compile")
-    ```groovy
-    repositories {
-        mavenCentral()
-    }
-
-    dependencies {
-        implementation 'net.dv8tion:JDA:4.3.0_334' // Or newer version
-
-        implementation 'dev.mayuna:mayus-jda-utilities:2.0.3' // Change version to latest one
-        implementation 'dev.mayuna:mayus-library:1.0.2' // For miscellaneous things
-
-        // If you will be using #toJsonObject() methods ->
-        implementation 'com.google.code.gson:gson:2.8.9'
-        implementation 'dev.mayuna:mayus-json-utilities:1.3'
-    }
-    ```
-- Maven
-    - Too lazy. Feel free to PR this
-
 ### Interactive Message
 You need to register MayuCoreListener class within JDA event listeners
 ```java

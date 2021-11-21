@@ -8,7 +8,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
 group 'dev.mayuna'
-version '2.0.2'
+version '2.0.3'
 
 repositories {
     mavenCentral()

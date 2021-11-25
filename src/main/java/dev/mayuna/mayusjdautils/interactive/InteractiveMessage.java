@@ -32,7 +32,7 @@ public class InteractiveMessage {
 
     // Settings
     private @Getter boolean whitelistUsers = false;
-    private @Getter boolean deleteMessageAfterInteraction = true;
+    private @Getter boolean deleteMessageAfterInteraction = false;
 
     // Discord
     private @Getter Message message;

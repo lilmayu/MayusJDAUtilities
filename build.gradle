@@ -30,7 +30,7 @@ dependencies {
     compileOnly 'com.google.code.gson:gson:2.8.9'
 
     // Mayu's Library
-    implementation 'dev.mayuna:mayus-library:1.0.1'
+    implementation 'dev.mayuna:mayus-library:1.0.2'
 
     // Mayu's Json Utilities
     implementation 'dev.mayuna:mayus-json-utilities:1.3'

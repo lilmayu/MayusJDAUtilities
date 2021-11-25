@@ -26,7 +26,7 @@ public class InteractiveMessage {
 
     // Data
     private final @Getter List<User> whitelistedUsers = new ArrayList<>();
-    private final @Getter Map<Interaction, Consumer<User>> interactions = new LinkedHashMap<>();
+    private final @Getter Map<Interaction, Consumer<InteractionEvent>> interactions = new LinkedHashMap<>();
     private @Getter @Setter MessageBuilder messageBuilder;
     private @Getter @Setter SelectionMenu.Builder selectionMenuBuilder;
     private @Getter @Setter int deleteAfterSeconds = 0;
@@ -88,15 +88,15 @@ public class InteractiveMessage {
      * Adds Interaction to Intractable Message
      *
      * @param interaction  Interaction object, which is made wit {@link Interaction#asEmoji(String, JDA)} / {@link Interaction#asEmote(Emote)} / {@link Interaction#asButton(Button)} / {@link Interaction#asSelectOption(SelectOption)}
-     * @param onInteracted Consumer (with user who interacted) which will be called when user interacted with specific interaction
+     * @param onInteracted Consumer (with {@link InteractionEvent}) which will be called when user interacted with specific interaction
      *
      * @return Returns itself - great for chaining
      *
      * @throws CannotAddInteractionException This exception is thrown, if you exceed limit of interactions per message (Reaction - 20, Button/Select Option - 25). Or if you are trying to add Button to Select Menu message and vice-versa.
      */
-    public InteractiveMessage addInteraction(Interaction interaction, Consumer<User> onInteracted) throws CannotAddInteractionException {
-        Map<Interaction, Consumer<User>> interactionsButtons = getInteractions(InteractionType.BUTTON);
-        Map<Interaction, Consumer<User>> interactionsSelectOptions = getInteractions(InteractionType.SELECTION_MENU);
+    public InteractiveMessage addInteraction(Interaction interaction, Consumer<InteractionEvent> onInteracted) throws CannotAddInteractionException {
+        Map<Interaction, Consumer<InteractionEvent>> interactionsButtons = getInteractions(InteractionType.BUTTON);
+        Map<Interaction, Consumer<InteractionEvent>> interactionsSelectOptions = getInteractions(InteractionType.SELECTION_MENU);
 
         if (interactionsButtons.size() != 0 && interaction.getInteractionType() == InteractionType.SELECTION_MENU) {
             throw new CannotAddInteractionException("Cannot add Select Option interaction! Message can only have Buttons or Select Menu.", interaction);
@@ -135,8 +135,8 @@ public class InteractiveMessage {
      */
     @Deprecated
     public InteractiveMessage addInteraction(Interaction interaction, Runnable onInteracted) throws CannotAddInteractionException {
-        Map<Interaction, Consumer<User>> interactionsButtons = getInteractions(InteractionType.BUTTON);
-        Map<Interaction, Consumer<User>> interactionsSelectOptions = getInteractions(InteractionType.SELECTION_MENU);
+        Map<Interaction, Consumer<InteractionEvent>> interactionsButtons = getInteractions(InteractionType.BUTTON);
+        Map<Interaction, Consumer<InteractionEvent>> interactionsSelectOptions = getInteractions(InteractionType.SELECTION_MENU);
 
         if (interactionsButtons.size() != 0 && interaction.getInteractionType() == InteractionType.SELECTION_MENU) {
             throw new CannotAddInteractionException("Cannot add Select Option interaction! Message can only have Buttons or Select Menu.", interaction);
@@ -193,7 +193,7 @@ public class InteractiveMessage {
         List<Button> buttons = new ArrayList<>();
         List<SelectOption> selectOptions = new ArrayList<>();
 
-        for (Map.Entry<Interaction, Consumer<User>> entry : interactions.entrySet()) {
+        for (Map.Entry<Interaction, Consumer<InteractionEvent>> entry : interactions.entrySet()) {
             Interaction interaction = entry.getKey();
 
             if (interaction.isEmoji() || interaction.isEmote()) {
@@ -311,10 +311,10 @@ public class InteractiveMessage {
 
     // -- Utils -- //
 
-    public Map<Interaction, Consumer<User>> getInteractions(InteractionType interactionType) {
-        Map<Interaction, Consumer<User>> interactions = new HashMap<>();
+    public Map<Interaction, Consumer<InteractionEvent>> getInteractions(InteractionType interactionType) {
+        Map<Interaction, Consumer<InteractionEvent>> interactions = new HashMap<>();
 
-        for (Map.Entry<Interaction, Consumer<User>> entry : this.interactions.entrySet()) {
+        for (Map.Entry<Interaction, Consumer<InteractionEvent>> entry : this.interactions.entrySet()) {
             if (entry.getKey().getInteractionType() == interactionType) {
                 interactions.put(entry.getKey(), entry.getValue());
             }
@@ -426,12 +426,12 @@ public class InteractiveMessage {
             }
         }
 
-        for (Map.Entry<Interaction, Consumer<User>> entry : interactions.entrySet()) {
+        for (Map.Entry<Interaction, Consumer<InteractionEvent>> entry : interactions.entrySet()) {
             Interaction interaction = entry.getKey();
 
             if (interactionEvent.getInteractionType() == interaction.getInteractionType()) {
                 if (isApplicable(interaction, interactionEvent)) {
-                    entry.getValue().accept(eventUser);
+                    entry.getValue().accept(interactionEvent);
                     return true;
                 }
             }

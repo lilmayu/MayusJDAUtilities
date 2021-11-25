@@ -38,6 +38,7 @@ dependencies {
 - You can also use [GitHub Releases](https://github.com/lilmayu/MayusJDAUtilities/releases) or [GitHub Packages](https://github.com/lilmayu/MayusJDAUtilities/packages/)
 
 ## Documentation
+- NOTE: These docs are not final! There can be missing or incomplete information.
 ### Interactive Message
 [Video Showcase](https://user-images.githubusercontent.com/52459400/142770573-2d4dd7ca-241c-4c38-90ab-df96e737128e.mp4)
 

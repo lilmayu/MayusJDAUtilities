@@ -20,19 +20,20 @@ import net.dv8tion.jda.api.requests.restaction.WebhookMessageUpdateAction;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public class InteractiveMessage {
 
     // Data
     private final @Getter List<User> whitelistedUsers = new ArrayList<>();
-    private final @Getter Map<Interaction, Runnable> interactions = new LinkedHashMap<>();
+    private final @Getter Map<Interaction, Consumer<User>> interactions = new LinkedHashMap<>();
     private @Getter @Setter MessageBuilder messageBuilder;
     private @Getter @Setter SelectionMenu.Builder selectionMenuBuilder;
     private @Getter @Setter int deleteAfterSeconds = 0;
 
     // Settings
     private @Getter boolean whitelistUsers = false;
-    private @Getter boolean deleteMessageAfterInteraction = true;
+    private @Getter boolean deleteMessageAfterInteraction = false;
 
     // Discord
     private @Getter Message message;
@@ -87,15 +88,15 @@ public class InteractiveMessage {
      * Adds Interaction to Intractable Message
      *
      * @param interaction  Interaction object, which is made wit {@link Interaction#asEmoji(String, JDA)} / {@link Interaction#asEmote(Emote)} / {@link Interaction#asButton(Button)} / {@link Interaction#asSelectOption(SelectOption)}
-     * @param onInteracted Runnable which will be called when user interacted with specific interaction
+     * @param onInteracted Consumer (with user who interacted) which will be called when user interacted with specific interaction
      *
      * @return Returns itself - great for chaining
      *
      * @throws CannotAddInteractionException This exception is thrown, if you exceed limit of interactions per message (Reaction - 20, Button/Select Option - 25). Or if you are trying to add Button to Select Menu message and vice-versa.
      */
-    public InteractiveMessage addInteraction(Interaction interaction, Runnable onInteracted) throws CannotAddInteractionException {
-        Map<Interaction, Runnable> interactionsButtons = getInteractions(InteractionType.BUTTON);
-        Map<Interaction, Runnable> interactionsSelectOptions = getInteractions(InteractionType.SELECTION_MENU);
+    public InteractiveMessage addInteraction(Interaction interaction, Consumer<User> onInteracted) throws CannotAddInteractionException {
+        Map<Interaction, Consumer<User>> interactionsButtons = getInteractions(InteractionType.BUTTON);
+        Map<Interaction, Consumer<User>> interactionsSelectOptions = getInteractions(InteractionType.SELECTION_MENU);
 
         if (interactionsButtons.size() != 0 && interaction.getInteractionType() == InteractionType.SELECTION_MENU) {
             throw new CannotAddInteractionException("Cannot add Select Option interaction! Message can only have Buttons or Select Menu.", interaction);
@@ -118,6 +119,46 @@ public class InteractiveMessage {
         }
 
         interactions.put(interaction, onInteracted);
+        return this;
+    }
+
+    /**
+     * Adds Interaction to Intractable Message
+     *
+     * @param interaction  Interaction object, which is made wit {@link Interaction#asEmoji(String, JDA)} / {@link Interaction#asEmote(Emote)} / {@link Interaction#asButton(Button)} / {@link Interaction#asSelectOption(SelectOption)}
+     * @param onInteracted Runnable which will be called when user interacted with specific interaction
+     *
+     * @return Returns itself - great for chaining
+     *
+     * @throws CannotAddInteractionException This exception is thrown, if you exceed limit of interactions per message (Reaction - 20, Button/Select Option - 25). Or if you are trying to add Button to Select Menu message and vice-versa.
+     * @deprecated Please, use {@link #addInteraction(Interaction, Consumer)}. Will be removed in future version.
+     */
+    @Deprecated
+    public InteractiveMessage addInteraction(Interaction interaction, Runnable onInteracted) throws CannotAddInteractionException {
+        Map<Interaction, Consumer<User>> interactionsButtons = getInteractions(InteractionType.BUTTON);
+        Map<Interaction, Consumer<User>> interactionsSelectOptions = getInteractions(InteractionType.SELECTION_MENU);
+
+        if (interactionsButtons.size() != 0 && interaction.getInteractionType() == InteractionType.SELECTION_MENU) {
+            throw new CannotAddInteractionException("Cannot add Select Option interaction! Message can only have Buttons or Select Menu.", interaction);
+        }
+
+        if (interactionsSelectOptions.size() != 0 && interaction.getInteractionType() == InteractionType.BUTTON) {
+            throw new CannotAddInteractionException("Cannot add Button interaction! Message can only have Buttons or Select Menu.", interaction);
+        }
+
+        if (interactionsButtons.size() == 25) {
+            throw new CannotAddInteractionException("Cannot add Button interaction! Maximum number of buttons for message is 25.", interaction);
+        }
+
+        if (interactionsSelectOptions.size() == 25) {
+            throw new CannotAddInteractionException("Cannot add Select Option interaction! Maximum number of select options for message is 25.", interaction);
+        }
+
+        if (getInteractions(InteractionType.REACTION).size() == 20) {
+            throw new CannotAddInteractionException("Cannot add Reaction interaction! Maximum number of reactions for message is 20.", interaction);
+        }
+
+        interactions.put(interaction, user -> onInteracted.run());
         return this;
     }
 
@@ -152,7 +193,7 @@ public class InteractiveMessage {
         List<Button> buttons = new ArrayList<>();
         List<SelectOption> selectOptions = new ArrayList<>();
 
-        for (Map.Entry<Interaction, Runnable> entry : interactions.entrySet()) {
+        for (Map.Entry<Interaction, Consumer<User>> entry : interactions.entrySet()) {
             Interaction interaction = entry.getKey();
 
             if (interaction.isEmoji() || interaction.isEmote()) {
@@ -270,10 +311,10 @@ public class InteractiveMessage {
 
     // -- Utils -- //
 
-    public Map<Interaction, Runnable> getInteractions(InteractionType interactionType) {
-        Map<Interaction, Runnable> interactions = new HashMap<>();
+    public Map<Interaction, Consumer<User>> getInteractions(InteractionType interactionType) {
+        Map<Interaction, Consumer<User>> interactions = new HashMap<>();
 
-        for (Map.Entry<Interaction, Runnable> entry : this.interactions.entrySet()) {
+        for (Map.Entry<Interaction, Consumer<User>> entry : this.interactions.entrySet()) {
             if (entry.getKey().getInteractionType() == interactionType) {
                 interactions.put(entry.getKey(), entry.getValue());
             }
@@ -365,14 +406,15 @@ public class InteractiveMessage {
             return false;
         }
 
+        User eventUser = interactionEvent.getUser();
+
+        if (eventUser == null) {
+            return false;
+        }
+
         if (whitelistUsers) {
-            User eventUser = interactionEvent.getUser();
-
-            if (eventUser == null) {
-                return false;
-            }
-
             boolean allow = false;
+
             for (User whitelistUser : whitelistedUsers) {
                 if (whitelistUser.getIdLong() == eventUser.getIdLong()) {
                     allow = true;
@@ -384,12 +426,12 @@ public class InteractiveMessage {
             }
         }
 
-        for (Map.Entry<Interaction, Runnable> entry : interactions.entrySet()) {
+        for (Map.Entry<Interaction, Consumer<User>> entry : interactions.entrySet()) {
             Interaction interaction = entry.getKey();
 
             if (interactionEvent.getInteractionType() == interaction.getInteractionType()) {
                 if (isApplicable(interaction, interactionEvent)) {
-                    entry.getValue().run();
+                    entry.getValue().accept(eventUser);
                     return true;
                 }
             }
@@ -397,5 +439,4 @@ public class InteractiveMessage {
 
         return false;
     }
-
 }

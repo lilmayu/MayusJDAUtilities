@@ -301,19 +301,24 @@ public class MessageInfo {
             }
         }
 
-        public Message send(MessageChannel messageChannel) {
+        public Message sendMessage(MessageChannel messageChannel) {
             prepareMessage();
-            return interactiveMessage.send(messageChannel);
+            return interactiveMessage.sendMessage(messageChannel);
         }
 
-        public Message edit(Message message) {
+        public Message editMessage(Message message) {
             prepareMessage();
-            return interactiveMessage.edit(message);
+            return interactiveMessage.editMessage(message);
         }
 
-        public Message send(InteractionHook interactionHook) {
+        public Message sendMessage(InteractionHook interactionHook) {
             prepareMessage();
-            return interactiveMessage.send(interactionHook);
+            return interactiveMessage.sendMessage(interactionHook);
+        }
+
+        public Message editOriginal(InteractionHook interactionHook) {
+            prepareMessage();
+            return interactiveMessage.editOriginal(interactionHook);
         }
     }
 

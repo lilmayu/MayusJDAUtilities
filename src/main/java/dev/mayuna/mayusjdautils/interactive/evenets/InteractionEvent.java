@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.ButtonClickEvent;
 import net.dv8tion.jda.api.events.interaction.SelectionMenuEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
+import net.dv8tion.jda.api.interactions.InteractionHook;
 
 public class InteractionEvent {
 
@@ -42,6 +43,21 @@ public class InteractionEvent {
             return InteractionType.SELECTION_MENU;
 
         return null;
+    }
+
+    /**
+     * Gets {@link InteractionHook} from {@link ButtonClickEvent} or {@link SelectionMenuEvent} (depends on which of these are not null)
+     * @return Nullable {@link InteractionHook} (null if {@link InteractionEvent} is of type {@link InteractionType#REACTION}
+     */
+    public InteractionHook getInteractionHook() {
+        switch (getInteractionType()) {
+            case BUTTON:
+                return buttonClickEvent.getHook();
+            case SELECTION_MENU:
+                return selectionMenuEvent.getHook();
+            default:
+                return null;
+        }
     }
 
     public boolean isReactionInteraction() {

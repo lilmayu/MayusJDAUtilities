@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.interactions.components.Button;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import net.dv8tion.jda.api.interactions.components.selections.SelectionMenu;
 import net.dv8tion.jda.api.requests.restaction.MessageAction;
+import net.dv8tion.jda.api.requests.restaction.WebhookMessageAction;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageUpdateAction;
 
 import java.util.*;
@@ -163,32 +164,54 @@ public class InteractiveMessage {
     }
 
     /**
-     * Sends message to specified {@link MessageChannel}. This method can throw standard JDA's exceptions while sending / adding reactions / etc.
+     * Sends message to specified {@link MessageChannel}. This method can throw standard JDA's exceptions while sending / adding reactions / etc.<br>
+     * Performs {@link MessageChannel#sendMessage(Message)}
      *
      * @param messageChannel Message channel to send message into
      *
      * @return Sent message
      */
-    public Message send(@NonNull MessageChannel messageChannel) {
-        return sendEx(messageChannel, null, null);
+    public Message sendMessage(@NonNull MessageChannel messageChannel) {
+        return sendEx(messageChannel, null, false, null);
     }
 
     /**
-     * Edits original message in supplied {@link InteractionHook} object. Reactions are not added since Ephemeral messages do not support them.
+     * Edits supplied message with current {@link InteractionHook} object. Reactions might be little glitched.<br>
+     * Performs {@link Message#editMessage(Message)}
+     *
+     * @param message Non-null Message object
+     *
+     * @return Sent message (should be same as supplied Message)
+     */
+    public Message editMessage(@NonNull Message message) {
+        return sendEx(null, null, false, message);
+    }
+
+    /**
+     * Edits original message supplied in {@link InteractionHook} object. Reactions are not added since Ephemeral messages do not support them.<br>
+     * Performs {@link InteractionHook#editOriginal(Message)}
      *
      * @param interactionHook Non-null InteractionHook object
      *
      * @return Sent ephemeral message
      */
-    public Message send(@NonNull InteractionHook interactionHook) {
-        return sendEx(null, interactionHook, null);
+    public Message editOriginal(@NonNull InteractionHook interactionHook) {
+        return sendEx(null, interactionHook, true, null);
     }
 
-    public Message edit(@NonNull Message message) {
-        return sendEx(null, null, message);
+    /**
+     * Sends message supplied to {@link InteractionHook} object. Reactions are not added since Ephemeral messages do not support them.<br>
+     * Performs {@link InteractionHook#sendMessage(Message)}
+     *
+     * @param interactionHook Non-null InteractionHook object
+     *
+     * @return Sent ephemeral message
+     */
+    public Message sendMessage(@NonNull InteractionHook interactionHook) {
+        return sendEx(null, interactionHook, false, null);
     }
 
-    private Message sendEx(MessageChannel messageChannel, InteractionHook interactionHook, Message editMessage) {
+    private Message sendEx(MessageChannel messageChannel, InteractionHook interactionHook, boolean editOriginalInteractionHook, Message editMessage) {
         List<Interaction> reactions = new ArrayList<>();
         List<Button> buttons = new ArrayList<>();
         List<SelectOption> selectOptions = new ArrayList<>();
@@ -206,12 +229,17 @@ public class InteractiveMessage {
         }
 
         MessageAction normalMessageAction = null;
-        WebhookMessageUpdateAction<Message> hookMessageAction = null;
+        WebhookMessageAction<Message> hookMessageAction = null;
+        WebhookMessageUpdateAction<Message> hookMessageUpdateAction = null;
 
         if (messageChannel != null) {
             normalMessageAction = messageChannel.sendMessage(messageBuilder.build());
         } else if (interactionHook != null) {
-            hookMessageAction = interactionHook.editOriginal(messageBuilder.build());
+            if (editOriginalInteractionHook) {
+                hookMessageUpdateAction = interactionHook.editOriginal(messageBuilder.build());
+            } else {
+                hookMessageAction = interactionHook.sendMessage(messageBuilder.build());
+            }
         } else if (editMessage != null) {
             normalMessageAction = editMessage.editMessage(messageBuilder.build());
         }
@@ -263,8 +291,15 @@ public class InteractiveMessage {
                 });
             }
         } else if (interactionHook != null) {
-            hookMessageAction = hookMessageAction.setActionRows(actionRows);
-            message = hookMessageAction.complete();
+            if (hookMessageUpdateAction != null) {
+                hookMessageUpdateAction = hookMessageUpdateAction.setActionRows(actionRows);
+                message = hookMessageUpdateAction.complete();
+            }
+
+            if (hookMessageAction != null) {
+                hookMessageAction = hookMessageAction.addActionRows(actionRows);
+                message = hookMessageAction.complete();
+            }
         }
 
         this.message = message;

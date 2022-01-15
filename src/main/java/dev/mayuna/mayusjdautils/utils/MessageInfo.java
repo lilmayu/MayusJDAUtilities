@@ -105,7 +105,7 @@ public class MessageInfo {
     public static void sendExceptionMessage(MessageChannel messageChannel, Throwable throwable) {
         MessageBuilder messageBuilder = new MessageBuilder();
 
-        messageBuilder.setEmbed(errorEmbed(LanguageSettings.Messages.getExceptionOccurredMessage()).addField(LanguageSettings.Other.getInformation(),
+        messageBuilder.setEmbeds(errorEmbed(LanguageSettings.Messages.getExceptionOccurredMessage()).addField(LanguageSettings.Other.getInformation(),
                 formatExceptionInformationField(throwable),
                 false).build());
 

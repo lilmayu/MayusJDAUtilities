@@ -64,7 +64,7 @@ public class MayuHelpCommand extends MayuCommand {
         if (canSend) {
             event.getHook().editOriginalEmbeds(embedBuilder.build()).queue();
         } else {
-            event.getChannel().sendMessage(MessageInfo.UnknownCommand.asEmbedBuilder().build()).complete();
+            event.getChannel().sendMessageEmbeds(MessageInfo.UnknownCommand.asEmbedBuilder().build()).complete();
         }
     }
 

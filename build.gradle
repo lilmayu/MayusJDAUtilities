@@ -12,16 +12,12 @@ version '2.2'
 
 repositories {
     mavenCentral()
-    maven {
-        name 'm2-dv8tion'
-        url 'https://m2.dv8tion.net/releases'
-    }
     maven { url "https://m2.chew.pro/releases" }
 }
 
 dependencies {
     // JDA
-    compileOnly "net.dv8tion:JDA:4.3.0_339"
+    compileOnly group: 'net.dv8tion', name: 'JDA', version: '5.0.0-alpha.4'
 
     // JDA Chewtils
     compileOnly 'pw.chew:jda-chewtils:1.22.0'
@@ -33,7 +29,7 @@ dependencies {
     implementation 'dev.mayuna:mayus-library:1.0.2'
 
     // Mayu's Json Utilities
-    implementation 'dev.mayuna:mayus-json-utilities:1.3'
+    implementation 'dev.mayuna:mayus-json-utilities:1.3.1'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.22'

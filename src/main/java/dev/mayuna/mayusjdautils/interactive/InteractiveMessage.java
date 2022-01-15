@@ -200,7 +200,7 @@ public class InteractiveMessage {
     }
 
     /**
-     * Sends message supplied to {@link InteractionHook} object. Reactions are not added since Ephemeral messages do not support them.<br>
+     * Sends message supplied to {@link InteractionHook} object. Reactions will be not added since Ephemeral messages do not support them.<br>
      * Performs {@link InteractionHook#sendMessage(Message)}
      *
      * @param interactionHook Non-null InteractionHook object
@@ -209,6 +209,19 @@ public class InteractiveMessage {
      */
     public Message sendMessage(@NonNull InteractionHook interactionHook) {
         return sendEx(null, interactionHook, false, null);
+    }
+
+    /**
+     * Sends message supplied to {@link InteractionHook} object. Reactions will be not added since Ephemeral messages do not support them.<br>
+     * Performs {@link InteractionHook#sendMessage(Message)}
+     *
+     * @param interactionHook Non-null InteractionHook object
+     * @param ephemeral Decides if sent interactive message should be ephemeral or not
+     *
+     * @return Sent ephemeral message
+     */
+    public Message sendMessage(@NonNull InteractionHook interactionHook, boolean ephemeral) {
+        return sendEx(null, interactionHook.setEphemeral(ephemeral), false, null);
     }
 
     private Message sendEx(MessageChannel messageChannel, InteractionHook interactionHook, boolean editOriginalInteractionHook, Message editMessage) {

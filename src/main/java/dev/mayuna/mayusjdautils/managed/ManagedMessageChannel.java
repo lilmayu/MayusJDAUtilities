@@ -159,7 +159,7 @@ public class ManagedMessageChannel implements Savable {
             guildValid = true;
             messageChannel = guild.getTextChannelById(messageChannelID);
             if (messageChannel == null) {
-                throw new FailedToGetTextChannelGuildException(guild, messageChannelID);
+                throw new InvalidTextChannelIDException(guild, messageChannelID);
             }
         }
         messageChannelValid = true;

@@ -8,7 +8,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
 group 'dev.mayuna'
-version '2.2.1'
+version '2.3'
 
 repositories {
     mavenCentral()
@@ -20,10 +20,10 @@ dependencies {
     compileOnly group: 'net.dv8tion', name: 'JDA', version: '5.0.0-alpha.4'
 
     // JDA Chewtils
-    compileOnly 'pw.chew:jda-chewtils:1.22.0'
+    compileOnly 'pw.chew:jda-chewtils:1.24.1'
 
     // GSon
-    compileOnly 'com.google.code.gson:gson:2.8.9'
+    compileOnly 'com.google.code.gson:gson:2.9.0'
 
     // Mayu's Library
     implementation 'dev.mayuna:mayus-library:1.0.2'
@@ -43,25 +43,6 @@ task compileLibrary(type: Jar) {
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
-}
-
-publishing {
-    repositories {
-        maven {
-            name = "mayus-jda-utilities"
-            url = uri("https://maven.pkg.github.com/lilmayu/MayusJDAUtilities")
-            credentials {
-                username = GPR_USER_PERSONAL
-                password = GPR_TOKEN_PERSONAL
-            }
-        }
-    }
-
-    publications {
-        gpr(MavenPublication) {
-            from(components.java)
-        }
-    }
 }
 
 uploadArchives {
@@ -131,3 +112,6 @@ artifacts {
 signing {
     sign configurations.archives
 }
+
+compileLibrary.dependsOn javadocJar
+compileLibrary.dependsOn sourcesJar

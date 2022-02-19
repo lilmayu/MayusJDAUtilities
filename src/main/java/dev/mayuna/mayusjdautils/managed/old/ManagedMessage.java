@@ -1,8 +1,8 @@
-package dev.mayuna.mayusjdautils.managed;
+package dev.mayuna.mayusjdautils.managed.old;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import dev.mayuna.mayusjdautils.exceptions.FailedToGetTextChannelGuildException;
+import dev.mayuna.mayusjdautils.exceptions.InvalidTextChannelIDException;
 import dev.mayuna.mayusjdautils.exceptions.InvalidGuildIDException;
 import dev.mayuna.mayusjdautils.exceptions.InvalidJsonException;
 import dev.mayuna.mayusjdautils.exceptions.InvalidMessageIDException;
@@ -127,7 +127,7 @@ public class ManagedMessage implements Savable {
 
         messageChannel = guild.getTextChannelById(messageChannelID);
         if (messageChannel == null) {
-            throw new FailedToGetTextChannelGuildException(guild, messageChannelID);
+            throw new InvalidTextChannelIDException(guild, messageChannelID);
         }
         messageChannelValid = true;
 

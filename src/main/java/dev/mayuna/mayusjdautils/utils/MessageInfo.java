@@ -47,20 +47,52 @@ public class MessageInfo {
         return useSystemEmotes ? SystemEmotes.SUCCESS + " | " + content : "✅ | " + content;
     }
 
-    public static EmbedBuilder errorEmbed(String content) {
-        return quickEmbed(ColorUtils.getError(), useSystemEmotes ? SystemEmotes.ERROR + " Error" : "❌ Error", content);
+    public static EmbedBuilder errorEmbed(String content, MessageEmbed.Field... fields) {
+        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getError(), useSystemEmotes ? SystemEmotes.ERROR + " Error" : "❌ Error", content);
+
+        if (fields != null) {
+            for (MessageEmbed.Field field : fields) {
+                embedBuilder.addField(field);
+            }
+        }
+
+        return embedBuilder;
     }
 
-    public static EmbedBuilder warningEmbed(String content) {
-        return quickEmbed(ColorUtils.getWarning(), useSystemEmotes ? SystemEmotes.WARNING + " Warning" : "❗ Warning", content);
+    public static EmbedBuilder warningEmbed(String content, MessageEmbed.Field... fields) {
+        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getWarning(), useSystemEmotes ? SystemEmotes.WARNING + " Warning" : "❗ Warning", content);
+
+        if (fields != null) {
+            for (MessageEmbed.Field field : fields) {
+                embedBuilder.addField(field);
+            }
+        }
+
+        return embedBuilder;
     }
 
-    public static EmbedBuilder informationEmbed(String content) {
-        return quickEmbed(ColorUtils.getInformation(), useSystemEmotes ? SystemEmotes.INFORMATION + " Information" : "❔ Information", content);
+    public static EmbedBuilder informationEmbed(String content, MessageEmbed.Field... fields) {
+        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getInformation(), useSystemEmotes ? SystemEmotes.INFORMATION + " Information" : "❔ Information", content);
+
+        if (fields != null) {
+            for (MessageEmbed.Field field : fields) {
+                embedBuilder.addField(field);
+            }
+        }
+
+        return embedBuilder;
     }
 
-    public static EmbedBuilder successEmbed(String content) {
-        return quickEmbed(ColorUtils.getSuccess(), useSystemEmotes ? SystemEmotes.SUCCESS + " Success" : "✅ Success", content);
+    public static EmbedBuilder successEmbed(String content, MessageEmbed.Field... fields) {
+        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getSuccess(), useSystemEmotes ? SystemEmotes.SUCCESS + " Success" : "✅ Success", content);
+
+        if (fields != null) {
+            for (MessageEmbed.Field field : fields) {
+                embedBuilder.addField(field);
+            }
+        }
+
+        return embedBuilder;
     }
 
     public static Builder closable(Type type, String content, int closeAfterSeconds) {

@@ -18,7 +18,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
 
 /**
- * Managed guild message - Useful while working with messages in guilds which can be saved into JSON<br>
+ * Managed guild message - Useful when working with messages in guilds which can be saved into JSON<br>
  * Safe to use with {@link com.google.gson.Gson#toJson(Object)} if you use {@link com.google.gson.GsonBuilder} and {@link GsonBuilder#excludeFieldsWithoutExposeAnnotation()}
  */
 public class ManagedGuildMessage {
@@ -106,7 +106,7 @@ public class ManagedGuildMessage {
      *
      * @param jda                      Non-null {@link JDA}
      * @param force                    Determines if this method should update entries even if all entries are valid
-     * @param useExtraChecks           Determines if this method should call more expensive and more thorough methods ({@link #isGuildValid(JDA)}, {@link #isMessageValid(JDA)}, {@link #isMessageValid(JDA)})
+     * @param useExtraChecks           Determines if this method should call more expensive and more thorough methods ({@link #isGuildValid(JDA)}, {@link #isTextChannelValid(JDA)}, {@link #isMessageValid(JDA)})
      * @param sendNewMessageIfNotFound Determines if new message will be sent if current message cannot be found
      *
      * @return True if entries are valid or if all entries were successfully updated
@@ -114,9 +114,9 @@ public class ManagedGuildMessage {
     public boolean updateEntries(@NonNull JDA jda, boolean force, boolean useExtraChecks, boolean sendNewMessageIfNotFound) {
         boolean valid;
         if (useExtraChecks) {
-            valid = isGuildValid(jda) && isMessageValid(jda) && isMessageValid(jda);
+            valid = isGuildValid(jda) && isTextChannelValid(jda) && isMessageValid(jda);
         } else {
-            valid = isGuildValid() && isMessageValid() && isMessageValid();
+            valid = isGuildValid() && isTextChannelValid() && isMessageValid();
         }
         if (valid) {
             if (!force) {

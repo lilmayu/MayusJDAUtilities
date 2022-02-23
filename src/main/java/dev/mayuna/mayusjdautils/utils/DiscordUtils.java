@@ -8,6 +8,7 @@ import lombok.Setter;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.exceptions.*;
 import net.dv8tion.jda.api.interactions.components.Button;
 import net.dv8tion.jda.api.interactions.components.ButtonStyle;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
@@ -152,5 +153,34 @@ public class DiscordUtils {
      */
     public static SelectOption generateCloseSelectOption() {
         return SelectOption.of(LanguageSettings.Other.getClose(), MayuCoreListener.GENERIC_BUTTON_CLOSE_ID);
+    }
+
+    public static boolean isDiscordException(Throwable throwable) {
+        if (throwable instanceof MissingAccessException) {
+            return true;
+        }
+
+        if (throwable instanceof InsufficientPermissionException) {
+            return true;
+        }
+
+        if (throwable instanceof InteractionFailureException) {
+            return true;
+        }
+
+        if (throwable instanceof PermissionException) {
+            return true;
+        }
+
+        if (throwable instanceof RateLimitedException) {
+            return true;
+        }
+
+        if (throwable instanceof ErrorResponseException) {
+            ErrorResponseException responseException = (ErrorResponseException) throwable;
+            return responseException.getErrorCode() > 10000;
+        }
+
+        return false;
     }
 }

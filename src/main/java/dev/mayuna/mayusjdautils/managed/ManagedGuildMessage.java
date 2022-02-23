@@ -3,10 +3,7 @@ package dev.mayuna.mayusjdautils.managed;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import dev.mayuna.mayusjdautils.exceptions.CannotSendNewMessageException;
-import dev.mayuna.mayusjdautils.exceptions.InvalidGuildIDException;
-import dev.mayuna.mayusjdautils.exceptions.InvalidMessageIDException;
-import dev.mayuna.mayusjdautils.exceptions.InvalidTextChannelIDException;
+import dev.mayuna.mayusjdautils.exceptions.*;
 import dev.mayuna.mayusjdautils.utils.CallbackResult;
 import dev.mayuna.mayusjdautils.utils.DiscordUtils;
 import dev.mayuna.mayusjdautils.utils.RestActionMethod;
@@ -18,6 +15,7 @@ import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.requests.RestAction;
 
 import java.util.function.Consumer;
@@ -96,14 +94,28 @@ public class ManagedGuildMessage {
     // Others
 
     /**
-     * Calls {@link #updateEntries(JDA, boolean, boolean, boolean)} with false, false, true values
+     * Calls {@link #updateEntries(JDA, boolean, boolean, boolean, RestActionMethod, Consumer, Consumer)} with supplied {@link JDA}, false, false, true, restActionMethod.COMPLETE,
+     * empty success lambda, empty failure lambda
      *
      * @param jda Non-null {@link JDA}
-     *
-     * @return True if entries are valid or if all entries were successfully updated
      */
-    public boolean updateEntries(@NonNull JDA jda) {
-        return updateEntries(jda, false, false, true);
+    public void updateEntries(@NonNull JDA jda) {
+        updateEntries(jda, false, false, true, RestActionMethod.COMPLETE, success -> {}, failure -> {});
+    }
+
+    /**
+     * Calls {@link #updateEntries(JDA, boolean, boolean, boolean, RestActionMethod, Consumer, Consumer)} with supplied {@link JDA}, false, false, supplied {@link RestActionMethod},
+     * supplied success lambda, supplied failure lambda
+     *
+     * @param jda              Non-null {@link JDA}
+     * @param restActionMethod Determines which method should RestAction use (#queue() or #complete)
+     * @param success          This consumer is called with non-null {@link CallbackResult} if entries were updated successfully
+     * @param failure          This consumer is called with non-null {@link Exception} if updating entries failed. If there is Non-Discord Exception
+     *                         (e.g. HTTP 500 error, SocketTimeoutException, etc.), {@link NonDiscordException} is supplied - In this case, you should try calling this method again.
+     */
+    public void updateEntries(@NonNull JDA jda, @NonNull RestActionMethod restActionMethod, @NonNull Consumer<CallbackResult> success,
+            @NonNull Consumer<Exception> failure) {
+        updateEntries(jda, false, false, true, restActionMethod, success, failure);
     }
 
     /**
@@ -111,10 +123,13 @@ public class ManagedGuildMessage {
      *
      * @param jda                      Non-null {@link JDA}
      * @param force                    Determines if this method should update entries even if all entries are valid
-     * @param useExtraChecks           Determines if this method should call more expensive and more thorough methods ({@link #isGuildValid(JDA)}, {@link #isTextChannelValid(JDA)}, {@link #isMessageValid(JDA)})
+     * @param useExtraChecks           Determines if this method should call more expensive and more thorough methods ({@link #isGuildValid(JDA)}, {@link #isTextChannelValid(JDA)},
+     *                                 {@link #isMessageValid(JDA)})
      * @param sendNewMessageIfNotFound Determines if new message will be sent if current message cannot be found
-     *
-     * @return True if entries are valid or if all entries were successfully updated
+     * @param restActionMethod         Determines which method should RestAction use (#queue() or #complete)
+     * @param success                  This consumer is called with non-null {@link CallbackResult} if entries were updated successfully
+     * @param failure                  This consumer is called with non-null {@link Exception} if updating entries failed. If there is Non-Discord Exception
+     *                                 (e.g. HTTP 500 error, SocketTimeoutException, etc.), {@link NonDiscordException} is supplied - In this case, you should try calling this method again.
      */
     public void updateEntries(@NonNull JDA jda, boolean force, boolean useExtraChecks, boolean sendNewMessageIfNotFound, @NonNull RestActionMethod restActionMethod,
             @NonNull Consumer<CallbackResult> success, @NonNull Consumer<Exception> failure) {
@@ -126,7 +141,9 @@ public class ManagedGuildMessage {
                         setMessage(message);
                         success.accept(CallbackResult.SENT);
                     }, exception -> {
-                        failure.accept(new CannotSendNewMessageException(exception, guild, textChannel));
+                        handleException(exception, failure, () -> {
+                            failure.accept(new CannotSendNewMessageException(exception, guild, textChannel));
+                        });
                     });
                     return;
                 }
@@ -135,7 +152,9 @@ public class ManagedGuildMessage {
                         setMessage(textChannel.sendMessage(DiscordUtils.getDefaultMessageBuilder().build()).complete());
                         success.accept(CallbackResult.SENT);
                     } catch (Exception exception) {
-                        failure.accept(new CannotSendNewMessageException(exception, guild, textChannel));
+                        handleException(exception, failure, () -> {
+                            failure.accept(new CannotSendNewMessageException(exception, guild, textChannel));
+                        });
                     }
                     return;
                 }
@@ -177,11 +196,13 @@ public class ManagedGuildMessage {
                     setMessage(message);
                     success.accept(CallbackResult.RETRIEVED);
                 }, exception -> {
-                    if (sendNewMessageIfNotFound) {
-                        sendNewMessageRunnable.run();
-                    } else {
-                        failure.accept(new InvalidMessageIDException(exception, guild, textChannel, rawMessageID));
-                    }
+                    handleException(exception, failure, () -> {
+                        if (sendNewMessageIfNotFound) {
+                            sendNewMessageRunnable.run();
+                        } else {
+                            failure.accept(new InvalidMessageIDException(exception, guild, textChannel, rawMessageID));
+                        }
+                    });
                 });
                 return;
             }
@@ -190,11 +211,13 @@ public class ManagedGuildMessage {
                     setMessage(textChannel.retrieveMessageById(rawMessageID).complete());
                     success.accept(CallbackResult.RETRIEVED);
                 } catch (Exception exception) {
-                    if (sendNewMessageIfNotFound) {
-                        sendNewMessageRunnable.run();
-                    } else {
-                        failure.accept(new InvalidMessageIDException(exception, guild, textChannel, rawMessageID));
-                    }
+                    handleException(exception, failure, () -> {
+                        if (sendNewMessageIfNotFound) {
+                            sendNewMessageRunnable.run();
+                        } else {
+                            failure.accept(new InvalidMessageIDException(exception, guild, textChannel, rawMessageID));
+                        }
+                    });
                 }
                 return;
             }
@@ -216,12 +239,15 @@ public class ManagedGuildMessage {
     }
 
     /**
-     * Calls {@link #sendOrEditMessage(JDA, Message, boolean, RestActionMethod, Consumer, Consumer)} with arguments: null, provided message, false, provided restActionMethod, provided success callback, provided failure callback
+     * Calls {@link #sendOrEditMessage(JDA, Message, boolean, RestActionMethod, Consumer, Consumer)} with arguments: null, provided message, false, provided restActionMethod,
+     * provided success callback, provided failure callback
      *
      * @param message          Non-null {@link Message} (can be from {@link MessageBuilder}
      * @param restActionMethod Determines which method should RestAction use (#queue() or #complete)
      * @param success          This consumer is called with non-null {@link CallbackResult} if message was successfully edited or sent
-     * @param failure          This consumer is called with non-null {@link Exception} if editing or sending failed. These exceptions are possible: {@link CannotSendNewMessageException} and {@link InvalidMessageIDException}
+     * @param failure          This consumer is called with non-null {@link Exception} if editing or sending failed. These exceptions are possible:
+     *                         {@link CannotSendNewMessageException} and {@link InvalidMessageIDException}. If there is Non-Discord Exception
+     *                         (e.g. HTTP 500 error, SocketTimeoutException, etc.), {@link NonDiscordException} is supplied - In this case, you should try calling this method again.
      */
     public void sendOrEditMessage(@NonNull Message message, @NonNull RestActionMethod restActionMethod, @NonNull Consumer<CallbackResult> success,
             @NonNull Consumer<Exception> failure) {
@@ -236,7 +262,9 @@ public class ManagedGuildMessage {
      * @param useExtraChecks   Determines if this method should call more expensive and more thorough methods ({@link #isGuildValid(JDA)}, {@link #isMessageValid(JDA)})
      * @param restActionMethod Determines which method should RestAction use (#queue() or #complete)
      * @param success          This consumer is called with non-null {@link CallbackResult} if message was successfully edited or sent
-     * @param failure          This consumer is called with non-null {@link Exception} if editing or sending failed. These exceptions are possible: {@link CannotSendNewMessageException} and {@link InvalidMessageIDException}
+     * @param failure          This consumer is called with non-null {@link Exception} if editing or sending failed. These exceptions are possible:
+     *                         {@link CannotSendNewMessageException} and {@link InvalidMessageIDException}. If there is Non-Discord Exception
+     *                         (e.g. HTTP 500 error, SocketTimeoutException, etc.), {@link NonDiscordException} is supplied - In this case, you should try calling this method again.
      */
     public void sendOrEditMessage(JDA jda, @NonNull Message message, boolean useExtraChecks, @NonNull RestActionMethod restActionMethod, @NonNull Consumer<CallbackResult> success,
             @NonNull Consumer<Exception> failure) {
@@ -258,7 +286,9 @@ public class ManagedGuildMessage {
                                 setMessage(sentMessage);
                                 success.accept(CallbackResult.SENT);
                             }, exception -> {
-                                failure.accept(new CannotSendNewMessageException(exception, guild, textChannel));
+                                handleException(exception, failure, () -> {
+                                    failure.accept(new CannotSendNewMessageException(exception, guild, textChannel));
+                                });
                             });
                             return;
                         }
@@ -267,7 +297,9 @@ public class ManagedGuildMessage {
                                 setMessage(messageRestAction.complete());
                                 success.accept(CallbackResult.SENT);
                             } catch (Exception exception) {
-                                failure.accept(new CannotSendNewMessageException(exception, guild, textChannel));
+                                handleException(exception, failure, () -> {
+                                    failure.accept(new CannotSendNewMessageException(exception, guild, textChannel));
+                                });
                             }
                             return;
                         }
@@ -277,11 +309,13 @@ public class ManagedGuildMessage {
                         }
                     }
                 } catch (Exception exception) {
-                    failure.accept(new CannotSendNewMessageException(exception, guild, textChannel));
+                    handleException(exception, failure, () -> {
+                        failure.accept(new CannotSendNewMessageException(exception, guild, textChannel));
+                    });
                 }
+            } else {
+                failure.accept(new InvalidTextChannelIDException(guild, rawTextChannelID));
             }
-
-            failure.accept(new InvalidTextChannelIDException(guild, rawTextChannelID));
         };
 
         boolean messageValid;
@@ -299,7 +333,9 @@ public class ManagedGuildMessage {
                     messageRestAction.queue(editedMessage -> {
                         success.accept(CallbackResult.EDITED);
                     }, exception -> {
-                        sendNewMessageConsumer.accept(message);
+                        handleException(exception, failure, () -> {
+                            sendNewMessageConsumer.accept(message);
+                        });
                     });
                     return;
                 }
@@ -307,8 +343,10 @@ public class ManagedGuildMessage {
                     try {
                         messageRestAction.complete();
                         success.accept(CallbackResult.EDITED);
-                    } catch (Exception ignored) {
-                        sendNewMessageConsumer.accept(message);
+                    } catch (Exception exception) {
+                        handleException(exception, failure, () -> {
+                            sendNewMessageConsumer.accept(message);
+                        });
                     }
                     return;
                 }
@@ -317,6 +355,8 @@ public class ManagedGuildMessage {
                     return;
                 }
             }
+        } else {
+            sendNewMessageConsumer.accept(message);
         }
     }
 
@@ -384,7 +424,9 @@ public class ManagedGuildMessage {
     }
 
     /**
-     * Calls {@link #isMessageValid()} and {@link #isTextChannelValid()} and checks if JDA can retrieve message in {@link ManagedGuildMessage#textChannel} with {@link ManagedGuildMessage#message}'s ID<br>
+     * Calls {@link #isMessageValid()} and {@link #isTextChannelValid()} and checks if JDA can retrieve message in {@link ManagedGuildMessage#textChannel} with
+     * {@link ManagedGuildMessage#message}'s ID<br>
+     * Warning! If there will be non-discord exception, this method will still report false.
      *
      * @param jda Non-null {@link JDA} object
      *
@@ -488,5 +530,13 @@ public class ManagedGuildMessage {
         }
 
         return this;
+    }
+
+    private void handleException(Throwable throwable, Consumer<Exception> failure, Runnable onDiscordException) {
+        if (DiscordUtils.isDiscordException(throwable)) {
+            onDiscordException.run();
+        } else {
+            failure.accept(new NonDiscordException(throwable));
+        }
     }
 }

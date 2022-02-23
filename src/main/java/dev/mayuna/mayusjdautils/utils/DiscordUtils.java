@@ -2,9 +2,11 @@ package dev.mayuna.mayusjdautils.utils;
 
 import dev.mayuna.mayusjdautils.data.MayuCoreListener;
 import dev.mayuna.mayusjdautils.lang.LanguageSettings;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.components.Button;
 import net.dv8tion.jda.api.interactions.components.ButtonStyle;
@@ -19,6 +21,8 @@ public class DiscordUtils {
             .setTimestamp(Instant.now())
             .setTitle("Loading...")
             .setDescription("Please wait.");
+
+    private static @Getter @Setter MessageBuilder defaultMessageBuilder = new MessageBuilder().setEmbeds(getDefaultEmbed().build());
 
     /**
      * Checks if specified string is qualified as User mention

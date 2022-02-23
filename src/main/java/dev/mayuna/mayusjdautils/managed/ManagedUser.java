@@ -24,7 +24,7 @@ public class ManagedUser {
 
     protected ManagedUser(String name, User user) {
         this.name = name;
-        setUser(user); // note: možná ditchnout #create() metody a prostě používat constructory?
+        //setUser(user); // note: možná ditchnout #create() metody a prostě používat constructory?
     }
 
     protected ManagedUser(String name, long rawUserID) {

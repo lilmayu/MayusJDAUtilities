@@ -7,7 +7,9 @@ import dev.mayuna.mayusjdautils.exceptions.CannotSendNewMessageException;
 import dev.mayuna.mayusjdautils.exceptions.InvalidGuildIDException;
 import dev.mayuna.mayusjdautils.exceptions.InvalidMessageIDException;
 import dev.mayuna.mayusjdautils.exceptions.InvalidTextChannelIDException;
+import dev.mayuna.mayusjdautils.utils.CallbackResult;
 import dev.mayuna.mayusjdautils.utils.DiscordUtils;
+import dev.mayuna.mayusjdautils.utils.RestActionMethod;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -16,6 +18,10 @@ import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.requests.RestAction;
+
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * Managed guild message - Useful when working with messages in guilds which can be saved into JSON<br>
@@ -152,28 +158,80 @@ public class ManagedGuildMessage {
     }
 
     /**
-     * Calls {@link #sendOrEditMessage(JDA, Message, boolean)} with null, false value
+     * Calls {@link #sendOrEditMessage(JDA, Message, boolean, RestActionMethod, BiConsumer)} with arguments: null, provided message, false, RestActionMethod.COMPLETE, empty callback<br>
+     * Ignores if message was not successfully sent, if not found.
      *
      * @param message Non-null {@link Message} (can be from {@link MessageBuilder}
-     *
-     * @return True if message was sent or edited successfully
      */
-    public boolean sendOrEditMessage(Message message) {
-        return sendOrEditMessage(null, message, false);
+    public void sendOrEditMessage(@NonNull Message message) {
+        sendOrEditMessage(null, message, false, RestActionMethod.COMPLETE, (callbackResult, throwable) -> {});
+    }
+
+    /**
+     * Calls {@link #sendOrEditMessage(JDA, Message, boolean, RestActionMethod, BiConsumer)} with arguments: null, provided message, false, provided restActionMethod, provided callback
+     *
+     * @param message          Non-null {@link Message} (can be from {@link MessageBuilder}
+     * @param restActionMethod Determines which method should RestAction use (#queue() or #complete)
+     * @param callback         Callback with answer in boolean. If successful, answer will be true and exception will be null, otherwise false and exception will be non-null.
+     */
+    public void sendOrEditMessage(@NonNull Message message, RestActionMethod restActionMethod, BiConsumer<CallbackResult, Exception> callback) {
+        sendOrEditMessage(null, message, false, restActionMethod, callback);
     }
 
     /**
      * Edits current message in {@link ManagedGuildMessage}, if failed, tries to send new message into current {@link ManagedGuildMessage#textChannel}
      *
-     * @param jda            Nullable {@link JDA} if useExtraChecks argument is set false, otherwise must be non-null
-     * @param message        Non-null {@link Message} (can be from {@link MessageBuilder}
-     * @param useExtraChecks Determines if this method should call more expensive and more thorough methods ({@link #isGuildValid(JDA)}, {@link #isMessageValid(JDA)})
-     *
-     * @return True if message was sent or edited successfully
-     *
-     * @throws CannotSendNewMessageException if editing message resulted in exception and sending a new message as well
+     * @param jda              Nullable {@link JDA} if useExtraChecks argument is set false, otherwise must be non-null
+     * @param message          Non-null {@link Message} (can be from {@link MessageBuilder}
+     * @param useExtraChecks   Determines if this method should call more expensive and more thorough methods ({@link #isGuildValid(JDA)}, {@link #isMessageValid(JDA)})
+     * @param restActionMethod Determines which method should RestAction use (#queue() or #complete)
+     * @param callback         Callback with answer in {@link CallbackResult}. If successful, result will be non-null and exception will be null, otherwise result will be null and exception will be non-null.
      */
-    public boolean sendOrEditMessage(JDA jda, Message message, boolean useExtraChecks) {
+    public void sendOrEditMessage(JDA jda, Message message, boolean useExtraChecks, RestActionMethod restActionMethod, BiConsumer<CallbackResult, Exception> callback) {
+        Consumer<Message> sendNewMessageConsumer = (messageToSend) -> {
+            boolean textChannelValid;
+            if (useExtraChecks) {
+                textChannelValid = isTextChannelValid(jda);
+            } else {
+                textChannelValid = isTextChannelValid();
+            }
+
+            if (textChannelValid) {
+                try {
+                    RestAction<Message> messageRestAction = textChannel.sendMessage(messageToSend);
+
+                    switch (restActionMethod) {
+                        case QUEUE: {
+                            messageRestAction.queue(sentMessage -> {
+                                setMessage(sentMessage);
+                                callback.accept(CallbackResult.SENT, null);
+                            }, exception -> {
+                                callback.accept(null, new CannotSendNewMessageException(exception, guild, textChannel));
+                            });
+                            return;
+                        }
+                        case COMPLETE: {
+                            try {
+                                setMessage(messageRestAction.complete());
+                                callback.accept(CallbackResult.SENT, null);
+                            } catch (Exception exception) {
+                                callback.accept(null, new CannotSendNewMessageException(exception, guild, textChannel));
+                            }
+                            return;
+                        }
+                        default: {
+                            callback.accept(null, new IllegalArgumentException("No rest action method: " + restActionMethod));
+                            return;
+                        }
+                    }
+                } catch (Exception exception) {
+                    callback.accept(null, new CannotSendNewMessageException(exception, guild, textChannel));
+                }
+            }
+
+            callback.accept(null, new InvalidTextChannelIDException(guild, rawTextChannelID));
+        };
+
         boolean messageValid;
         if (useExtraChecks) {
             messageValid = isMessageValid(jda);
@@ -182,31 +240,32 @@ public class ManagedGuildMessage {
         }
 
         if (messageValid) {
-            try {
-                this.message.editMessage(message).complete();
-                return true;
-            } catch (Exception ignored) {
-                // Ignores if message cannot be found. Tries to send a new message
+            RestAction<Message> messageRestAction = this.message.editMessage(message);
+
+            switch (restActionMethod) {
+                case QUEUE: {
+                    messageRestAction.queue(success -> {
+                        callback.accept(CallbackResult.EDITED, null);
+                    }, exception -> {
+                        sendNewMessageConsumer.accept(message);
+                    });
+                    return;
+                }
+                case COMPLETE: {
+                    try {
+                        messageRestAction.complete();
+                        callback.accept(CallbackResult.EDITED, null);
+                    } catch (Exception ignored) {
+                        sendNewMessageConsumer.accept(message);
+                    }
+                    return;
+                }
+                default: {
+                    callback.accept(null, new IllegalArgumentException("No rest action method: " + restActionMethod));
+                    return;
+                }
             }
         }
-
-        boolean textChannelValid;
-        if (useExtraChecks) {
-            textChannelValid = isTextChannelValid(jda);
-        } else {
-            textChannelValid = isTextChannelValid();
-        }
-
-        if (textChannelValid) {
-            try {
-                setMessage(textChannel.sendMessage(message).complete());
-                return true;
-            } catch (Exception exception) {
-                throw new CannotSendNewMessageException(exception, guild, textChannel);
-            }
-        }
-
-        return false;
     }
 
     /**

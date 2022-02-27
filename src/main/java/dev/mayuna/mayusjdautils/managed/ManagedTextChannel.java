@@ -27,32 +27,29 @@ public class ManagedTextChannel {
     private @Getter @Expose(serialize = false, deserialize = false) Guild guild;
     private @Getter @Expose(serialize = false, deserialize = false) TextChannel textChannel;
 
-    protected ManagedTextChannel(String name, Guild guild, TextChannel textChannel) {
+    /**
+     * Constructs {@link ManagedTextChannel} with specified objects
+     *
+     * @param name        Name of {@link ManagedTextChannel}
+     * @param guild       Non-null {@link Guild} object
+     * @param textChannel Non-null {@link TextChannel} object
+     */
+    public ManagedTextChannel(String name, @NonNull Guild guild, @NonNull TextChannel textChannel) {
         this.name = name;
         setGuild(guild);
         setTextChannel(textChannel);
     }
 
-    protected ManagedTextChannel(String name, long rawGuildID, long rawTextChannelID) {
-        this.name = name;
-        this.rawGuildID = rawGuildID;
-        this.rawTextChannelID = rawTextChannelID;
-    }
-
-    // Static creators
-
     /**
-     * Creates {@link ManagedTextChannel} with specified raw IDs
+     * Constructs {@link ManagedTextChannel} with specified raw IDs
      *
      * @param name             Name of {@link ManagedTextChannel}
      * @param rawGuildID       Raw Guild ID, must not be 0
      * @param rawTextChannelID Raw Text channel ID, must not be 0
      *
-     * @return Non-null {@link ManagedTextChannel}
-     *
      * @throws IllegalArgumentException if rawGuildID is zero or rawTextChannelID is zero
      */
-    public static ManagedTextChannel create(String name, long rawGuildID, long rawTextChannelID) {
+    public ManagedTextChannel(String name, long rawGuildID, long rawTextChannelID) {
         if (rawGuildID <= 0) {
             throw new IllegalArgumentException("rawGuildID must not be 0!");
         }
@@ -61,20 +58,9 @@ public class ManagedTextChannel {
             throw new IllegalArgumentException("rawTextChannelID must not be 0!");
         }
 
-        return new ManagedTextChannel(name, rawGuildID, rawTextChannelID);
-    }
-
-    /**
-     * Creates {@link ManagedTextChannel} with specified objects
-     *
-     * @param name        Name of {@link ManagedTextChannel}
-     * @param guild       Non-null {@link Guild} object
-     * @param textChannel Non-null {@link TextChannel} object
-     *
-     * @return Non-null {@link ManagedTextChannel}
-     */
-    public static ManagedTextChannel create(String name, @NonNull Guild guild, @NonNull TextChannel textChannel) {
-        return new ManagedTextChannel(name, guild, textChannel);
+        this.name = name;
+        this.rawGuildID = rawGuildID;
+        this.rawTextChannelID = rawTextChannelID;
     }
 
     // Others

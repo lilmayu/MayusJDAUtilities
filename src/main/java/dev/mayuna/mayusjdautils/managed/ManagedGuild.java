@@ -4,7 +4,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import dev.mayuna.mayusjdautils.exceptions.InvalidGuildIDException;
-import dev.mayuna.mayusjdautils.exceptions.InvalidTextChannelIDException;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -24,46 +23,32 @@ public class ManagedGuild {
     // Discord data
     private @Getter @Expose(serialize = false, deserialize = false) Guild guild;
 
-    protected ManagedGuild(String name, Guild guild) {
+    /**
+     * Constructs {@link ManagedGuild} with specified objects
+     *
+     * @param name  Name of {@link ManagedGuild}
+     * @param guild Non-null {@link Guild} object
+     */
+    public ManagedGuild(String name, @NonNull Guild guild) {
         this.name = name;
         setGuild(guild);
     }
 
-    protected ManagedGuild(String name, long rawGuildID) {
-        this.name = name;
-        this.rawGuildID = rawGuildID;
-    }
-
-    // Static creators
-
     /**
-     * Creates {@link ManagedGuild} with specified raw IDs
+     * Constructs {@link ManagedGuild} with specified raw IDs
      *
      * @param name       Name of {@link ManagedGuild}
      * @param rawGuildID Raw Guild ID, must not be 0
      *
-     * @return Non-null {@link ManagedGuild}
-     *
      * @throws IllegalArgumentException if rawGuildID is zero
      */
-    public static ManagedGuild create(String name, long rawGuildID) {
+    public ManagedGuild(String name, long rawGuildID) {
         if (rawGuildID <= 0) {
             throw new IllegalArgumentException("rawGuildID must not be 0!");
         }
 
-        return new ManagedGuild(name, rawGuildID);
-    }
-
-    /**
-     * Creates {@link ManagedGuild} with specified objects
-     *
-     * @param name  Name of {@link ManagedGuild}
-     * @param guild Non-null {@link Guild} object
-     *
-     * @return Non-null {@link ManagedGuild}
-     */
-    public static ManagedGuild create(String name, @NonNull Guild guild) {
-        return new ManagedGuild(name, guild);
+        this.name = name;
+        this.rawGuildID = rawGuildID;
     }
 
     // Others
@@ -134,7 +119,7 @@ public class ManagedGuild {
         return isGuildValid() && jda.getGuilds().stream().anyMatch(jdaGuild -> jdaGuild.getIdLong() == rawGuildID);
     }
 
-    // Getters / Setters
+    // Setters
 
     /**
      * Sets specified value to {@link ManagedGuild#rawGuildID}.<br>
@@ -142,11 +127,14 @@ public class ManagedGuild {
      * You will have to run {@link #updateEntries(JDA)} method to update them
      *
      * @param rawGuildID Raw Guild ID
+     *
+     * @return Non-null {@link ManagedGuild}
      */
-    public void setRawGuildID(long rawGuildID) {
+    public ManagedGuild setRawGuildID(long rawGuildID) {
         this.rawGuildID = rawGuildID;
-
         guild = null;
+
+        return this;
     }
 
     /**
@@ -160,6 +148,7 @@ public class ManagedGuild {
     public ManagedGuild setGuild(@NonNull Guild guild) {
         this.guild = guild;
         this.rawGuildID = guild.getIdLong();
+
         return this;
     }
 }

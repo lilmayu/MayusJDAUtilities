@@ -15,7 +15,6 @@ import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
-import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.requests.RestAction;
 
 import java.util.function.Consumer;
@@ -37,35 +36,32 @@ public class ManagedGuildMessage {
     private @Getter @Expose(serialize = false, deserialize = false) TextChannel textChannel;
     private @Getter @Expose(serialize = false, deserialize = false) Message message;
 
-    protected ManagedGuildMessage(String name, Guild guild, TextChannel textChannel, Message message) {
+    /**
+     * Constructs {@link ManagedGuildMessage} with specified objects
+     *
+     * @param name        Name of {@link ManagedGuildMessage}
+     * @param guild       Non-null {@link Guild} object
+     * @param textChannel Non-null {@link TextChannel} object
+     * @param message     Nullable {@link TextChannel} object
+     */
+    public ManagedGuildMessage(String name, @NonNull Guild guild, @NonNull TextChannel textChannel, Message message) {
         this.name = name;
         setGuild(guild);
         setTextChannel(textChannel);
         setMessage(message);
     }
 
-    protected ManagedGuildMessage(String name, long rawGuildID, long rawTextChannelID, long rawMessageID) {
-        this.name = name;
-        this.rawGuildID = rawGuildID;
-        this.rawTextChannelID = rawTextChannelID;
-        this.rawMessageID = rawMessageID;
-    }
-
-    // Static creators
-
     /**
-     * Creates {@link ManagedGuildMessage} with specified raw IDs
+     * Constructs {@link ManagedGuildMessage} with specified raw IDs
      *
      * @param name             Name of {@link ManagedGuildMessage}
      * @param rawGuildID       Raw Guild ID, must not be 0
      * @param rawTextChannelID Raw Text channel ID, must not be 0
      * @param rawMessageID     Raw Message ID, can be 0
      *
-     * @return Non-null {@link ManagedGuildMessage}
-     *
      * @throws IllegalArgumentException if rawGuildID is zero or rawTextChannelID is zero
      */
-    public static ManagedGuildMessage create(String name, long rawGuildID, long rawTextChannelID, long rawMessageID) {
+    public ManagedGuildMessage(String name, long rawGuildID, long rawTextChannelID, long rawMessageID) {
         if (rawGuildID <= 0) {
             throw new IllegalArgumentException("rawGuildID must not be 0!");
         }
@@ -74,21 +70,10 @@ public class ManagedGuildMessage {
             throw new IllegalArgumentException("rawTextChannelID must not be 0!");
         }
 
-        return new ManagedGuildMessage(name, rawGuildID, rawTextChannelID, rawMessageID);
-    }
-
-    /**
-     * Creates {@link ManagedGuildMessage} with specified objects
-     *
-     * @param name        Name of {@link ManagedGuildMessage}
-     * @param guild       Non-null {@link Guild} object
-     * @param textChannel Non-null {@link TextChannel} object
-     * @param message     Nullable {@link TextChannel} object
-     *
-     * @return Non-null {@link ManagedGuildMessage}
-     */
-    public static ManagedGuildMessage create(String name, @NonNull Guild guild, @NonNull TextChannel textChannel, Message message) {
-        return new ManagedGuildMessage(name, guild, textChannel, message);
+        this.name = name;
+        this.rawGuildID = rawGuildID;
+        this.rawTextChannelID = rawTextChannelID;
+        this.rawMessageID = rawMessageID;
     }
 
     // Others

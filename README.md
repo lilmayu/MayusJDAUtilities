@@ -39,6 +39,7 @@ dependencies {
 
 ## Documentation
 - [docs.mayuna.dev](https://docs.mayuna.dev/en/mayus-jda-utilities)
+- [Javadoc](https://data.mayuna.dev/javadocs/mayus-jda-utilities/)
 
 ## Examples
 ### Interactive Message

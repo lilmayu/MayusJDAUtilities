@@ -1,149 +1,154 @@
 package dev.mayuna.mayusjdautils.managed;
 
-import com.google.gson.JsonObject;
-import dev.mayuna.mayusjdautils.exceptions.InvalidJsonException;
-import dev.mayuna.mayusjsonutils.data.Savable;
-import dev.mayuna.mayusjsonutils.objects.MayuJson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
+import dev.mayuna.mayusjdautils.exceptions.InvalidGuildIDException;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 
-public abstract class ManagedGuild implements Savable {
+/**
+ * Managed guild - Useful when working with guilds which can be saved into JSON<br>
+ * Safe to use with {@link com.google.gson.Gson#toJson(Object)} if you use {@link com.google.gson.GsonBuilder} and {@link GsonBuilder#excludeFieldsWithoutExposeAnnotation()}
+ */
+public class ManagedGuild {
 
-    // Data
-    private @Getter Guild guild;
-    private @Getter long guildId;
+    // Raw data
+    private @Getter @Setter @Expose String name;
+    private @Getter @Expose @SerializedName("guildID") long rawGuildID;
 
-    /**
-     * Creates {@link ManagedGuild} from Guild ID
-     *
-     * @param guildId Valid User ID
-     */
-    public ManagedGuild(long guildId) {
-        setGuildId(guildId);
-    }
+    // Discord data
+    private @Getter @Expose(serialize = false, deserialize = false) Guild guild;
 
     /**
-     * Creates {@link ManagedGuild} from {@link Guild} object
+     * Constructs {@link ManagedGuild} with specified objects
      *
+     * @param name  Name of {@link ManagedGuild}
      * @param guild Non-null {@link Guild} object
      */
-    public ManagedGuild(@NonNull Guild guild) {
+    public ManagedGuild(String name, @NonNull Guild guild) {
+        this.name = name;
         setGuild(guild);
     }
 
     /**
-     * Creates {@link ManagedGuild} from {@link JsonObject} object <br>
-     * **Note**: You need to call {@link #fromJsonObject(JsonObject)} again after construction if you extend class with this {@link ManagedGuild} class!
+     * Constructs {@link ManagedGuild} with specified raw IDs
      *
-     * @param jsonObject Non-null {@link JsonObject} object
+     * @param name       Name of {@link ManagedGuild}
+     * @param rawGuildID Raw Guild ID, must not be 0
+     *
+     * @throws IllegalArgumentException if rawGuildID is zero
      */
-    public ManagedGuild(@NonNull JsonObject jsonObject) {
-        fromJsonObject(jsonObject);
+    public ManagedGuild(String name, long rawGuildID) {
+        if (rawGuildID <= 0) {
+            throw new IllegalArgumentException("rawGuildID must not be 0!");
+        }
+
+        this.name = name;
+        this.rawGuildID = rawGuildID;
     }
 
-    /**
-     * Sets {@link ManagedGuild}'s ManagedGuild and Guild ID to specified Guild
-     *
-     * @param guild Non-null {@link Guild} object
-     */
-    public void setGuild(@NonNull Guild guild) {
-        this.guild = guild;
-        this.guildId = guild.getIdLong();
-    }
+    // Others
 
     /**
-     * Sets {@link ManagedGuild}'s Guild ID to specified Guild ID. Sets current Guild to null - you can update it with {@link #updateEntries(JDA)}
+     * Calls {@link #updateEntries(JDA, boolean, boolean)} with false, false values
      *
-     * @param guildId Valid Guild ID
-     */
-    public void setGuildId(long guildId) {
-        this.guildId = guildId;
-        this.guild = null;
-    }
-
-    /**
-     * Checks whenever GuildID is valid and Guild is not null
+     * @param jda Non-null {@link JDA}
      *
-     * @return true if both of them are valid (non-zero and non-null)
-     */
-    public boolean isGuildValid() {
-        return guildId != 0 && guild != null;
-    }
-
-    /**
-     * Checks if guild exists. This method calls {@link #updateEntries(JDA, boolean)} with force flag set to true
-     *
-     * @param jda Non-null {@link JDA} object
-     *
-     * @return true if guild exists
-     */
-    public boolean doesGuildExist(@NonNull JDA jda) {
-        return updateEntries(jda, true);
-    }
-
-    /**
-     * Updates entries. This method calls {@link #updateEntries(JDA, boolean)} with force flag set to false
-     *
-     * @param jda Non-null {@link JDA} object
-     *
-     * @return true if Guild is valid or if JDA could get non-null Guild from Discord
+     * @return True if entries are valid or if all entries were successfully updated
      */
     public boolean updateEntries(@NonNull JDA jda) {
-        return updateEntries(jda, false);
+        return updateEntries(jda, false, false);
     }
 
     /**
-     * Updates entries
+     * Updates all entries in {@link ManagedGuild}
      *
-     * @param jda   Non-null {@link JDA} object
-     * @param force True if it should ignore return value from {@link #isGuildValid()} and update entries even if Guild is valid
+     * @param jda            Non-null {@link JDA}
+     * @param force          Determines if this method should update entries even if all entries are valid
+     * @param useExtraChecks Determines if this method should call more expensive and more thorough methods ({@link #isGuildValid(JDA)})
      *
-     * @return true if Guild is valid or if JDA could get non-null Guild from Discord
+     * @return True if entries are valid or if all entries were successfully updated
      */
-    public boolean updateEntries(@NonNull JDA jda, boolean force) {
-        if (isGuildValid()) {
+    public boolean updateEntries(@NonNull JDA jda, boolean force, boolean useExtraChecks) {
+        boolean valid;
+        if (useExtraChecks) {
+            valid = isGuildValid(jda);
+        } else {
+            valid = isGuildValid();
+        }
+        if (valid) {
             if (!force) {
                 return true;
             }
         }
 
-        if (guildId == 0) {
-            return false;
+        guild = jda.getGuildById(rawGuildID);
+        if (guild == null) {
+            throw new InvalidGuildIDException(rawGuildID);
         }
 
-        guild = jda.getGuildById(guildId);
-
-        return guild != null;
+        return true;
     }
 
     /**
-     * Parses {@link ManagedGuild} from {@link JsonObject} <br>
-     * Specified JSON must contain "guildId" element
+     * Checks if {@link ManagedGuild#guild} is not null and if {@link ManagedGuild#rawGuildID} equals to {@link ManagedGuild#guild}'s ID
      *
-     * @param jsonObject Non-null {@link JsonObject}
+     * @return True if applies, false otherwise
      */
-    public void fromJsonObjectCore(@NonNull JsonObject jsonObject) {
-        try {
-            MayuJson mayuJson = new MayuJson(jsonObject);
-
-            this.guildId = mayuJson.getJsonObject().get("guildId").getAsLong();
-        } catch (NullPointerException exception) {
-            throw new InvalidJsonException("Invalid JSON for MayuGuild with ID " + this.guildId + " (this value may be 0 -> it does not exist in JSON)", jsonObject, exception);
+    public boolean isGuildValid() {
+        if (guild != null) {
+            return rawGuildID == guild.getIdLong();
         }
+
+        return false;
     }
 
     /**
-     * Returns {@link JsonObject} with saved entries
+     * Calls {@link #isGuildValid()} and checks if JDA is connected to {@link ManagedGuild#guild}<br>
+     * This method may take longer if your bot is on more guilds
      *
-     * @return Non-null {@link JsonObject}
+     * @param jda Non-null {@link JDA} object
+     *
+     * @return True if applies, false otherwise
      */
-    public JsonObject toJsonObjectCore() {
-        JsonObject jsonObject = new JsonObject();
+    public boolean isGuildValid(@NonNull JDA jda) {
+        return isGuildValid() && jda.getGuilds().stream().anyMatch(jdaGuild -> jdaGuild.getIdLong() == rawGuildID);
+    }
 
-        jsonObject.addProperty("guildId", this.guildId);
+    // Setters
 
-        return jsonObject;
+    /**
+     * Sets specified value to {@link ManagedGuild#rawGuildID}.<br>
+     * This automatically nulls {@link ManagedGuild#guild}<br>
+     * You will have to run {@link #updateEntries(JDA)} method to update them
+     *
+     * @param rawGuildID Raw Guild ID
+     *
+     * @return Non-null {@link ManagedGuild}
+     */
+    public ManagedGuild setRawGuildID(long rawGuildID) {
+        this.rawGuildID = rawGuildID;
+        guild = null;
+
+        return this;
+    }
+
+    /**
+     * Sets {@link Guild} object<br>
+     * This automatically also sets {@link ManagedGuild#rawGuildID} to {@link Guild}'s ID
+     *
+     * @param guild Non-null {@link Guild}
+     *
+     * @return Non-null {@link ManagedGuild}
+     */
+    public ManagedGuild setGuild(@NonNull Guild guild) {
+        this.guild = guild;
+        this.rawGuildID = guild.getIdLong();
+
+        return this;
     }
 }

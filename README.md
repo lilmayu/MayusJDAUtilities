@@ -4,7 +4,6 @@
 <p align="center">
   <img src="http://ForTheBadge.com/images/badges/made-with-java.svg" alt="Made with Java">
   <br>
-  <img src="https://www.code-inspector.com/project/29506/status/svg" alt="Code Grade">
   <img src="https://img.shields.io/github/license/lilmayu/MayusJDAUtilities.svg" alt="License">
   <img src="https://img.shields.io/github/v/release/lilmayu/MayusJDAUtilities.svg" alt="Version">
 </p>
@@ -34,8 +33,9 @@ dependencies {
     implementation 'dev.mayuna:mayus-jda-utilities:VERSION'
 }
 ```
+- Replace `VERSION` with your desired version. TIP: Remove "v" before version number
 - For version number see latest [Maven Repository](https://mvnrepository.com/artifact/dev.mayuna/mayus-jda-utilities) release (should be same with Github Release though)
-- You can also use [GitHub Releases](https://github.com/lilmayu/MayusJDAUtilities/releases) or [GitHub Packages](https://github.com/lilmayu/MayusJDAUtilities/packages/)
+- You can also use [GitHub Releases](https://github.com/lilmayu/MayusJDAUtilities/releases)
 
 ## Documentation
 - NOTE: These docs are not final! There can be missing or incomplete information.

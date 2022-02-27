@@ -119,7 +119,7 @@ public class ManagedUser {
     }
 
     /**
-     * Checks if {@link ManagedUser#} is not null and if {@link ManagedUser#rawUserID} equals to {@link ManagedUser#user}'s ID
+     * Checks if {@link ManagedUser#user} is not null and if {@link ManagedUser#rawUserID} equals to {@link ManagedUser#user}'s ID
      *
      * @return True if applies, false otherwise
      */
@@ -151,6 +151,8 @@ public class ManagedUser {
      * You will have to run {@link #updateEntries(JDA)} method to update them
      *
      * @param rawUserID Raw User ID
+     *
+     * @return Non-null {@link ManagedUser}
      */
     public ManagedUser setRawUserID(long rawUserID) {
         this.rawUserID = rawUserID;

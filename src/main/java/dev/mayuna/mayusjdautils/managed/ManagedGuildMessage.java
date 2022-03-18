@@ -177,18 +177,24 @@ public class ManagedGuildMessage {
 
         switch (restActionMethod) {
             case QUEUE: {
-                textChannel.retrieveMessageById(rawMessageID).queue(message -> {
-                    setMessage(message);
-                    success.accept(CallbackResult.RETRIEVED);
-                }, exception -> {
-                    handleException(exception, failure, () -> {
-                        if (sendNewMessageIfNotFound) {
-                            sendNewMessageRunnable.run();
-                        } else {
-                            failure.accept(new InvalidMessageIDException(exception, guild, textChannel, rawMessageID));
-                        }
+                try {
+                    textChannel.retrieveMessageById(rawMessageID).queue(message -> {
+                        setMessage(message);
+                        success.accept(CallbackResult.RETRIEVED);
+                    }, exception -> {
+                        handleException(exception, failure, () -> {
+                            if (sendNewMessageIfNotFound) {
+                                sendNewMessageRunnable.run();
+                            } else {
+                                failure.accept(new InvalidMessageIDException(exception, guild, textChannel, rawMessageID));
+                            }
+                        });
                     });
-                });
+                } catch (Exception exception) {
+                    handleException(exception, failure, () -> {
+                        failure.accept(new InvalidMessageIDException(exception, guild, textChannel, rawMessageID));
+                    });
+                }
                 return;
             }
             case COMPLETE: {

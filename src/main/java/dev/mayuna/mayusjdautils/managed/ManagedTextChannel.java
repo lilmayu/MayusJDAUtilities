@@ -11,6 +11,7 @@ import lombok.Setter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.sharding.ShardManager;
 
 /**
  * Managed text channel - Useful when working with text channels in guilds which can be saved into JSON<br>
@@ -66,39 +67,66 @@ public class ManagedTextChannel {
     // Others
 
     /**
-     * Calls {@link #updateEntries(JDA, boolean, boolean)} with false, false values
+     * Calls {@link #updateEntries(JDA, boolean)} with false value
      *
      * @param jda Non-null {@link JDA}
      *
      * @return True if entries are valid or if all entries were successfully updated
      */
     public boolean updateEntries(@NonNull JDA jda) {
-        return updateEntries(jda, false, false);
+        return updateEntries(jda, false);
+    }
+
+    /**
+     * Calls {@link #updateEntries(ShardManager, boolean)} with false value
+     *
+     * @param shardManager Non-null {@link ShardManager}
+     *
+     * @return True if entries are valid or if all entries were successfully updated
+     */
+    public boolean updateEntries(@NonNull ShardManager shardManager) {
+        return updateEntries(shardManager, false);
     }
 
     /**
      * Updates all entries in {@link ManagedTextChannel}
      *
-     * @param jda            Non-null {@link JDA}
-     * @param force          Determines if this method should update entries even if all entries are valid
-     * @param useExtraChecks Determines if this method should call more expensive and more thorough methods ({@link #isGuildValid(JDA)}, {@link #isTextChannelValid(JDA)}})
+     * @param jda   Non-null {@link JDA}
+     * @param force Determines if this method should update entries even if all entries are valid
      *
      * @return True if entries are valid or if all entries were successfully updated
      */
-    public boolean updateEntries(@NonNull JDA jda, boolean force, boolean useExtraChecks) {
-        boolean valid;
-        if (useExtraChecks) {
-            valid = isGuildValid(jda) && isTextChannelValid(jda);
-        } else {
-            valid = isGuildValid() && isTextChannelValid();
-        }
+    public boolean updateEntries(@NonNull JDA jda, boolean force) {
+        return updateEntriesEx(jda, null, force);
+    }
+
+    /**
+     * Updates all entries in {@link ManagedTextChannel}
+     *
+     * @param shardManager Non-null {@link ShardManager}
+     * @param force        Determines if this method should update entries even if all entries are valid
+     *
+     * @return True if entries are valid or if all entries were successfully updated
+     */
+    public boolean updateEntries(@NonNull ShardManager shardManager, boolean force) {
+        return updateEntriesEx(null, shardManager, force);
+    }
+
+    private boolean updateEntriesEx(JDA jda, ShardManager shardManager, boolean force) {
+        boolean valid = isGuildValid() && isTextChannelValid();
+
         if (valid) {
             if (!force) {
                 return true;
             }
         }
 
-        guild = jda.getGuildById(rawGuildID);
+        if (jda != null) {
+            guild = jda.getGuildById(rawGuildID);
+        } else {
+            guild = shardManager.getGuildById(rawGuildID);
+        }
+
         if (guild == null) {
             throw new InvalidGuildIDException(rawGuildID);
         }
@@ -125,18 +153,6 @@ public class ManagedTextChannel {
     }
 
     /**
-     * Calls {@link #isGuildValid()} and checks if JDA is connected to {@link ManagedTextChannel#guild}<br>
-     * This method may take longer if your bot is on more guilds
-     *
-     * @param jda Non-null {@link JDA} object
-     *
-     * @return True if applies, false otherwise
-     */
-    public boolean isGuildValid(@NonNull JDA jda) {
-        return isGuildValid() && jda.getGuilds().stream().anyMatch(jdaGuild -> jdaGuild.getIdLong() == rawGuildID);
-    }
-
-    /**
      * Checks if {@link ManagedTextChannel#textChannel} is not null and if {@link ManagedTextChannel#rawTextChannelID} equals to {@link ManagedTextChannel#textChannel}'s ID
      *
      * @return True if applies, false otherwise
@@ -147,18 +163,6 @@ public class ManagedTextChannel {
         }
 
         return false;
-    }
-
-    /**
-     * Calls {@link #isTextChannelValid()} and checks if JDA can find channel with {@link ManagedTextChannel#textChannel}'s ID<br>
-     * This method may take longer if your bot is on more guilds
-     *
-     * @param jda Non-null {@link JDA} object
-     *
-     * @return True if applies, false otherwise
-     */
-    public boolean isTextChannelValid(@NonNull JDA jda) {
-        return isTextChannelValid() && jda.getTextChannels().stream().anyMatch(jdaTextChannel -> jdaTextChannel.getIdLong() == rawTextChannelID);
     }
 
     // Setters

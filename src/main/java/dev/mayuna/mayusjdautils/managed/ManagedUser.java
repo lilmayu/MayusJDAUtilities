@@ -13,6 +13,7 @@ import lombok.NonNull;
 import lombok.Setter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.sharding.ShardManager;
 
 import java.util.function.Consumer;
 
@@ -56,13 +57,23 @@ public class ManagedUser {
     // Others
 
     /**
-     * Calls {@link #updateEntries(JDA, boolean, boolean, RestActionMethod, Consumer, Consumer)} with supplied {@link JDA}, false, false, true, restActionMethod.COMPLETE,
+     * Calls {@link #updateEntries(JDA, boolean, RestActionMethod, Consumer, Consumer)} with supplied {@link JDA}, false, restActionMethod.COMPLETE,
      * empty success lambda, empty failure lambda
      *
      * @param jda Non-null {@link JDA}
      */
     public void updateEntries(@NonNull JDA jda) {
-        updateEntries(jda, false, false, RestActionMethod.COMPLETE, success -> {}, failure -> {});
+        updateEntries(jda, false, RestActionMethod.COMPLETE, success -> {}, failure -> {});
+    }
+
+    /**
+     * Calls {@link #updateEntries(ShardManager, boolean, RestActionMethod, Consumer, Consumer)} with supplied {@link ShardManager}, false, restActionMethod.COMPLETE,
+     * empty success lambda, empty failure lambda
+     *
+     * @param shardManager Non-null {@link ShardManager}
+     */
+    public void updateEntries(@NonNull ShardManager shardManager) {
+        updateEntries(shardManager, false, RestActionMethod.COMPLETE, success -> {}, failure -> {});
     }
 
     /**
@@ -70,21 +81,37 @@ public class ManagedUser {
      *
      * @param jda              Non-null {@link JDA}
      * @param force            Determines if this method should update entries even if all entries are valid
-     * @param useExtraChecks   Determines if this method should call more expensive and more thorough methods ({@link #isUserValid(JDA)})
      * @param restActionMethod Determines which method should RestAction use (#queue() or #complete)
      * @param success          This consumer is called with non-null {@link CallbackResult} if user was successfully retrieved
      * @param failure          This consumer is called with non-null {@link Exception} if editing or sending failed. These exceptions are possible:
      *                         {@link CannotRetrieveUserException}. If there is Non-Discord Exception (e.g. HTTP 500 error, SocketTimeoutException, etc.),
      *                         {@link NonDiscordException} is supplied - In this case, you should try calling this method again.
      */
-    public void updateEntries(@NonNull JDA jda, boolean force, boolean useExtraChecks, @NonNull RestActionMethod restActionMethod, @NonNull Consumer<CallbackResult> success,
+    public void updateEntries(@NonNull JDA jda, boolean force, @NonNull RestActionMethod restActionMethod, @NonNull Consumer<CallbackResult> success,
             @NonNull Consumer<Exception> failure) {
-        boolean valid;
-        if (useExtraChecks) {
-            valid = isUserValid(jda);
-        } else {
-            valid = isUserValid();
-        }
+        updateEntriesEx(jda, null, force, restActionMethod, success, failure);
+    }
+
+    /**
+     * Updates all entries in {@link ManagedUser}
+     *
+     * @param shardManager     Non-null {@link ShardManager}
+     * @param force            Determines if this method should update entries even if all entries are valid
+     * @param restActionMethod Determines which method should RestAction use (#queue() or #complete)
+     * @param success          This consumer is called with non-null {@link CallbackResult} if user was successfully retrieved
+     * @param failure          This consumer is called with non-null {@link Exception} if editing or sending failed. These exceptions are possible:
+     *                         {@link CannotRetrieveUserException}. If there is Non-Discord Exception (e.g. HTTP 500 error, SocketTimeoutException, etc.),
+     *                         {@link NonDiscordException} is supplied - In this case, you should try calling this method again.
+     */
+    public void updateEntries(@NonNull ShardManager shardManager, boolean force, @NonNull RestActionMethod restActionMethod, @NonNull Consumer<CallbackResult> success,
+            @NonNull Consumer<Exception> failure) {
+        updateEntriesEx(null, shardManager, force, restActionMethod, success, failure);
+    }
+
+    private void updateEntriesEx(JDA jda, ShardManager shardManager, boolean force, @NonNull RestActionMethod restActionMethod, @NonNull Consumer<CallbackResult> success,
+            @NonNull Consumer<Exception> failure) {
+        boolean valid = isUserValid();
+
         if (valid) {
             if (!force) {
                 success.accept(CallbackResult.NOTHING);
@@ -94,19 +121,30 @@ public class ManagedUser {
 
         switch (restActionMethod) {
             case QUEUE: {
-                jda.retrieveUserById(rawUserID).queue(user -> {
+                Consumer<User> userConsumer = user -> {
                     setUser(user);
                     success.accept(CallbackResult.RETRIEVED);
-                }, exception -> {
+                };
+                Consumer<? super Throwable> exceptionConsumer = exception -> {
                     handleException(exception, failure, () -> {
                         failure.accept(new CannotRetrieveUserException(exception, rawUserID));
                     });
-                });
+                };
+
+                if (jda != null) {
+                    jda.retrieveUserById(rawUserID).queue(userConsumer, exceptionConsumer);
+                } else {
+                    shardManager.retrieveUserById(rawUserID).queue(userConsumer, exceptionConsumer);
+                }
                 return;
             }
             case COMPLETE: {
                 try {
-                    setUser(jda.retrieveUserById(rawUserID).complete());
+                    if (jda != null) {
+                        setUser(jda.retrieveUserById(rawUserID).complete());
+                    } else {
+                        setUser(shardManager.retrieveUserById(rawUserID).complete());
+                    }
                     success.accept(CallbackResult.RETRIEVED);
                 } catch (Exception exception) {
                     handleException(exception, failure, () -> {
@@ -129,18 +167,6 @@ public class ManagedUser {
         }
 
         return false;
-    }
-
-    /**
-     * Calls {@link #isUserValid()} and checks if JDA has cached this {@link User}<br>
-     * This method requires you to cache all users and could fail even if User ID is valid
-     *
-     * @param jda Non-null {@link JDA} object
-     *
-     * @return True if applies, false otherwise
-     */
-    public boolean isUserValid(@NonNull JDA jda) {
-        return isUserValid() && jda.getUsers().stream().anyMatch(jdaUser -> jdaUser.getIdLong() == rawUserID);
     }
 
     // Setters

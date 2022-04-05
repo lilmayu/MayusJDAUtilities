@@ -1,6 +1,5 @@
 package dev.mayuna.mayusjdautils.utils;
 
-import dev.mayuna.mayusjdautils.commands.MayuCommand;
 import dev.mayuna.mayusjdautils.data.MayuCoreListener;
 import dev.mayuna.mayusjdautils.interactive.InteractionType;
 import dev.mayuna.mayusjdautils.interactive.InteractiveMessage;
@@ -351,36 +350,6 @@ public class MessageInfo {
         public Message editOriginal(InteractionHook interactionHook) {
             prepareMessage();
             return interactiveMessage.editOriginal(interactionHook);
-        }
-    }
-
-    public static class InvalidSyntax {
-
-        public static String asText() {
-            return error(LanguageSettings.Messages.getInvalidSyntax());
-        }
-
-        public static EmbedBuilder asEmbedBuilder() {
-            return errorEmbed(LanguageSettings.Messages.getInvalidSyntax());
-        }
-
-        public static String asText(MayuCommand mayuCommand) {
-            return error(LanguageSettings.Messages.getInvalidSyntaxHint().replace("{syntax}", mayuCommand.syntax));
-        }
-
-        public static EmbedBuilder asEmbedBuilder(MayuCommand mayuCommand) {
-            return errorEmbed(LanguageSettings.Messages.getInvalidSyntaxHint().replace("{syntax}", mayuCommand.syntax));
-        }
-    }
-
-    public static class UnknownCommand {
-
-        public static String asText() {
-            return error(LanguageSettings.Messages.getUnknownCommand());
-        }
-
-        public static EmbedBuilder asEmbedBuilder() {
-            return errorEmbed(LanguageSettings.Messages.getUnknownCommand());
         }
     }
 }

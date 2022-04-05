@@ -3,6 +3,7 @@ package dev.mayuna.mayusjdautils.utils;
 import lombok.Getter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Emote;
+import net.dv8tion.jda.api.sharding.ShardManager;
 
 public enum SystemEmotes {
 
@@ -36,6 +37,10 @@ public enum SystemEmotes {
 
     public Emote getAsEmote(JDA jda) {
         return jda.getEmoteById(emoteId);
+    }
+
+    public Emote getAsEmote(ShardManager shardManager) {
+        return shardManager.getEmoteById(emoteId);
     }
 
     @Override

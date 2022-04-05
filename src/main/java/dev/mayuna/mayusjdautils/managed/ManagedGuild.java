@@ -9,6 +9,9 @@ import lombok.NonNull;
 import lombok.Setter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.sharding.ShardManager;
+
+import java.util.List;
 
 /**
  * Managed guild - Useful when working with guilds which can be saved into JSON<br>
@@ -54,14 +57,25 @@ public class ManagedGuild {
     // Others
 
     /**
-     * Calls {@link #updateEntries(JDA, boolean, boolean)} with false, false values
+     * Calls {@link #updateEntries(JDA, boolean)} with false value
      *
      * @param jda Non-null {@link JDA}
      *
      * @return True if entries are valid or if all entries were successfully updated
      */
     public boolean updateEntries(@NonNull JDA jda) {
-        return updateEntries(jda, false, false);
+        return updateEntries(jda, false);
+    }
+
+    /**
+     * Calls {@link #updateEntries(ShardManager, boolean)} with false values
+     *
+     * @param shardManager Non-null {@link ShardManager}
+     *
+     * @return True if entries are valid or if all entries were successfully updated
+     */
+    public boolean updateEntries(@NonNull ShardManager shardManager) {
+        return updateEntries(shardManager, false);
     }
 
     /**
@@ -69,24 +83,41 @@ public class ManagedGuild {
      *
      * @param jda            Non-null {@link JDA}
      * @param force          Determines if this method should update entries even if all entries are valid
-     * @param useExtraChecks Determines if this method should call more expensive and more thorough methods ({@link #isGuildValid(JDA)})
      *
      * @return True if entries are valid or if all entries were successfully updated
      */
-    public boolean updateEntries(@NonNull JDA jda, boolean force, boolean useExtraChecks) {
-        boolean valid;
-        if (useExtraChecks) {
-            valid = isGuildValid(jda);
-        } else {
-            valid = isGuildValid();
-        }
+    public boolean updateEntries(@NonNull JDA jda, boolean force) {
+        return updateEntriesEx(jda, null, force);
+    }
+
+    /**
+     * Updates all entries in {@link ManagedGuild}
+     *
+     * @param shardManager   Non-null {@link ShardManager}
+     * @param force          Determines if this method should update entries even if all entries are valid
+     *
+     * @return True if entries are valid or if all entries were successfully updated
+     */
+    public boolean updateEntries(@NonNull ShardManager shardManager, boolean force) {
+        return updateEntriesEx(null, shardManager, force);
+    }
+
+    private boolean updateEntriesEx(JDA jda, ShardManager shardManager, boolean force) {
+        boolean valid = isGuildValid();
+
         if (valid) {
             if (!force) {
                 return true;
             }
         }
 
-        guild = jda.getGuildById(rawGuildID);
+
+        if (jda != null) {
+            guild = jda.getGuildById(rawGuildID);
+        } else {
+            guild = shardManager.getGuildById(rawGuildID);
+        }
+
         if (guild == null) {
             throw new InvalidGuildIDException(rawGuildID);
         }
@@ -105,18 +136,6 @@ public class ManagedGuild {
         }
 
         return false;
-    }
-
-    /**
-     * Calls {@link #isGuildValid()} and checks if JDA is connected to {@link ManagedGuild#guild}<br>
-     * This method may take longer if your bot is on more guilds
-     *
-     * @param jda Non-null {@link JDA} object
-     *
-     * @return True if applies, false otherwise
-     */
-    public boolean isGuildValid(@NonNull JDA jda) {
-        return isGuildValid() && jda.getGuilds().stream().anyMatch(jdaGuild -> jdaGuild.getIdLong() == rawGuildID);
     }
 
     // Setters

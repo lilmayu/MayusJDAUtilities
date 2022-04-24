@@ -3,33 +3,33 @@ package dev.mayuna.mayusjdautils.interactive.evenets;
 import dev.mayuna.mayusjdautils.interactive.InteractionType;
 import lombok.Getter;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.interaction.ButtonClickEvent;
-import net.dv8tion.jda.api.events.interaction.SelectionMenuEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 
 public class InteractionEvent {
 
     private final @Getter MessageReactionAddEvent reactionAddEvent;
-    private final @Getter ButtonClickEvent buttonClickEvent;
-    private final @Getter SelectionMenuEvent selectionMenuEvent;
+    private final @Getter ButtonInteractionEvent buttonInteractionEvent;
+    private final @Getter SelectMenuInteractionEvent selectMenuInteractionEvent;
 
     public InteractionEvent(MessageReactionAddEvent reactionAddEvent) {
         this.reactionAddEvent = reactionAddEvent;
-        this.buttonClickEvent = null;
-        this.selectionMenuEvent = null;
+        this.buttonInteractionEvent = null;
+        this.selectMenuInteractionEvent = null;
     }
 
-    public InteractionEvent(ButtonClickEvent buttonClickEvent) {
+    public InteractionEvent(ButtonInteractionEvent buttonInteractionEvent) {
         this.reactionAddEvent = null;
-        this.buttonClickEvent = buttonClickEvent;
-        this.selectionMenuEvent = null;
+        this.buttonInteractionEvent = buttonInteractionEvent;
+        this.selectMenuInteractionEvent = null;
     }
 
-    public InteractionEvent(SelectionMenuEvent selectionMenuEvent) {
+    public InteractionEvent(SelectMenuInteractionEvent selectMenuInteractionEvent) {
         this.reactionAddEvent = null;
-        this.buttonClickEvent = null;
-        this.selectionMenuEvent = selectionMenuEvent;
+        this.buttonInteractionEvent = null;
+        this.selectMenuInteractionEvent = selectMenuInteractionEvent;
     }
 
     public InteractionType getInteractionType() {
@@ -39,22 +39,22 @@ public class InteractionEvent {
         if (isButtonInteraction())
             return InteractionType.BUTTON;
 
-        if (isSelectionMenuInteraction())
-            return InteractionType.SELECTION_MENU;
+        if (isSelectMenuInteraction())
+            return InteractionType.SELECT_MENU;
 
         return null;
     }
 
     /**
-     * Gets {@link InteractionHook} from {@link ButtonClickEvent} or {@link SelectionMenuEvent} (depends on which of these are not null)
+     * Gets {@link InteractionHook} from {@link ButtonInteractionEvent} or {@link SelectMenuInteractionEvent} (depends on which of these are not null)
      * @return Nullable {@link InteractionHook} (null if {@link InteractionEvent} is of type {@link InteractionType#REACTION}
      */
     public InteractionHook getInteractionHook() {
         switch (getInteractionType()) {
             case BUTTON:
-                return buttonClickEvent.getHook();
-            case SELECTION_MENU:
-                return selectionMenuEvent.getHook();
+                return buttonInteractionEvent.getHook();
+            case SELECT_MENU:
+                return selectMenuInteractionEvent.getHook();
             default:
                 return null;
         }
@@ -65,11 +65,11 @@ public class InteractionEvent {
     }
 
     public boolean isButtonInteraction() {
-        return buttonClickEvent != null;
+        return buttonInteractionEvent != null;
     }
 
-    public boolean isSelectionMenuInteraction() {
-        return selectionMenuEvent != null;
+    public boolean isSelectMenuInteraction() {
+        return selectMenuInteractionEvent != null;
     }
 
     public long getInteractedMessageID() {
@@ -80,13 +80,13 @@ public class InteractionEvent {
                 }
                 break;
             case BUTTON:
-                if (buttonClickEvent != null) {
-                    return buttonClickEvent.getMessageIdLong();
+                if (buttonInteractionEvent != null) {
+                    return buttonInteractionEvent.getMessageIdLong();
                 }
                 break;
-            case SELECTION_MENU:
-                if (selectionMenuEvent != null) {
-                    return selectionMenuEvent.getMessageIdLong();
+            case SELECT_MENU:
+                if (selectMenuInteractionEvent != null) {
+                    return selectMenuInteractionEvent.getMessageIdLong();
                 }
                 break;
         }
@@ -102,13 +102,13 @@ public class InteractionEvent {
                 }
                 break;
             case BUTTON:
-                if (buttonClickEvent != null) {
-                    return buttonClickEvent.getUser();
+                if (buttonInteractionEvent != null) {
+                    return buttonInteractionEvent.getUser();
                 }
                 break;
-            case SELECTION_MENU:
-                if (selectionMenuEvent != null) {
-                    return selectionMenuEvent.getUser();
+            case SELECT_MENU:
+                if (selectMenuInteractionEvent != null) {
+                    return selectMenuInteractionEvent.getUser();
                 }
                 break;
         }

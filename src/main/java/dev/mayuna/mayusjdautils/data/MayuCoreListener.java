@@ -2,14 +2,13 @@ package dev.mayuna.mayusjdautils.data;
 
 import dev.mayuna.mayusjdautils.interactive.InteractiveMessage;
 import dev.mayuna.mayusjdautils.interactive.evenets.InteractionEvent;
-import net.dv8tion.jda.api.events.interaction.ButtonClickEvent;
-import net.dv8tion.jda.api.events.interaction.SelectionMenuEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.components.Button;
-import net.dv8tion.jda.api.interactions.components.ButtonInteraction;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.buttons.ButtonInteraction;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
-import net.dv8tion.jda.api.interactions.components.selections.SelectionMenuInteraction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +40,7 @@ public class MayuCoreListener extends ListenerAdapter {
         processEvents(interactionEvent);
     }
 
-    public void onButtonClick(ButtonClickEvent event) {
+    public void onButtonClick(ButtonInteractionEvent event) {
         if (event.getUser().isBot()) {
             return;
         }
@@ -51,7 +50,7 @@ public class MayuCoreListener extends ListenerAdapter {
         processEvents(interactionEvent);
     }
 
-    public void onSelectionMenu(SelectionMenuEvent event) {
+    public void onSelectMenu(SelectMenuInteractionEvent event) {
         if (event.getUser().isBot()) {
             return;
         }
@@ -89,25 +88,23 @@ public class MayuCoreListener extends ListenerAdapter {
         if (enableExperimentalInteractionBehavior) {
             if (!processed) {
                 if (interactionEvent.isButtonInteraction()) {
-                    ButtonInteraction buttonInteraction = interactionEvent.getButtonClickEvent();
+                    ButtonInteraction buttonInteraction = interactionEvent.getButtonInteractionEvent();
                     Button button = buttonInteraction.getButton();
 
                     if (button != null) {
                         if (button.getId() != null) {
                             if (button.getId().equals(GENERIC_BUTTON_CLOSE_ID)) {
-                                interactionEvent.getButtonClickEvent().getMessage().delete().queue(success -> {}, failure -> {});
+                                interactionEvent.getButtonInteractionEvent().getMessage().delete().queue(success -> {}, failure -> {});
                             }
                         }
                     }
-                } else if (interactionEvent.isSelectionMenuInteraction()) {
-                    SelectionMenuInteraction selectionMenuInteraction = interactionEvent.getSelectionMenuEvent();
-
-                    List<SelectOption> selectOptions = interactionEvent.getSelectionMenuEvent().getInteraction().getSelectedOptions();
+                } else if (interactionEvent.isSelectMenuInteraction()) {
+                    List<SelectOption> selectOptions = interactionEvent.getSelectMenuInteractionEvent().getInteraction().getSelectedOptions();
 
                     if (selectOptions != null) {
                         for (SelectOption selectedOption : selectOptions) {
                             if (selectedOption.getValue().equals(GENERIC_BUTTON_CLOSE_ID)) {
-                                interactionEvent.getButtonClickEvent().getMessage().delete().queue(success -> {}, failure -> {});
+                                interactionEvent.getButtonInteractionEvent().getMessage().delete().queue(success -> {}, failure -> {});
                             }
                         }
                     }

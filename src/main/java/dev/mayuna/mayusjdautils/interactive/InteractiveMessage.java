@@ -12,9 +12,9 @@ import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.Button;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
-import net.dv8tion.jda.api.interactions.components.selections.SelectionMenu;
+import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import net.dv8tion.jda.api.requests.restaction.MessageAction;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageAction;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageUpdateAction;
@@ -29,7 +29,7 @@ public class InteractiveMessage {
     private final @Getter List<User> whitelistedUsers = new ArrayList<>();
     private final @Getter Map<Interaction, Consumer<InteractionEvent>> interactions = new LinkedHashMap<>();
     private @Getter @Setter MessageBuilder messageBuilder;
-    private @Getter @Setter SelectionMenu.Builder selectionMenuBuilder;
+    private @Getter @Setter SelectMenu.Builder selectMenuBuilder;
     private @Getter @Setter int deleteAfterSeconds = 0;
 
     // Settings
@@ -49,14 +49,14 @@ public class InteractiveMessage {
         this.messageBuilder = messageBuilder;
     }
 
-    private InteractiveMessage(@NonNull SelectionMenu.Builder selectionMenuBuilder) {
+    private InteractiveMessage(@NonNull SelectMenu.Builder selectMenuBuilder) {
         messageBuilder = new MessageBuilder();
-        this.selectionMenuBuilder = selectionMenuBuilder;
+        this.selectMenuBuilder = selectMenuBuilder;
     }
 
-    private InteractiveMessage(@NonNull MessageBuilder messageBuilder, @NonNull SelectionMenu.Builder selectionMenuBuilder) {
+    private InteractiveMessage(@NonNull MessageBuilder messageBuilder, @NonNull SelectMenu.Builder selectMenuBuilder) {
         this.messageBuilder = messageBuilder;
-        this.selectionMenuBuilder = selectionMenuBuilder;
+        this.selectMenuBuilder = selectMenuBuilder;
     }
 
     public static InteractiveMessage create() {
@@ -67,20 +67,20 @@ public class InteractiveMessage {
         return new InteractiveMessage(messageBuilder);
     }
 
-    public static InteractiveMessage create(@NonNull SelectionMenu.Builder selectionMenuBuilder) {
-        return new InteractiveMessage(selectionMenuBuilder);
+    public static InteractiveMessage create(@NonNull SelectMenu.Builder selectMenuBuilder) {
+        return new InteractiveMessage(selectMenuBuilder);
     }
 
-    public static InteractiveMessage create(@NonNull MessageBuilder messageBuilder, @NonNull SelectionMenu.Builder selectionMenuBuilder) {
-        return new InteractiveMessage(messageBuilder, selectionMenuBuilder);
+    public static InteractiveMessage create(@NonNull MessageBuilder messageBuilder, @NonNull SelectMenu.Builder selectMenuBuilder) {
+        return new InteractiveMessage(messageBuilder, selectMenuBuilder);
     }
 
-    public static InteractiveMessage createSelectionMenu() {
-        return new InteractiveMessage(SelectionMenu.create(String.valueOf(new Random().nextInt())));
+    public static InteractiveMessage createSelectMenu() {
+        return new InteractiveMessage(SelectMenu.create(String.valueOf(new Random().nextInt())));
     }
 
-    public static InteractiveMessage createSelectionMenu(@NonNull MessageBuilder messageBuilder) {
-        return new InteractiveMessage(messageBuilder, SelectionMenu.create(String.valueOf(new Random().nextInt())));
+    public static InteractiveMessage createSelectMenu(@NonNull MessageBuilder messageBuilder) {
+        return new InteractiveMessage(messageBuilder, SelectMenu.create(String.valueOf(new Random().nextInt())));
     }
 
     // -- Main stuff -- //
@@ -97,9 +97,9 @@ public class InteractiveMessage {
      */
     public InteractiveMessage addInteraction(Interaction interaction, Consumer<InteractionEvent> onInteracted) throws CannotAddInteractionException {
         Map<Interaction, Consumer<InteractionEvent>> interactionsButtons = getInteractions(InteractionType.BUTTON);
-        Map<Interaction, Consumer<InteractionEvent>> interactionsSelectOptions = getInteractions(InteractionType.SELECTION_MENU);
+        Map<Interaction, Consumer<InteractionEvent>> interactionsSelectOptions = getInteractions(InteractionType.SELECT_MENU);
 
-        if (interactionsButtons.size() != 0 && interaction.getInteractionType() == InteractionType.SELECTION_MENU) {
+        if (interactionsButtons.size() != 0 && interaction.getInteractionType() == InteractionType.SELECT_MENU) {
             throw new CannotAddInteractionException("Cannot add Select Option interaction! Message can only have Buttons or Select Menu.", interaction);
         }
 
@@ -120,46 +120,6 @@ public class InteractiveMessage {
         }
 
         interactions.put(interaction, onInteracted);
-        return this;
-    }
-
-    /**
-     * Adds Interaction to Intractable Message
-     *
-     * @param interaction  Interaction object, which is made wit {@link Interaction#asEmoji(String, JDA)} / {@link Interaction#asEmote(Emote)} / {@link Interaction#asButton(Button)} / {@link Interaction#asSelectOption(SelectOption)}
-     * @param onInteracted Runnable which will be called when user interacted with specific interaction
-     *
-     * @return Returns itself - great for chaining
-     *
-     * @throws CannotAddInteractionException This exception is thrown, if you exceed limit of interactions per message (Reaction - 20, Button/Select Option - 25). Or if you are trying to add Button to Select Menu message and vice-versa.
-     * @deprecated Please, use {@link #addInteraction(Interaction, Consumer)}. Will be removed in future version.
-     */
-    @Deprecated
-    public InteractiveMessage addInteraction(Interaction interaction, Runnable onInteracted) throws CannotAddInteractionException {
-        Map<Interaction, Consumer<InteractionEvent>> interactionsButtons = getInteractions(InteractionType.BUTTON);
-        Map<Interaction, Consumer<InteractionEvent>> interactionsSelectOptions = getInteractions(InteractionType.SELECTION_MENU);
-
-        if (interactionsButtons.size() != 0 && interaction.getInteractionType() == InteractionType.SELECTION_MENU) {
-            throw new CannotAddInteractionException("Cannot add Select Option interaction! Message can only have Buttons or Select Menu.", interaction);
-        }
-
-        if (interactionsSelectOptions.size() != 0 && interaction.getInteractionType() == InteractionType.BUTTON) {
-            throw new CannotAddInteractionException("Cannot add Button interaction! Message can only have Buttons or Select Menu.", interaction);
-        }
-
-        if (interactionsButtons.size() == 25) {
-            throw new CannotAddInteractionException("Cannot add Button interaction! Maximum number of buttons for message is 25.", interaction);
-        }
-
-        if (interactionsSelectOptions.size() == 25) {
-            throw new CannotAddInteractionException("Cannot add Select Option interaction! Maximum number of select options for message is 25.", interaction);
-        }
-
-        if (getInteractions(InteractionType.REACTION).size() == 20) {
-            throw new CannotAddInteractionException("Cannot add Reaction interaction! Maximum number of reactions for message is 20.", interaction);
-        }
-
-        interactions.put(interaction, user -> onInteracted.run());
         return this;
     }
 
@@ -274,9 +234,9 @@ public class InteractiveMessage {
 
             actionRows.add(ActionRow.of(fiveButtons));
         } else {
-            if (selectionMenuBuilder != null) {
-                selectionMenuBuilder.addOptions(selectOptions);
-                actionRows.add(ActionRow.of(selectionMenuBuilder.build()));
+            if (selectMenuBuilder != null) {
+                selectMenuBuilder.addOptions(selectOptions);
+                actionRows.add(ActionRow.of(selectMenuBuilder.build()));
             }
         }
 
@@ -394,7 +354,7 @@ public class InteractiveMessage {
                     return false;
                 }
 
-                Button clickedButton = interactionEvent.getButtonClickEvent().getButton();
+                Button clickedButton = interactionEvent.getButtonInteractionEvent().getButton();
 
                 if (clickedButton == null) {
                     return false;
@@ -408,12 +368,12 @@ public class InteractiveMessage {
                 }
 
                 return clickedButtonID.equals(messageInteractionID);
-            case SELECTION_MENU:
-                if (interaction.getInteractionType() != InteractionType.SELECTION_MENU) {
+            case SELECT_MENU:
+                if (interaction.getInteractionType() != InteractionType.SELECT_MENU) {
                     return false;
                 }
 
-                List<SelectOption> selectOptions = interactionEvent.getSelectionMenuEvent().getInteraction().getSelectedOptions();
+                List<SelectOption> selectOptions = interactionEvent.getSelectMenuInteractionEvent().getInteraction().getSelectedOptions();
 
                 if (selectOptions == null) {
                     return false;

@@ -5,7 +5,7 @@ import lombok.NonNull;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Emote;
 import net.dv8tion.jda.api.entities.MessageReaction;
-import net.dv8tion.jda.api.interactions.components.Button;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 
 public class Interaction {
@@ -130,7 +130,7 @@ public class Interaction {
     /**
      * Gets MessageInteraction's type
      *
-     * @return InteractionType (NOTE: Type "REACTION" is for Emoji and Emote; Type "SELECTION_MENU" is Select Option)
+     * @return InteractionType (NOTE: {@link InteractionType#REACTION} is for Emoji and Emote; Type {@link InteractionType#SELECT_MENU} is Select Option)
      */
     public InteractionType getInteractionType() {
         if (isEmoji() || isEmote())
@@ -140,7 +140,7 @@ public class Interaction {
             return InteractionType.BUTTON;
 
         if (isSelectOption())
-            return InteractionType.SELECTION_MENU;
+            return InteractionType.SELECT_MENU;
 
         return null;
     }

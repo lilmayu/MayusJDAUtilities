@@ -12,15 +12,11 @@ version '2.4'
 
 repositories {
     mavenCentral()
-    maven { url "https://m2.chew.pro/releases" }
 }
 
 dependencies {
     // JDA
-    compileOnly group: 'net.dv8tion', name: 'JDA', version: '5.0.0-alpha.4'
-
-    // JDA Chewtils
-    compileOnly 'pw.chew:jda-chewtils:1.24.1'
+    compileOnly group: 'net.dv8tion', name: 'JDA', version: '5.0.0-alpha.10'
 
     // GSon
     compileOnly 'com.google.code.gson:gson:2.9.0'

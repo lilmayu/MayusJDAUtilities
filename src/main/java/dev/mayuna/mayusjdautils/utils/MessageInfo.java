@@ -3,6 +3,7 @@ package dev.mayuna.mayusjdautils.utils;
 import dev.mayuna.mayusjdautils.data.MayuCoreListener;
 import dev.mayuna.mayusjdautils.interactive.InteractionType;
 import dev.mayuna.mayusjdautils.interactive.InteractiveMessage;
+import dev.mayuna.mayusjdautils.interactive.evenets.InteractionEvent;
 import dev.mayuna.mayusjdautils.interactive.objects.Interaction;
 import dev.mayuna.mayusjdautils.lang.LanguageSettings;
 import dev.mayuna.mayuslibrary.utils.objects.ParsedStackTraceElement;
@@ -14,9 +15,9 @@ import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.interactions.InteractionHook;
-import net.dv8tion.jda.api.interactions.components.ButtonStyle;
+import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
+import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
-import net.dv8tion.jda.api.interactions.components.selections.SelectionMenu;
 
 import java.awt.*;
 import java.io.PrintWriter;
@@ -25,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Consumer;
 
 public class MessageInfo {
 
@@ -137,8 +139,9 @@ public class MessageInfo {
         MessageBuilder messageBuilder = new MessageBuilder();
 
         messageBuilder.setEmbeds(errorEmbed(LanguageSettings.Messages.getExceptionOccurredMessage()).addField(LanguageSettings.Other.getInformation(),
-                formatExceptionInformationField(throwable),
-                false).build());
+                                                                                                              formatExceptionInformationField(throwable),
+                                                                                                              false
+        ).build());
 
         StringWriter stringWriter = new StringWriter();
         PrintWriter printWriter = new PrintWriter(stringWriter);
@@ -148,7 +151,11 @@ public class MessageInfo {
     }
 
     public enum Type {
-        ERROR, WARNING, INFORMATION, SUCCESS, CUSTOM
+        ERROR,
+        WARNING,
+        INFORMATION,
+        SUCCESS,
+        CUSTOM
     }
 
     public static class Builder {
@@ -164,7 +171,7 @@ public class MessageInfo {
         private @Getter String content;
         private @Getter final List<MessageEmbed.Field> customFields = new ArrayList<>();
         private @Getter int closeAfterSeconds;
-        private @Getter SelectionMenu.Builder selectionMenuBuilder;
+        private @Getter SelectMenu.Builder selectMenuBuilder;
 
         // Overrides
         private @Getter EmbedBuilder customEmbedBuilder;
@@ -232,18 +239,18 @@ public class MessageInfo {
             return this;
         }
 
-        public Builder setSelectionMenuBuilder(SelectionMenu.Builder selectionMenuBuilder) {
-            this.selectionMenuBuilder = selectionMenuBuilder;
+        public Builder setSelectMenuBuilder(SelectMenu.Builder selectMenuBuilder) {
+            this.selectMenuBuilder = selectMenuBuilder;
             return this;
         }
 
-        public Builder generateSelectionMenuBuilder(String placeholder) {
-            this.selectionMenuBuilder = SelectionMenu.create(Integer.toString(new Random().nextInt())).setPlaceholder(placeholder);
+        public Builder generateSelectMenuBuilder(String placeholder) {
+            this.selectMenuBuilder = SelectMenu.create(Integer.toString(new Random().nextInt())).setPlaceholder(placeholder);
             return this;
         }
 
-        public Builder addInteraction(Interaction interaction, Runnable runnable) {
-            interactiveMessage.addInteraction(interaction, runnable);
+        public Builder addInteraction(Interaction interaction, Consumer<InteractionEvent> onInteracted) {
+            interactiveMessage.addInteraction(interaction, onInteracted);
             return this;
         }
 
@@ -312,7 +319,7 @@ public class MessageInfo {
             }
 
             interactiveMessage.setMessageBuilder(messageBuilder);
-            interactiveMessage.setSelectionMenuBuilder(selectionMenuBuilder);
+            interactiveMessage.setSelectMenuBuilder(selectMenuBuilder);
             interactiveMessage.setDeleteAfterSeconds(closeAfterSeconds);
 
             if (!interactionWhitelist.isEmpty()) {
@@ -321,12 +328,20 @@ public class MessageInfo {
             }
 
             if (closable) {
-                if (interactiveMessage.getInteractions(InteractionType.BUTTON).size() < 25 || interactiveMessage.getInteractions(InteractionType.SELECTION_MENU).size() < 25) {
-                    if (interactiveMessage.getSelectionMenuBuilder() == null) {
-                        interactiveMessage.addInteraction(Interaction.asButton(DiscordUtils.generateCloseButton(ButtonStyle.DANGER)), interactiveMessage::delete);
+                if (interactiveMessage.getInteractions(InteractionType.BUTTON).size() < 25 || interactiveMessage.getInteractions(InteractionType.SELECT_MENU).size() < 25) {
+                    if (interactiveMessage.getSelectMenuBuilder() == null) {
+                        interactiveMessage.addInteraction(Interaction.asButton(DiscordUtils.generateCloseButton(ButtonStyle.DANGER)), interactionEvent -> {
+                            interactiveMessage.delete();
+                        });
+                        interactiveMessage.addInteraction(Interaction.asButton(DiscordUtils.generateCloseButton(ButtonStyle.DANGER)), interactionEvent -> {
+                            interactiveMessage.delete();
+                        });
                     } else {
                         interactiveMessage.addInteraction(Interaction.asSelectOption(SelectOption.of(LanguageSettings.Other.getClose(), MayuCoreListener.GENERIC_BUTTON_CLOSE_ID)),
-                                interactiveMessage::delete);
+                                                          interactionEvent -> {
+                                                              interactiveMessage.delete();
+                                                          }
+                        );
                     }
                 }
             }

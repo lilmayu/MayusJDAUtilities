@@ -13,8 +13,8 @@ import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
+import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import net.dv8tion.jda.api.requests.restaction.MessageAction;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageAction;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageUpdateAction;
@@ -176,7 +176,7 @@ public class InteractiveMessage {
      * Performs {@link InteractionHook#sendMessage(Message)}
      *
      * @param interactionHook Non-null InteractionHook object
-     * @param ephemeral Decides if sent interactive message should be ephemeral or not
+     * @param ephemeral       Decides if sent interactive message should be ephemeral or not
      *
      * @return Sent ephemeral message
      */
@@ -258,9 +258,9 @@ public class InteractiveMessage {
 
             if (deleteAfterSeconds != 0) {
                 message.delete().queueAfter(deleteAfterSeconds, TimeUnit.SECONDS, success -> {
-                    MayuCoreListener.removeIntractableMessage(this);
+                    MayuCoreListener.removeInteractiveMessage(this);
                 }, failure -> {
-                    MayuCoreListener.removeIntractableMessage(this);
+                    MayuCoreListener.removeInteractiveMessage(this);
                 });
             }
         } else if (interactionHook != null) {
@@ -276,7 +276,7 @@ public class InteractiveMessage {
         }
 
         this.message = message;
-        MayuCoreListener.addIntractableMessage(this);
+        MayuCoreListener.addInteractiveMessage(this);
 
         return message;
     }
@@ -285,7 +285,7 @@ public class InteractiveMessage {
      * Deletes Intractable Message from Discord and internals of Mayu's JDA Utilities
      */
     public void delete() {
-        MayuCoreListener.removeIntractableMessage(this);
+        MayuCoreListener.removeInteractiveMessage(this);
         if (message != null) {
             if (!message.isEphemeral()) {
                 message.delete().queue(success -> {}, failure -> {});

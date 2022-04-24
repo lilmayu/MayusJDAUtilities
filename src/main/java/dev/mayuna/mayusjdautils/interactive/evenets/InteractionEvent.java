@@ -2,7 +2,10 @@ package dev.mayuna.mayusjdautils.interactive.evenets;
 
 import dev.mayuna.mayusjdautils.interactive.InteractionType;
 import lombok.Getter;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
@@ -10,26 +13,25 @@ import net.dv8tion.jda.api.interactions.InteractionHook;
 
 public class InteractionEvent {
 
-    private final @Getter MessageReactionAddEvent reactionAddEvent;
-    private final @Getter ButtonInteractionEvent buttonInteractionEvent;
-    private final @Getter SelectMenuInteractionEvent selectMenuInteractionEvent;
+    private @Getter MessageReactionAddEvent reactionAddEvent = null;
+    private @Getter ButtonInteractionEvent buttonInteractionEvent = null;
+    private @Getter SelectMenuInteractionEvent selectMenuInteractionEvent = null;
+    private @Getter ModalInteractionEvent modalInteractionEvent = null;
 
     public InteractionEvent(MessageReactionAddEvent reactionAddEvent) {
         this.reactionAddEvent = reactionAddEvent;
-        this.buttonInteractionEvent = null;
-        this.selectMenuInteractionEvent = null;
     }
 
     public InteractionEvent(ButtonInteractionEvent buttonInteractionEvent) {
-        this.reactionAddEvent = null;
         this.buttonInteractionEvent = buttonInteractionEvent;
-        this.selectMenuInteractionEvent = null;
     }
 
     public InteractionEvent(SelectMenuInteractionEvent selectMenuInteractionEvent) {
-        this.reactionAddEvent = null;
-        this.buttonInteractionEvent = null;
         this.selectMenuInteractionEvent = selectMenuInteractionEvent;
+    }
+
+    public InteractionEvent(ModalInteractionEvent modalInteractionEvent) {
+        this.modalInteractionEvent = modalInteractionEvent;
     }
 
     public InteractionType getInteractionType() {
@@ -42,11 +44,15 @@ public class InteractionEvent {
         if (isSelectMenuInteraction())
             return InteractionType.SELECT_MENU;
 
+        if (isModalInteraction())
+            return InteractionType.MODAL;
+
         return null;
     }
 
     /**
      * Gets {@link InteractionHook} from {@link ButtonInteractionEvent} or {@link SelectMenuInteractionEvent} (depends on which of these are not null)
+     *
      * @return Nullable {@link InteractionHook} (null if {@link InteractionEvent} is of type {@link InteractionType#REACTION}
      */
     public InteractionHook getInteractionHook() {
@@ -55,9 +61,11 @@ public class InteractionEvent {
                 return buttonInteractionEvent.getHook();
             case SELECT_MENU:
                 return selectMenuInteractionEvent.getHook();
-            default:
-                return null;
+            case MODAL:
+                return modalInteractionEvent.getHook();
         }
+
+        return null;
     }
 
     public boolean isReactionInteraction() {
@@ -72,45 +80,79 @@ public class InteractionEvent {
         return selectMenuInteractionEvent != null;
     }
 
+    public boolean isModalInteraction() {
+        return modalInteractionEvent != null;
+    }
+
+    /**
+     * Returns Message ID of interacted message.
+     *
+     * @return Message ID of interacted message, if the {@link InteractionEvent} is of type {@link InteractionType#MODAL} 0 is returned
+     */
     public long getInteractedMessageID() {
         switch (getInteractionType()) {
             case REACTION:
-                if (reactionAddEvent != null) {
-                    return reactionAddEvent.getMessageIdLong();
-                }
-                break;
+                return reactionAddEvent.getMessageIdLong();
             case BUTTON:
-                if (buttonInteractionEvent != null) {
-                    return buttonInteractionEvent.getMessageIdLong();
-                }
-                break;
+                return buttonInteractionEvent.getMessageIdLong();
             case SELECT_MENU:
-                if (selectMenuInteractionEvent != null) {
-                    return selectMenuInteractionEvent.getMessageIdLong();
-                }
-                break;
+                return selectMenuInteractionEvent.getMessageIdLong();
         }
 
         return 0;
     }
 
+    /**
+     * Returns {@link Message} of interacted message.
+     *
+     * @return {@link Message} of interacted message, if the {@link InteractionEvent} is of type {@link InteractionType#REACTION} or {@link InteractionType#MODAL} null is returned
+     */
+    public Message getInteractedMessage() {
+        switch (getInteractionType()) {
+            case BUTTON:
+                return buttonInteractionEvent.getMessage();
+            case SELECT_MENU:
+                return selectMenuInteractionEvent.getMessage();
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns {@link MessageChannel} of interacted message.
+     *
+     * @return {@link MessageChannel}
+     */
+    public MessageChannel getInteractedChannel() {
+        switch (getInteractionType()) {
+            case REACTION:
+                return reactionAddEvent.getChannel();
+            case BUTTON:
+                return buttonInteractionEvent.getChannel();
+            case SELECT_MENU:
+                return selectMenuInteractionEvent.getChannel();
+            case MODAL:
+                return modalInteractionEvent.getMessageChannel(); // sus
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns {@link User} of interacted message
+     *
+     * @return {@link User}
+     */
     public User getUser() {
         switch (getInteractionType()) {
             case REACTION:
-                if (reactionAddEvent != null) {
-                    return reactionAddEvent.getUser();
-                }
-                break;
+                return reactionAddEvent.getUser();
             case BUTTON:
-                if (buttonInteractionEvent != null) {
-                    return buttonInteractionEvent.getUser();
-                }
-                break;
+                return buttonInteractionEvent.getUser();
             case SELECT_MENU:
-                if (selectMenuInteractionEvent != null) {
-                    return selectMenuInteractionEvent.getUser();
-                }
-                break;
+                return selectMenuInteractionEvent.getUser();
+            case MODAL:
+                return modalInteractionEvent.getUser();
         }
 
         return null;

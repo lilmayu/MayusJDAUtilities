@@ -12,11 +12,12 @@ version '2.4.1'
 
 repositories {
     mavenCentral()
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
     // JDA
-    compileOnly group: 'net.dv8tion', name: 'JDA', version: '5.0.0-alpha.10'
+    compileOnly 'com.github.DV8FromTheWorld:JDA:5492a76bce'
 
     // GSon
     compileOnly 'com.google.code.gson:gson:2.9.0'

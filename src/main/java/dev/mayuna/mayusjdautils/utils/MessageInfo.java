@@ -163,13 +163,13 @@ public class MessageInfo {
         private final @Getter List<User> interactionWhitelist = new ArrayList<>();
         // Huge
         private final @Getter InteractiveMessage interactiveMessage = InteractiveMessage.create();
+        private @Getter final List<MessageEmbed.Field> customFields = new ArrayList<>();
         private @Getter Type type;
         private @Getter boolean embed;
         private @Getter boolean closable;
         // Data
         private @Getter String customTitle;
         private @Getter String content;
-        private @Getter final List<MessageEmbed.Field> customFields = new ArrayList<>();
         private @Getter int closeAfterSeconds;
         private @Getter SelectMenu.Builder selectMenuBuilder;
 

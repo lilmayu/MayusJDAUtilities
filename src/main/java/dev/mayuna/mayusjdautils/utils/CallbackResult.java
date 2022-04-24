@@ -4,5 +4,5 @@ public enum CallbackResult {
     SENT,
     EDITED,
     RETRIEVED,
-    NOTHING;
+    NOTHING
 }

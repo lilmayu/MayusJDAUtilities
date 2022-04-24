@@ -11,8 +11,6 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.sharding.ShardManager;
 
-import java.util.List;
-
 /**
  * Managed guild - Useful when working with guilds which can be saved into JSON<br>
  * Safe to use with {@link com.google.gson.Gson#toJson(Object)} if you use {@link com.google.gson.GsonBuilder} and {@link GsonBuilder#excludeFieldsWithoutExposeAnnotation()}
@@ -81,8 +79,8 @@ public class ManagedGuild {
     /**
      * Updates all entries in {@link ManagedGuild}
      *
-     * @param jda            Non-null {@link JDA}
-     * @param force          Determines if this method should update entries even if all entries are valid
+     * @param jda   Non-null {@link JDA}
+     * @param force Determines if this method should update entries even if all entries are valid
      *
      * @return True if entries are valid or if all entries were successfully updated
      */
@@ -93,8 +91,8 @@ public class ManagedGuild {
     /**
      * Updates all entries in {@link ManagedGuild}
      *
-     * @param shardManager   Non-null {@link ShardManager}
-     * @param force          Determines if this method should update entries even if all entries are valid
+     * @param shardManager Non-null {@link ShardManager}
+     * @param force        Determines if this method should update entries even if all entries are valid
      *
      * @return True if entries are valid or if all entries were successfully updated
      */

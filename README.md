@@ -41,6 +41,9 @@ dependencies {
 - [docs.mayuna.dev](https://docs.mayuna.dev/en/mayus-jda-utilities)
 - [Javadoc](https://data.mayuna.dev/javadocs/mayus-jda-utilities/)
 
+## Note
+**If you are planning to use version `2.5` (or newer)**, please read this [release](https://github.com/lilmayu/MayusJDAUtilities/releases/tag/v2.5) (if you are using JDA on version `v5.0.0-alpha.11` (or newer), you should be okay)
+
 ## Examples
 ### Interactive Message
 [Video Showcase](https://user-images.githubusercontent.com/52459400/142770573-2d4dd7ca-241c-4c38-90ab-df96e737128e.mp4)

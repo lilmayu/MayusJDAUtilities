@@ -8,7 +8,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
 group 'dev.mayuna'
-version '2.5'
+version '2.5.1'
 
 repositories {
     mavenCentral()
@@ -17,7 +17,7 @@ repositories {
 
 dependencies {
     // JDA
-    compileOnly 'com.github.DV8FromTheWorld:JDA:5492a76bce'
+    compileOnly 'net.dv8tion:JDA:5.0.0-alpha.11'
 
     // GSon
     compileOnly 'com.google.code.gson:gson:2.9.0'

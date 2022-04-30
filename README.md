@@ -42,7 +42,7 @@ dependencies {
 - [Javadoc](https://data.mayuna.dev/javadocs/mayus-jda-utilities/)
 
 ## Note
-**If you are planning to use version `2.5` (or newer)**, please read this [release](https://github.com/lilmayu/MayusJDAUtilities/releases/tag/v2.5) (if you are using JDA on version `v5.0.0-alpha.11` (or newer), you should be okay)
+**If you are planning to use version `2.5` (or newer)**, please use JDA version `v5.0.0-alpha.11` or newer.
 
 ## Examples
 ### Interactive Message

@@ -1,4 +1,4 @@
-package dev.mayuna.mayusjdautils.utils;
+package dev.mayuna.mayusjdautils.util;
 
 import lombok.Getter;
 import lombok.Setter;

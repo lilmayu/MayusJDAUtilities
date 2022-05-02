@@ -1,4 +1,4 @@
-package dev.mayuna.mayusjdautils.utils;
+package dev.mayuna.mayusjdautils.util;
 
 public enum RestActionMethod {
     QUEUE,

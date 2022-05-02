@@ -1,4 +1,4 @@
-package dev.mayuna.mayusjdautils.utils;
+package dev.mayuna.mayusjdautils.util;
 
 import dev.mayuna.mayusjdautils.data.MayuCoreListener;
 import dev.mayuna.mayusjdautils.lang.LanguageSettings;

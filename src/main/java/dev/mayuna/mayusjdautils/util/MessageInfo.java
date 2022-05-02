@@ -1,4 +1,4 @@
-package dev.mayuna.mayusjdautils.utils;
+package dev.mayuna.mayusjdautils.util;
 
 import dev.mayuna.mayusjdautils.data.MayuCoreListener;
 import dev.mayuna.mayusjdautils.interactive.InteractionType;
@@ -6,7 +6,7 @@ import dev.mayuna.mayusjdautils.interactive.InteractiveMessage;
 import dev.mayuna.mayusjdautils.interactive.evenets.InteractionEvent;
 import dev.mayuna.mayusjdautils.interactive.objects.Interaction;
 import dev.mayuna.mayusjdautils.lang.LanguageSettings;
-import dev.mayuna.mayuslibrary.utils.objects.ParsedStackTraceElement;
+import dev.mayuna.mayuslibrary.util.objects.ParsedStackTraceElement;
 import lombok.Getter;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.MessageBuilder;

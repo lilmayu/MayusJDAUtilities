@@ -63,7 +63,6 @@ public class MayuCoreListener extends ListenerAdapter {
             return;
         }
 
-        event.getInteraction().deferEdit().complete();
         InteractionEvent interactionEvent = new InteractionEvent(event);
         processEvents(interactionEvent);
     }
@@ -74,7 +73,6 @@ public class MayuCoreListener extends ListenerAdapter {
             return;
         }
 
-        event.getInteraction().deferEdit().complete();
         InteractionEvent interactionEvent = new InteractionEvent(event);
         processEvents(interactionEvent);
     }
@@ -109,6 +107,7 @@ public class MayuCoreListener extends ListenerAdapter {
                 if (modalId.equals(modalInteractionEvent.getModalId())) {
                     interactiveModalToRemove = interactiveModal;
                     interactiveModal.getOnModalClosed().accept(modalInteractionEvent);
+                    interactionEvent.getModalInteractionEvent().deferReply().queue();
                     break;
                 }
             }
@@ -137,7 +136,7 @@ public class MayuCoreListener extends ListenerAdapter {
                 MessageReactionAddEvent event = interactionEvent.getReactionAddEvent();
 
                 if (event != null && event.getUser() != null) {
-                    event.getReaction().removeReaction(event.getUser()).complete();
+                    event.getReaction().removeReaction(event.getUser()).queue();
                 }
             }
 
@@ -145,6 +144,13 @@ public class MayuCoreListener extends ListenerAdapter {
 
             if (success) {
                 processed = true;
+
+                if (interactionEvent.isButtonInteraction()) {
+                    interactionEvent.getButtonInteractionEvent().deferReply().queue();
+                } else if (interactionEvent.isSelectMenuInteraction()) {
+                    interactionEvent.getSelectMenuInteractionEvent().deferReply().queue();
+                }
+
                 if (interactiveMessage.isDeleteMessageAfterInteraction()) {
                     interactiveMessage.delete();
                 }

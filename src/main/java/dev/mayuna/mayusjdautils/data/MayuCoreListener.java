@@ -106,8 +106,8 @@ public class MayuCoreListener extends ListenerAdapter {
 
                 if (modalId.equals(modalInteractionEvent.getModalId())) {
                     interactiveModalToRemove = interactiveModal;
+                    interactionEvent.getModalInteractionEvent().deferEdit().queue();
                     interactiveModal.getOnModalClosed().accept(modalInteractionEvent);
-                    interactionEvent.getModalInteractionEvent().deferReply().queue();
                     break;
                 }
             }
@@ -140,17 +140,9 @@ public class MayuCoreListener extends ListenerAdapter {
                 }
             }
 
-            boolean success = interactiveMessage.process(interactionEvent);
+            processed = interactiveMessage.process(interactionEvent);
 
-            if (success) {
-                processed = true;
-
-                if (interactionEvent.isButtonInteraction()) {
-                    interactionEvent.getButtonInteractionEvent().deferReply().queue();
-                } else if (interactionEvent.isSelectMenuInteraction()) {
-                    interactionEvent.getSelectMenuInteractionEvent().deferReply().queue();
-                }
-
+            if (processed) {
                 if (interactiveMessage.isDeleteMessageAfterInteraction()) {
                     interactiveMessage.delete();
                 }
@@ -164,21 +156,17 @@ public class MayuCoreListener extends ListenerAdapter {
                     ButtonInteraction buttonInteraction = interactionEvent.getButtonInteractionEvent();
                     Button button = buttonInteraction.getButton();
 
-                    if (button != null) {
-                        if (button.getId() != null) {
-                            if (button.getId().equals(GENERIC_BUTTON_CLOSE_ID)) {
-                                interactionEvent.getButtonInteractionEvent().getMessage().delete().queue(success -> {}, failure -> {});
-                            }
+                    if (button.getId() != null) {
+                        if (button.getId().equals(GENERIC_BUTTON_CLOSE_ID)) {
+                            interactionEvent.getButtonInteractionEvent().getMessage().delete().queue(success -> {}, failure -> {});
                         }
                     }
                 } else if (interactionEvent.isSelectMenuInteraction()) {
                     List<SelectOption> selectOptions = interactionEvent.getSelectMenuInteractionEvent().getInteraction().getSelectedOptions();
 
-                    if (selectOptions != null) {
-                        for (SelectOption selectedOption : selectOptions) {
-                            if (selectedOption.getValue().equals(GENERIC_BUTTON_CLOSE_ID)) {
-                                interactionEvent.getButtonInteractionEvent().getMessage().delete().queue(success -> {}, failure -> {});
-                            }
+                    for (SelectOption selectedOption : selectOptions) {
+                        if (selectedOption.getValue().equals(GENERIC_BUTTON_CLOSE_ID)) {
+                            interactionEvent.getButtonInteractionEvent().getMessage().delete().queue(success -> {}, failure -> {});
                         }
                     }
                 }

@@ -439,6 +439,12 @@ public class InteractiveMessage {
 
             if (interactionEvent.getInteractionType() == interaction.getInteractionType()) {
                 if (isApplicable(interaction, interactionEvent)) {
+                    if (interactionEvent.isButtonInteraction()) {
+                        interactionEvent.getButtonInteractionEvent().deferEdit().queue();
+                    } else if (interactionEvent.isSelectMenuInteraction()) {
+                        interactionEvent.getSelectMenuInteractionEvent().deferEdit().queue();
+                    }
+
                     entry.getValue().accept(interactionEvent);
                     return true;
                 }

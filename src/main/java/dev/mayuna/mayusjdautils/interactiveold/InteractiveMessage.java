@@ -1,9 +1,8 @@
-package dev.mayuna.mayusjdautils.interactive;
+package dev.mayuna.mayusjdautils.interactiveold;
 
 import dev.mayuna.mayusjdautils.data.MayuCoreListener;
 import dev.mayuna.mayusjdautils.exceptions.CannotAddInteractionException;
-import dev.mayuna.mayusjdautils.interactive.evenets.InteractionEvent;
-import dev.mayuna.mayusjdautils.interactive.objects.Interaction;
+import dev.mayuna.mayusjdautils.interactiveold.objects.Interaction;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;

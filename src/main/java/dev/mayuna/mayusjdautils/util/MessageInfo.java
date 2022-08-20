@@ -1,10 +1,8 @@
 package dev.mayuna.mayusjdautils.util;
 
 import dev.mayuna.mayusjdautils.data.MayuCoreListener;
-import dev.mayuna.mayusjdautils.interactive.InteractionType;
-import dev.mayuna.mayusjdautils.interactive.InteractiveMessage;
-import dev.mayuna.mayusjdautils.interactive.evenets.InteractionEvent;
-import dev.mayuna.mayusjdautils.interactive.objects.Interaction;
+import dev.mayuna.mayusjdautils.interactiveold.InteractiveMessage;
+import dev.mayuna.mayusjdautils.interactiveold.objects.Interaction;
 import dev.mayuna.mayusjdautils.lang.LanguageSettings;
 import dev.mayuna.mayuslibrary.util.objects.ParsedStackTraceElement;
 import lombok.Getter;
@@ -33,23 +31,23 @@ public class MessageInfo {
     public static boolean useSystemEmotes = false;
 
     public static String error(String content) {
-        return useSystemEmotes ? SystemEmotes.ERROR + " | " + content : "❌ | " + content;
+        return useSystemEmotes ? SystemEmote.ERROR + " | " + content : "❌ | " + content;
     }
 
     public static String warning(String content) {
-        return useSystemEmotes ? SystemEmotes.WARNING + " | " + content : "❗ | " + content;
+        return useSystemEmotes ? SystemEmote.WARNING + " | " + content : "❗ | " + content;
     }
 
     public static String information(String content) {
-        return useSystemEmotes ? SystemEmotes.INFORMATION + " | " + content : "❔ | " + content;
+        return useSystemEmotes ? SystemEmote.INFORMATION + " | " + content : "❔ | " + content;
     }
 
     public static String success(String content) {
-        return useSystemEmotes ? SystemEmotes.SUCCESS + " | " + content : "✅ | " + content;
+        return useSystemEmotes ? SystemEmote.SUCCESS + " | " + content : "✅ | " + content;
     }
 
     public static EmbedBuilder errorEmbed(String content, MessageEmbed.Field... fields) {
-        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getError(), useSystemEmotes ? SystemEmotes.ERROR + " Error" : "❌ Error", content);
+        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getError(), useSystemEmotes ? SystemEmote.ERROR + " Error" : "❌ Error", content);
 
         if (fields != null) {
             for (MessageEmbed.Field field : fields) {
@@ -61,7 +59,7 @@ public class MessageInfo {
     }
 
     public static EmbedBuilder warningEmbed(String content, MessageEmbed.Field... fields) {
-        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getWarning(), useSystemEmotes ? SystemEmotes.WARNING + " Warning" : "❗ Warning", content);
+        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getWarning(), useSystemEmotes ? SystemEmote.WARNING + " Warning" : "❗ Warning", content);
 
         if (fields != null) {
             for (MessageEmbed.Field field : fields) {
@@ -73,7 +71,7 @@ public class MessageInfo {
     }
 
     public static EmbedBuilder informationEmbed(String content, MessageEmbed.Field... fields) {
-        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getInformation(), useSystemEmotes ? SystemEmotes.INFORMATION + " Information" : "❔ Information", content);
+        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getInformation(), useSystemEmotes ? SystemEmote.INFORMATION + " Information" : "❔ Information", content);
 
         if (fields != null) {
             for (MessageEmbed.Field field : fields) {
@@ -85,7 +83,7 @@ public class MessageInfo {
     }
 
     public static EmbedBuilder successEmbed(String content, MessageEmbed.Field... fields) {
-        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getSuccess(), useSystemEmotes ? SystemEmotes.SUCCESS + " Success" : "✅ Success", content);
+        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getSuccess(), useSystemEmotes ? SystemEmote.SUCCESS + " Success" : "✅ Success", content);
 
         if (fields != null) {
             for (MessageEmbed.Field field : fields) {

@@ -1,6 +1,5 @@
-package dev.mayuna.mayusjdautils.interactive.objects;
+package dev.mayuna.mayusjdautils.interactiveold.objects;
 
-import dev.mayuna.mayusjdautils.interactive.InteractionType;
 import lombok.NonNull;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Emote;

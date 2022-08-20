@@ -1,8 +1,12 @@
 package dev.mayuna.mayusjdautils.interactive;
 
 public enum InteractionType {
-    REACTION,
-    BUTTON,
-    SELECT_MENU,
-    MODAL
+    UNKNOWN,
+
+    REACTION_ADD,
+    REACTION_REMOVE,
+
+    BUTTON_CLICK,
+    SELECT_MENU_CLICK,
+    MODAL_SUBMITTED;
 }

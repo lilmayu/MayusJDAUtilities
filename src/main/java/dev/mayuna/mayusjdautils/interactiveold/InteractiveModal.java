@@ -1,4 +1,4 @@
-package dev.mayuna.mayusjdautils.interactive;
+package dev.mayuna.mayusjdautils.interactiveold;
 
 import dev.mayuna.mayusjdautils.data.MayuCoreListener;
 import lombok.Getter;

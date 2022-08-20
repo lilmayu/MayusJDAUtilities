@@ -1,8 +1,7 @@
 package dev.mayuna.mayusjdautils.data;
 
-import dev.mayuna.mayusjdautils.interactive.InteractiveMessage;
-import dev.mayuna.mayusjdautils.interactive.InteractiveModal;
-import dev.mayuna.mayusjdautils.interactive.evenets.InteractionEvent;
+import dev.mayuna.mayusjdautils.interactiveold.InteractiveMessage;
+import dev.mayuna.mayusjdautils.interactiveold.InteractiveModal;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent;

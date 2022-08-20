@@ -119,7 +119,7 @@ public class GroupedInteractionEvent {
      *
      * @return Message ID of interacted message, if the {@link GroupedInteractionEvent} is of type {@link InteractionType#MODAL_SUBMITTED} 0 is returned
      */
-    public long getInteractedMessageID() {
+    public long getInteractedMessageId() {
         switch (getInteractionType()) {
             case REACTION_ADD:
                 return reactionAddEvent.getMessageIdLong();

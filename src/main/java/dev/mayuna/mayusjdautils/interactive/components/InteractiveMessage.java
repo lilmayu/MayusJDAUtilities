@@ -1,6 +1,5 @@
 package dev.mayuna.mayusjdautils.interactive.components;
 
-import dev.mayuna.mayusjdautils.data.MayuCoreListener;
 import dev.mayuna.mayusjdautils.interactive.GroupedInteractionEvent;
 import dev.mayuna.mayusjdautils.interactive.Interaction;
 import dev.mayuna.mayusjdautils.interactive.InteractionType;
@@ -12,7 +11,10 @@ import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
+import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.dv8tion.jda.api.entities.emoji.EmojiUnion;
+import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -24,9 +26,7 @@ import net.dv8tion.jda.api.requests.restaction.WebhookMessageUpdateAction;
 import net.dv8tion.jda.internal.utils.tuple.ImmutablePair;
 import net.dv8tion.jda.internal.utils.tuple.Pair;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -254,12 +254,54 @@ public class InteractiveMessage implements Interactable {
         return interactions;
     }
 
+    private boolean isApplicable(Interaction interaction, GroupedInteractionEvent event) {
+        if (interaction.getType() != event.getInteractionType()) {
+            return false;
+        }
+
+        switch (event.getInteractionType()) {
+            case UNKNOWN:
+                return false;
+            case REACTION_ADD: case REACTION_REMOVE:
+                EmojiUnion emojiReacted = event.getReactionAddEvent().getEmoji();
+                EmojiUnion emojiInteraction = interaction.getEmoji();
+
+                return emojiReacted.getAsReactionCode().equals(emojiInteraction.getAsReactionCode());
+                break;
+            case BUTTON_CLICK:
+                Button buttonClicked = event.getButtonInteractionEvent().getButton();
+                Button buttonInteraction = interaction.getButton();
+
+                String buttonClickedId = buttonClicked.getId();
+                String buttonInteractionId = buttonInteraction.getId();
+
+                if (buttonClickedId == null || buttonInteractionId == null) {
+                    return false;
+                }
+
+                return buttonClickedId.equals(buttonInteractionId);
+            case SELECT_MENU_CLICK:
+                break;
+            case MODAL_SUBMITTED:
+                break;
+        }
+    }
+
     ///////////////
     // Overrides //
     ///////////////
 
     @Override
     public void process(GroupedInteractionEvent interactionEvent) {
+        long messageId = interactionEvent.getInteractedMessageId();
+
+        if (message != null) {
+            if (message.getIdLong() != messageId) {
+                return;
+            }
+        }
+
+
 
     }
 

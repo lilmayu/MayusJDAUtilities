@@ -103,7 +103,7 @@ public class Interaction {
      * Gets Emoji or Emote
      * @return Returns null if {@link Interaction} is not emoji (custom or unicode)
      */
-    public Emoji getEmoji() {
+    public EmojiUnion getEmoji() {
         return emojiUnion;
     }
 

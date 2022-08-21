@@ -1,10 +1,8 @@
 package dev.mayuna.mayusjdautils.util;
 
-import dev.mayuna.mayusjdautils.data.MayuCoreListener;
-import dev.mayuna.mayusjdautils.interactive.InteractionType;
-import dev.mayuna.mayusjdautils.interactive.InteractiveMessage;
-import dev.mayuna.mayusjdautils.interactive.evenets.InteractionEvent;
-import dev.mayuna.mayusjdautils.interactive.objects.Interaction;
+import dev.mayuna.mayusjdautils.interactive.GroupedInteractionEvent;
+import dev.mayuna.mayusjdautils.interactive.Interaction;
+import dev.mayuna.mayusjdautils.interactive.components.InteractiveMessage;
 import dev.mayuna.mayusjdautils.lang.LanguageSettings;
 import dev.mayuna.mayuslibrary.util.objects.ParsedStackTraceElement;
 import lombok.Getter;
@@ -14,10 +12,9 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.interactions.InteractionHook;
-import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
-import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 
 import java.awt.*;
 import java.io.PrintWriter;
@@ -33,23 +30,23 @@ public class MessageInfo {
     public static boolean useSystemEmotes = false;
 
     public static String error(String content) {
-        return useSystemEmotes ? SystemEmotes.ERROR + " | " + content : "❌ | " + content;
+        return useSystemEmotes ? SystemEmote.ERROR + " | " + content : "❌ | " + content;
     }
 
     public static String warning(String content) {
-        return useSystemEmotes ? SystemEmotes.WARNING + " | " + content : "❗ | " + content;
+        return useSystemEmotes ? SystemEmote.WARNING + " | " + content : "❗ | " + content;
     }
 
     public static String information(String content) {
-        return useSystemEmotes ? SystemEmotes.INFORMATION + " | " + content : "❔ | " + content;
+        return useSystemEmotes ? SystemEmote.INFORMATION + " | " + content : "❔ | " + content;
     }
 
     public static String success(String content) {
-        return useSystemEmotes ? SystemEmotes.SUCCESS + " | " + content : "✅ | " + content;
+        return useSystemEmotes ? SystemEmote.SUCCESS + " | " + content : "✅ | " + content;
     }
 
     public static EmbedBuilder errorEmbed(String content, MessageEmbed.Field... fields) {
-        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getError(), useSystemEmotes ? SystemEmotes.ERROR + " Error" : "❌ Error", content);
+        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getError(), useSystemEmotes ? SystemEmote.ERROR + " Error" : "❌ Error", content);
 
         if (fields != null) {
             for (MessageEmbed.Field field : fields) {
@@ -61,7 +58,7 @@ public class MessageInfo {
     }
 
     public static EmbedBuilder warningEmbed(String content, MessageEmbed.Field... fields) {
-        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getWarning(), useSystemEmotes ? SystemEmotes.WARNING + " Warning" : "❗ Warning", content);
+        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getWarning(), useSystemEmotes ? SystemEmote.WARNING + " Warning" : "❗ Warning", content);
 
         if (fields != null) {
             for (MessageEmbed.Field field : fields) {
@@ -73,7 +70,7 @@ public class MessageInfo {
     }
 
     public static EmbedBuilder informationEmbed(String content, MessageEmbed.Field... fields) {
-        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getInformation(), useSystemEmotes ? SystemEmotes.INFORMATION + " Information" : "❔ Information", content);
+        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getInformation(), useSystemEmotes ? SystemEmote.INFORMATION + " Information" : "❔ Information", content);
 
         if (fields != null) {
             for (MessageEmbed.Field field : fields) {
@@ -85,7 +82,7 @@ public class MessageInfo {
     }
 
     public static EmbedBuilder successEmbed(String content, MessageEmbed.Field... fields) {
-        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getSuccess(), useSystemEmotes ? SystemEmotes.SUCCESS + " Success" : "✅ Success", content);
+        EmbedBuilder embedBuilder = quickEmbed(ColorUtils.getSuccess(), useSystemEmotes ? SystemEmote.SUCCESS + " Success" : "✅ Success", content);
 
         if (fields != null) {
             for (MessageEmbed.Field field : fields) {
@@ -94,10 +91,6 @@ public class MessageInfo {
         }
 
         return embedBuilder;
-    }
-
-    public static Builder closable(Type type, String content, int closeAfterSeconds) {
-        return Builder.create().setType(type).setContent(content).setClosable(true).setCloseAfterSeconds(closeAfterSeconds);
     }
 
     private static EmbedBuilder quickEmbed(Color color, String title, String text) {
@@ -112,8 +105,9 @@ public class MessageInfo {
         StringBuilder text = new StringBuilder();
 
         for (String line : stringWriter.toString().split("\n")) {
-            if (text.length() + line.length() > 2048)
+            if (text.length() + line.length() > 2048) {
                 break;
+            }
 
             text.append(line).append("\n");
         }
@@ -147,7 +141,9 @@ public class MessageInfo {
         PrintWriter printWriter = new PrintWriter(stringWriter);
         throwable.printStackTrace(printWriter);
 
-        messageChannel.sendMessage(messageBuilder.build()).addFile(stringWriter.toString().getBytes(StandardCharsets.UTF_8), "exception.txt").complete();
+        messageChannel.sendMessage(messageBuilder.build())
+                      .addFile(stringWriter.toString().getBytes(StandardCharsets.UTF_8), "exception.txt")
+                      .complete();
     }
 
     public enum Type {
@@ -162,7 +158,7 @@ public class MessageInfo {
 
         private final @Getter List<User> interactionWhitelist = new ArrayList<>();
         // Huge
-        private final @Getter InteractiveMessage interactiveMessage = InteractiveMessage.create();
+        private final @Getter InteractiveMessage interactiveMessage = InteractiveMessage.create(new MessageBuilder());
         private @Getter final List<MessageEmbed.Field> customFields = new ArrayList<>();
         private @Getter Type type;
         private @Getter boolean embed;
@@ -170,7 +166,6 @@ public class MessageInfo {
         // Data
         private @Getter String customTitle;
         private @Getter String content;
-        private @Getter int closeAfterSeconds;
         private @Getter SelectMenu.Builder selectMenuBuilder;
 
         // Overrides
@@ -203,11 +198,6 @@ public class MessageInfo {
 
         public Builder addOnInteractionWhitelist(User user) {
             this.interactionWhitelist.add(user);
-            return this;
-        }
-
-        public Builder setCloseAfterSeconds(int seconds) {
-            this.closeAfterSeconds = seconds;
             return this;
         }
 
@@ -249,7 +239,7 @@ public class MessageInfo {
             return this;
         }
 
-        public Builder addInteraction(Interaction interaction, Consumer<InteractionEvent> onInteracted) {
+        public Builder addInteraction(Interaction interaction, Consumer<GroupedInteractionEvent> onInteracted) {
             interactiveMessage.addInteraction(interaction, onInteracted);
             return this;
         }
@@ -286,8 +276,9 @@ public class MessageInfo {
 
                     int fields = embedBuilder.getFields().size();
                     for (MessageEmbed.Field field : customFields) {
-                        if (fields == 25)
+                        if (fields == 25) {
                             break;
+                        }
 
                         embedBuilder.addField(field);
                         fields++;
@@ -320,51 +311,30 @@ public class MessageInfo {
 
             interactiveMessage.setMessageBuilder(messageBuilder);
             interactiveMessage.setSelectMenuBuilder(selectMenuBuilder);
-            interactiveMessage.setDeleteAfterSeconds(closeAfterSeconds);
 
             if (!interactionWhitelist.isEmpty()) {
-                interactiveMessage.setWhitelistUsers(true);
-                interactionWhitelist.forEach(interactiveMessage::addWhitelistUser);
-            }
-
-            if (closable) {
-                if (interactiveMessage.getInteractions(InteractionType.BUTTON).size() < 25 || interactiveMessage.getInteractions(InteractionType.SELECT_MENU).size() < 25) {
-                    if (interactiveMessage.getSelectMenuBuilder() == null) {
-                        interactiveMessage.addInteraction(Interaction.asButton(DiscordUtils.generateCloseButton(ButtonStyle.DANGER)), interactionEvent -> {
-                            interactiveMessage.delete();
-                        });
-                        interactiveMessage.addInteraction(Interaction.asButton(DiscordUtils.generateCloseButton(ButtonStyle.DANGER)), interactionEvent -> {
-                            interactiveMessage.delete();
-                        });
-                    } else {
-                        interactiveMessage.addInteraction(Interaction.asSelectOption(SelectOption.of(LanguageSettings.Other.getClose(), MayuCoreListener.GENERIC_BUTTON_CLOSE_ID)),
-                                                          interactionEvent -> {
-                                                              interactiveMessage.delete();
-                                                          }
-                        );
-                    }
-                }
+                interactionWhitelist.forEach(interactiveMessage::addUserToWhitelist);
             }
         }
 
-        public Message sendMessage(MessageChannel messageChannel) {
+        public Message sendMessage(MessageChannelUnion messageChannelUnion) {
             prepareMessage();
-            return interactiveMessage.sendMessage(messageChannel);
+            return interactiveMessage.sendMessage(messageChannelUnion).getMessage();
         }
 
         public Message editMessage(Message message) {
             prepareMessage();
-            return interactiveMessage.editMessage(message);
+            return interactiveMessage.editMessage(message).getMessage();
         }
 
         public Message sendMessage(InteractionHook interactionHook) {
             prepareMessage();
-            return interactiveMessage.sendMessage(interactionHook);
+            return interactiveMessage.sendMessage(interactionHook).getMessage();
         }
 
         public Message editOriginal(InteractionHook interactionHook) {
             prepareMessage();
-            return interactiveMessage.editOriginal(interactionHook);
+            return interactiveMessage.editOriginal(interactionHook).getMessage();
         }
     }
 }

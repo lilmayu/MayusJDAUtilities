@@ -1,6 +1,5 @@
 package dev.mayuna.mayusjdautils.util;
 
-import dev.mayuna.mayusjdautils.lang.LanguageSettings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -8,19 +7,15 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.exceptions.*;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
-import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 
 import java.time.Instant;
-import java.util.Random;
 
 public class DiscordUtils {
 
     private static @Setter EmbedBuilder defaultEmbed = new EmbedBuilder().setFooter("Powered by Mayu's JDA Utilities")
-            .setTimestamp(Instant.now())
-            .setTitle("Loading...")
-            .setDescription("Please wait.");
+                                                                         .setTimestamp(Instant.now())
+                                                                         .setTitle("Loading...")
+                                                                         .setDescription("Please wait.");
 
     private static @Getter @Setter MessageBuilder defaultMessageBuilder = new MessageBuilder().setEmbeds(getDefaultEmbed().build());
 

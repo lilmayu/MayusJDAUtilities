@@ -105,8 +105,9 @@ public class MessageInfo {
         StringBuilder text = new StringBuilder();
 
         for (String line : stringWriter.toString().split("\n")) {
-            if (text.length() + line.length() > 2048)
+            if (text.length() + line.length() > 2048) {
                 break;
+            }
 
             text.append(line).append("\n");
         }
@@ -140,7 +141,9 @@ public class MessageInfo {
         PrintWriter printWriter = new PrintWriter(stringWriter);
         throwable.printStackTrace(printWriter);
 
-        messageChannel.sendMessage(messageBuilder.build()).addFile(stringWriter.toString().getBytes(StandardCharsets.UTF_8), "exception.txt").complete();
+        messageChannel.sendMessage(messageBuilder.build())
+                      .addFile(stringWriter.toString().getBytes(StandardCharsets.UTF_8), "exception.txt")
+                      .complete();
     }
 
     public enum Type {
@@ -273,8 +276,9 @@ public class MessageInfo {
 
                     int fields = embedBuilder.getFields().size();
                     for (MessageEmbed.Field field : customFields) {
-                        if (fields == 25)
+                        if (fields == 25) {
                             break;
+                        }
 
                         embedBuilder.addField(field);
                         fields++;

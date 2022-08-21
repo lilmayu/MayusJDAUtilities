@@ -1,6 +1,7 @@
 package dev.mayuna.mayusjdautils.interactive.components;
 
 import dev.mayuna.mayusjdautils.interactive.GroupedInteractionEvent;
+import dev.mayuna.mayusjdautils.interactive.InteractiveListener;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.internal.utils.tuple.Pair;
 
@@ -12,9 +13,15 @@ public interface Interactable {
 
     Pair<Long, TimeUnit> getExpireTime();
 
+    boolean isExpired();
+
     void process(GroupedInteractionEvent interactionEvent);
 
     default void onExpire() {
-        // TODO: Remove z listu
+        InteractiveListener.removeInteractable(this);
+    }
+
+    default void forceExpire() {
+        onExpire();
     }
 }

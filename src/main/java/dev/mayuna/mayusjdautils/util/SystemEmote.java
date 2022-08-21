@@ -67,7 +67,7 @@ public class SystemEmote {
     }
 
     /**
-     * It returns the emoji as a mention string: <:name:id>
+     * It returns the emoji as a mention string: {@literal <:name:id>}
      *
      * @return The toString() method is being returned.
      */

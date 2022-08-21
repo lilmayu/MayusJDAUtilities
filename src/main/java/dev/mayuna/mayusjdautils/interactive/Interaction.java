@@ -3,19 +3,21 @@ package dev.mayuna.mayusjdautils.interactive;
 import lombok.NonNull;
 import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
-import net.dv8tion.jda.api.entities.emoji.EmojiUnion;
 import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
+
+import java.util.UUID;
 
 public class Interaction {
 
-    private EmojiUnion emojiUnion;
+    private Emoji emoji;
     private Button button;
     private SelectOption selectOption;
 
-    private Interaction(EmojiUnion emojiUnion) {
-        this.emojiUnion = emojiUnion;
+    private Interaction(Emoji emoji) {
+        this.emoji = emoji;
     }
 
     private Interaction(Button button) {
@@ -26,15 +28,8 @@ public class Interaction {
         this.selectOption = selectOption;
     }
 
-    /**
-     * Creates {@link Interaction} with Emoji (unicode or emote)
-     *
-     * @param emojiUnion Emoji (unicode or emote), see {@link net.dv8tion.jda.api.JDA#getEmojiById(String)}
-     *
-     * @return {@link Interaction} object
-     */
-    public static Interaction asEmoji(EmojiUnion emojiUnion) {
-        return new Interaction(emojiUnion);
+    public static Interaction asReactionAdd(@NonNull Emoji emoji) {
+        return new Interaction(emoji);
     }
 
     /**
@@ -45,8 +40,19 @@ public class Interaction {
      * @return {@link Interaction} object
      */
     public static Interaction asButton(@NonNull Button button) {
-        // TODO: Všechny možnosti pro button
         return new Interaction(button);
+    }
+
+    public static Interaction asButton(@NonNull ButtonStyle buttonStyle, String label) {
+        return new Interaction(Button.of(buttonStyle, UUID.randomUUID().toString(), label));
+    }
+
+    public static Interaction asButton(@NonNull ButtonStyle buttonStyle, String label, Emoji emoji) {
+        return new Interaction(Button.of(buttonStyle, UUID.randomUUID().toString(), label, emoji));
+    }
+
+    public static Interaction asButton(@NonNull ButtonStyle buttonStyle, Emoji emoji) {
+        return new Interaction(Button.of(buttonStyle, UUID.randomUUID().toString(), emoji));
     }
 
     /**
@@ -56,21 +62,24 @@ public class Interaction {
      *
      * @return {@link Interaction} object
      */
-    public static Interaction asSelectOption(SelectOption selectOption) {
-        // TODO: Všechny možnosti pro select option
+    public static Interaction asSelectOption(@NonNull SelectOption selectOption) {
         return new Interaction(selectOption);
     }
 
+    public static Interaction asSelectOption(@NonNull String label) {
+        return new Interaction(SelectOption.of(label, UUID.randomUUID().toString()));
+    }
+
     public boolean isEmoji() {
-        return isUnicodeEmoji() || isCustomEmoji();
+        return emoji != null;
     }
 
     public boolean isUnicodeEmoji() {
-        return emojiUnion != null && emojiUnion.getType() == Emoji.Type.UNICODE;
+        return emoji != null && emoji.getType() == Emoji.Type.UNICODE;
     }
 
     public boolean isCustomEmoji() {
-        return emojiUnion != null && emojiUnion.getType() == Emoji.Type.CUSTOM;
+        return emoji != null && emoji.getType() == Emoji.Type.CUSTOM;
     }
 
     public boolean isButton() {
@@ -87,7 +96,7 @@ public class Interaction {
      * @return Returns null, if {@link Interaction} is not Unicode Emoji
      */
     public UnicodeEmoji getUnicodeEmoji() {
-        return isUnicodeEmoji() ? emojiUnion.asUnicode() : null;
+        return isUnicodeEmoji() ? (UnicodeEmoji) emoji : null;
     }
 
     /**
@@ -96,15 +105,16 @@ public class Interaction {
      * @return Returns null, if {@link Interaction} is not Custom Emoji
      */
     public CustomEmoji getCustomEmoji() {
-        return isCustomEmoji() ? emojiUnion.asCustom() : null;
+        return isCustomEmoji() ? (CustomEmoji) emoji : null;
     }
 
     /**
      * Gets Emoji or Emote
+     *
      * @return Returns null if {@link Interaction} is not emoji (custom or unicode)
      */
-    public EmojiUnion getEmoji() {
-        return emojiUnion;
+    public Emoji getEmoji() {
+        return isEmoji() ? emoji : null;
     }
 
     /**
@@ -131,7 +141,7 @@ public class Interaction {
      * @return Non-null {@link InteractionType}, if {@link Interaction} is unicode or emoji, always returns {@link InteractionType#REACTION_ADD}
      */
     public InteractionType getType() {
-        if (isUnicodeEmoji() || isCustomEmoji()) {
+        if (isEmoji()) {
             return InteractionType.REACTION_ADD;
         }
 
@@ -140,7 +150,7 @@ public class Interaction {
         }
 
         if (isSelectOption()) {
-            return InteractionType.SELECT_MENU_CLICK;
+            return InteractionType.SELECT_MENU_OPTION_CLICK;
         }
 
         return InteractionType.UNKNOWN;

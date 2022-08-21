@@ -1,6 +1,6 @@
 package dev.mayuna.mayusjdautils.exceptions;
 
-import dev.mayuna.mayusjdautils.interactiveold.objects.Interaction;
+import dev.mayuna.mayusjdautils.interactive.Interaction;
 import lombok.Getter;
 
 public class CannotAddInteractionException extends RuntimeException {

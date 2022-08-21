@@ -1,8 +1,8 @@
 package dev.mayuna.mayusjdautils.util;
 
-import dev.mayuna.mayusjdautils.data.MayuCoreListener;
-import dev.mayuna.mayusjdautils.interactiveold.InteractiveMessage;
-import dev.mayuna.mayusjdautils.interactiveold.objects.Interaction;
+import dev.mayuna.mayusjdautils.interactive.GroupedInteractionEvent;
+import dev.mayuna.mayusjdautils.interactive.Interaction;
+import dev.mayuna.mayusjdautils.interactive.components.InteractiveMessage;
 import dev.mayuna.mayusjdautils.lang.LanguageSettings;
 import dev.mayuna.mayuslibrary.util.objects.ParsedStackTraceElement;
 import lombok.Getter;
@@ -12,10 +12,9 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.interactions.InteractionHook;
-import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
-import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 
 import java.awt.*;
 import java.io.PrintWriter;
@@ -94,10 +93,6 @@ public class MessageInfo {
         return embedBuilder;
     }
 
-    public static Builder closable(Type type, String content, int closeAfterSeconds) {
-        return Builder.create().setType(type).setContent(content).setClosable(true).setCloseAfterSeconds(closeAfterSeconds);
-    }
-
     private static EmbedBuilder quickEmbed(Color color, String title, String text) {
         return DiscordUtils.getDefaultEmbed().setColor(color).setTitle(title).setDescription(text);
     }
@@ -160,7 +155,7 @@ public class MessageInfo {
 
         private final @Getter List<User> interactionWhitelist = new ArrayList<>();
         // Huge
-        private final @Getter InteractiveMessage interactiveMessage = InteractiveMessage.create();
+        private final @Getter InteractiveMessage interactiveMessage = InteractiveMessage.create(new MessageBuilder());
         private @Getter final List<MessageEmbed.Field> customFields = new ArrayList<>();
         private @Getter Type type;
         private @Getter boolean embed;
@@ -168,7 +163,6 @@ public class MessageInfo {
         // Data
         private @Getter String customTitle;
         private @Getter String content;
-        private @Getter int closeAfterSeconds;
         private @Getter SelectMenu.Builder selectMenuBuilder;
 
         // Overrides
@@ -201,11 +195,6 @@ public class MessageInfo {
 
         public Builder addOnInteractionWhitelist(User user) {
             this.interactionWhitelist.add(user);
-            return this;
-        }
-
-        public Builder setCloseAfterSeconds(int seconds) {
-            this.closeAfterSeconds = seconds;
             return this;
         }
 
@@ -247,7 +236,7 @@ public class MessageInfo {
             return this;
         }
 
-        public Builder addInteraction(Interaction interaction, Consumer<InteractionEvent> onInteracted) {
+        public Builder addInteraction(Interaction interaction, Consumer<GroupedInteractionEvent> onInteracted) {
             interactiveMessage.addInteraction(interaction, onInteracted);
             return this;
         }
@@ -318,51 +307,30 @@ public class MessageInfo {
 
             interactiveMessage.setMessageBuilder(messageBuilder);
             interactiveMessage.setSelectMenuBuilder(selectMenuBuilder);
-            interactiveMessage.setDeleteAfterSeconds(closeAfterSeconds);
 
             if (!interactionWhitelist.isEmpty()) {
-                interactiveMessage.setWhitelistUsers(true);
-                interactionWhitelist.forEach(interactiveMessage::addWhitelistUser);
-            }
-
-            if (closable) {
-                if (interactiveMessage.getInteractions(InteractionType.BUTTON).size() < 25 || interactiveMessage.getInteractions(InteractionType.SELECT_MENU).size() < 25) {
-                    if (interactiveMessage.getSelectMenuBuilder() == null) {
-                        interactiveMessage.addInteraction(Interaction.asButton(DiscordUtils.generateCloseButton(ButtonStyle.DANGER)), interactionEvent -> {
-                            interactiveMessage.delete();
-                        });
-                        interactiveMessage.addInteraction(Interaction.asButton(DiscordUtils.generateCloseButton(ButtonStyle.DANGER)), interactionEvent -> {
-                            interactiveMessage.delete();
-                        });
-                    } else {
-                        interactiveMessage.addInteraction(Interaction.asSelectOption(SelectOption.of(LanguageSettings.Other.getClose(), MayuCoreListener.GENERIC_BUTTON_CLOSE_ID)),
-                                                          interactionEvent -> {
-                                                              interactiveMessage.delete();
-                                                          }
-                        );
-                    }
-                }
+                interactionWhitelist.forEach(interactiveMessage::addUserToWhitelist);
             }
         }
 
-        public Message sendMessage(MessageChannel messageChannel) {
+        public Message sendMessage(MessageChannelUnion messageChannelUnion) {
             prepareMessage();
-            return interactiveMessage.sendMessage(messageChannel);
+            return interactiveMessage.sendMessage(messageChannelUnion).getMessage();
         }
 
         public Message editMessage(Message message) {
             prepareMessage();
-            return interactiveMessage.editMessage(message);
+            return interactiveMessage.editMessage(message).getMessage();
         }
 
         public Message sendMessage(InteractionHook interactionHook) {
             prepareMessage();
-            return interactiveMessage.sendMessage(interactionHook);
+            return interactiveMessage.sendMessage(interactionHook).getMessage();
         }
 
         public Message editOriginal(InteractionHook interactionHook) {
             prepareMessage();
-            return interactiveMessage.editOriginal(interactionHook);
+            return interactiveMessage.editOriginal(interactionHook).getMessage();
         }
     }
 }

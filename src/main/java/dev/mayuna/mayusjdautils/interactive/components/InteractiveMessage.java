@@ -370,7 +370,7 @@ public class InteractiveMessage implements Interactable {
             Interaction interaction = entry.getKey();
 
             if (interaction.getType() != event.getInteractionType()) {
-                return;
+                continue;
             }
 
             if (isApplicable(interaction, event)) {

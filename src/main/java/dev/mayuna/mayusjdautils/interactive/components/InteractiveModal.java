@@ -106,7 +106,10 @@ public class InteractiveModal implements Interactable {
             return;
         }
 
-        modalInteractionEvent.deferEdit().queue();
+        if (!modalInteractionEvent.isAcknowledged()) {
+            modalInteractionEvent.deferEdit().queue();
+        }
+
         modalClosedConsumer.accept(modalInteractionEvent);
     }
 

@@ -8,7 +8,6 @@ import dev.mayuna.mayusjdautils.interactive.InteractiveListener;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
-import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
@@ -19,9 +18,13 @@ import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
-import net.dv8tion.jda.api.requests.restaction.MessageAction;
-import net.dv8tion.jda.api.requests.restaction.WebhookMessageAction;
-import net.dv8tion.jda.api.requests.restaction.WebhookMessageUpdateAction;
+import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
+import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
+import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
+import net.dv8tion.jda.api.requests.restaction.WebhookMessageEditAction;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
+import net.dv8tion.jda.api.utils.messages.MessageEditData;
 import net.dv8tion.jda.internal.utils.tuple.ImmutablePair;
 import net.dv8tion.jda.internal.utils.tuple.MutablePair;
 import net.dv8tion.jda.internal.utils.tuple.Pair;
@@ -39,7 +42,7 @@ public class InteractiveMessage implements Interactable {
     private final List<Long> whitelistedUsers = new LinkedList<>();
     // Other
     private final long createdTime = System.currentTimeMillis();
-    private @Getter @Setter MessageBuilder messageBuilder;
+    private @Getter @Setter MessageEditBuilder messageEditBuilder;
     private @Getter @Setter SelectMenu.Builder selectMenuBuilder;
     private @Getter Pair<Long, TimeUnit> expireAfter = new MutablePair<>(5L, TimeUnit.MINUTES);
     private @Getter Runnable expiredRunnable;
@@ -52,20 +55,21 @@ public class InteractiveMessage implements Interactable {
     //////////////////
 
     private InteractiveMessage() {
-        messageBuilder = new MessageBuilder();
+        messageEditBuilder = new MessageEditBuilder();
     }
 
-    private InteractiveMessage(MessageBuilder messageBuilder) {
-        this.messageBuilder = messageBuilder;
+
+    private InteractiveMessage(MessageEditBuilder messageEditBuilder) {
+        this.messageEditBuilder = messageEditBuilder;
     }
 
-    private InteractiveMessage(MessageBuilder messageBuilder, SelectMenu.Builder selectMenuBuilder) {
-        this.messageBuilder = messageBuilder;
+    private InteractiveMessage(MessageEditBuilder messageEditBuilder, SelectMenu.Builder selectMenuBuilder) {
+        this.messageEditBuilder = messageEditBuilder;
         this.selectMenuBuilder = selectMenuBuilder;
     }
 
     /**
-     * Creates an empty {@link InteractiveMessage} object ({@link MessageBuilder} is empty)
+     * Creates an empty {@link InteractiveMessage} object ({@link MessageCreateBuilder} is empty)
      *
      * @return {@link InteractiveMessage}
      */
@@ -74,40 +78,41 @@ public class InteractiveMessage implements Interactable {
     }
 
     /**
-     * Creates {@link InteractiveMessage} object with {@link MessageBuilder}
+     * Creates {@link InteractiveMessage} object with {@link MessageEditBuilder}
      *
-     * @param messageBuilder Non-null {@link MessageBuilder}
+     * @param messageEditBuilder Non-null {@link MessageEditBuilder}
      *
      * @return {@link InteractiveMessage}
      */
-    public static InteractiveMessage create(@NonNull MessageBuilder messageBuilder) {
-        return new InteractiveMessage(messageBuilder);
+    public static InteractiveMessage create(@NonNull MessageEditBuilder messageEditBuilder) {
+        return new InteractiveMessage(messageEditBuilder);
     }
 
     /**
-     * Creates {@link InteractiveMessage} object with {@link MessageBuilder} and {@link SelectMenu.Builder}
+     * Creates {@link InteractiveMessage} object with {@link MessageEditBuilder} and {@link SelectMenu.Builder}
      *
-     * @param messageBuilder Non-null {@link MessageBuilder}
-     * @param selectMenuBuilder Non-null {@link SelectMenu.Builder}
+     * @param messageEditBuilder Non-null {@link MessageEditBuilder}
+     * @param selectMenuBuilder    Non-null {@link SelectMenu.Builder}
+     *
      * @return {@link InteractiveMessage}
      */
-    public static InteractiveMessage create(@NonNull MessageBuilder messageBuilder, @NonNull SelectMenu.Builder selectMenuBuilder) {
-        return new InteractiveMessage(messageBuilder, selectMenuBuilder);
+    public static InteractiveMessage create(@NonNull MessageEditBuilder messageEditBuilder, @NonNull SelectMenu.Builder selectMenuBuilder) {
+        return new InteractiveMessage(messageEditBuilder, selectMenuBuilder);
     }
 
     /**
-     * Creates {@link InteractiveMessage} object with {@link MessageBuilder} and randomly created {@link SelectMenu.Builder} with specified
+     * Creates {@link InteractiveMessage} object with {@link MessageEditBuilder} and randomly created {@link SelectMenu.Builder} with specified
      * placeholder
      *
-     * @param messageBuilder        Non-null {@link MessageBuilder}
+     * @param messageEditBuilder  Non-null {@link MessageEditBuilder}
      * @param selectMenuPlaceholder Non-null Select menu placeholder
      *
      * @return {@link InteractiveMessage}
      */
-    public static InteractiveMessage createSelectMenu(@NonNull MessageBuilder messageBuilder, @NonNull String selectMenuPlaceholder) {
+    public static InteractiveMessage createSelectMenu(@NonNull MessageEditBuilder messageEditBuilder, @NonNull String selectMenuPlaceholder) {
         SelectMenu.Builder selectMenuBuilder = SelectMenu.create(UUID.randomUUID().toString());
         selectMenuBuilder.setPlaceholder(selectMenuPlaceholder);
-        return new InteractiveMessage(messageBuilder, selectMenuBuilder);
+        return new InteractiveMessage(messageEditBuilder, selectMenuBuilder);
     }
 
     ////////////////
@@ -195,22 +200,23 @@ public class InteractiveMessage implements Interactable {
             }
         }));
 
-        MessageAction normalMessageAction = null; // Channel#sendMessage() / Channel#editMessage()
-        WebhookMessageAction<Message> hookMessageAction = null; // InteractionHook#sendMessage()
-        WebhookMessageUpdateAction<Message> hookMessageUpdateAction = null; // InteractionHook#editOriginal()
+        MessageCreateAction createMessageAction = null; // Channel#sendMessage() / Channel#sendMessage()
+        MessageEditAction editMessageAction = null; // Channel#sendMessage() / Channel#editMessage()
+        WebhookMessageCreateAction<Message> hookMessageAction = null; // InteractionHook#sendMessage()
+        WebhookMessageEditAction<Message> hookMessageUpdateAction = null; // InteractionHook#editOriginal()
 
-        Message builtMessage = messageBuilder.build();
+        MessageEditData messageEditData = messageEditBuilder.build();
 
         if (messageChannelUnion != null) {
-            normalMessageAction = messageChannelUnion.sendMessage(builtMessage);
+            createMessageAction = messageChannelUnion.sendMessage(MessageCreateBuilder.fromEdit(messageEditData).build());
         } else if (interactionHook != null) {
             if (editOriginal) {
-                hookMessageUpdateAction = interactionHook.editOriginal(builtMessage);
+                hookMessageUpdateAction = interactionHook.setEphemeral(ephemeral).editOriginal(messageEditData);
             } else {
-                hookMessageAction = interactionHook.sendMessage(builtMessage);
+                hookMessageAction = interactionHook.setEphemeral(ephemeral).sendMessage(MessageCreateBuilder.fromEdit(messageEditData).build());
             }
         } else {
-            normalMessageAction = messageToEdit.editMessage(builtMessage);
+            editMessageAction = messageToEdit.editMessage(messageEditData);
         }
 
         List<ActionRow> actionRows = new LinkedList<>();
@@ -238,24 +244,27 @@ public class InteractiveMessage implements Interactable {
             }
         }
 
-        Message sentMessage;
+        Message sentMessage = null;
 
-        if (normalMessageAction != null) {
-            normalMessageAction = normalMessageAction.setActionRows(actionRows);
-            sentMessage = normalMessageAction.complete(); // TODO: Možnost queue?
-
-            if (messageToEdit == null) {
-                for (Interaction reaction : reactions) {
-                    sentMessage.addReaction(reaction.getEmoji()).complete(); // TODO: Možnost queue?
-                }
-            }
+        if (createMessageAction != null) {
+            createMessageAction = createMessageAction.setComponents(actionRows);
+            sentMessage = createMessageAction.complete(); // TODO: Možnost queue?
+        } else if (editMessageAction != null) {
+            editMessageAction = editMessageAction.setComponents(actionRows);
+            sentMessage = editMessageAction.complete(); // TODO: Možnost queue?
         } else {
             if (hookMessageUpdateAction != null) {
-                hookMessageUpdateAction = hookMessageUpdateAction.setActionRows(actionRows);
+                hookMessageUpdateAction = hookMessageUpdateAction.setComponents(actionRows);
                 sentMessage = hookMessageUpdateAction.complete(); // TODO: Možnost queue?
             } else {
-                hookMessageAction = hookMessageAction.addActionRows(actionRows);
+                hookMessageAction = hookMessageAction.setComponents(actionRows);
                 sentMessage = hookMessageAction.complete(); // TODO: Možnost queue?
+            }
+        }
+
+        if (messageToEdit == null && sentMessage != null) {
+            for (Interaction reaction : reactions) {
+                sentMessage.addReaction(reaction.getEmoji()).complete(); // TODO: Možnost queue?
             }
         }
 

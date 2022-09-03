@@ -7,7 +7,6 @@ import dev.mayuna.mayusjdautils.lang.LanguageSettings;
 import dev.mayuna.mayuslibrary.util.objects.ParsedStackTraceElement;
 import lombok.Getter;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -15,6 +14,9 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
+import net.dv8tion.jda.api.utils.FileUpload;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 
 import java.awt.*;
 import java.io.PrintWriter;
@@ -130,20 +132,19 @@ public class MessageInfo {
     }
 
     public static void sendExceptionMessage(MessageChannel messageChannel, Throwable throwable) {
-        MessageBuilder messageBuilder = new MessageBuilder();
+        MessageCreateBuilder messageCreateBuilder = new MessageCreateBuilder();
 
-        messageBuilder.setEmbeds(errorEmbed(LanguageSettings.Messages.getExceptionOccurredMessage()).addField(LanguageSettings.Other.getInformation(),
-                                                                                                              formatExceptionInformationField(throwable),
-                                                                                                              false
+        messageCreateBuilder.setEmbeds(errorEmbed(LanguageSettings.Messages.getExceptionOccurredMessage()).addField(LanguageSettings.Other.getInformation(),
+                                                                                                                    formatExceptionInformationField(throwable),
+                                                                                                                    false
         ).build());
 
         StringWriter stringWriter = new StringWriter();
         PrintWriter printWriter = new PrintWriter(stringWriter);
         throwable.printStackTrace(printWriter);
 
-        messageChannel.sendMessage(messageBuilder.build())
-                      .addFile(stringWriter.toString().getBytes(StandardCharsets.UTF_8), "exception.txt")
-                      .complete();
+        messageCreateBuilder.addFiles(FileUpload.fromData(stringWriter.toString().getBytes(StandardCharsets.UTF_8), "exception.txt"));
+        messageChannel.sendMessage(messageCreateBuilder.build()).queue();
     }
 
     public enum Type {
@@ -158,7 +159,7 @@ public class MessageInfo {
 
         private final @Getter List<User> interactionWhitelist = new ArrayList<>();
         // Huge
-        private final @Getter InteractiveMessage interactiveMessage = InteractiveMessage.create(new MessageBuilder());
+        private final @Getter InteractiveMessage interactiveMessage = InteractiveMessage.create(new MessageEditBuilder());
         private @Getter final List<MessageEmbed.Field> customFields = new ArrayList<>();
         private @Getter Type type;
         private @Getter boolean embed;
@@ -245,7 +246,7 @@ public class MessageInfo {
         }
 
         private void prepareMessage() {
-            MessageBuilder messageBuilder = new MessageBuilder();
+            MessageEditBuilder messageEditBuilder = new MessageEditBuilder();
 
             if (type != Type.CUSTOM) {
                 if (embed) {
@@ -284,20 +285,20 @@ public class MessageInfo {
                         fields++;
                     }
 
-                    messageBuilder.setEmbeds(embedBuilder.build());
+                    messageEditBuilder.setEmbeds(embedBuilder.build());
                 } else {
                     switch (type) {
                         case ERROR:
-                            messageBuilder.setContent(error(content));
+                            messageEditBuilder.setContent(error(content));
                             break;
                         case WARNING:
-                            messageBuilder.setContent(warning(content));
+                            messageEditBuilder.setContent(warning(content));
                             break;
                         case INFORMATION:
-                            messageBuilder.setContent(information(content));
+                            messageEditBuilder.setContent(information(content));
                             break;
                         case SUCCESS:
-                            messageBuilder.setContent(success(content));
+                            messageEditBuilder.setContent(success(content));
                             break;
                     }
                 }
@@ -306,10 +307,10 @@ public class MessageInfo {
                     customEmbedBuilder.setColor(customColor);
                 }
 
-                messageBuilder.setEmbeds(customEmbedBuilder.build());
+                messageEditBuilder.setEmbeds(customEmbedBuilder.build());
             }
 
-            interactiveMessage.setMessageBuilder(messageBuilder);
+            interactiveMessage.setMessageEditBuilder(messageEditBuilder);
             interactiveMessage.setSelectMenuBuilder(selectMenuBuilder);
 
             if (!interactionWhitelist.isEmpty()) {

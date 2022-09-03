@@ -11,18 +11,20 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 
 import java.util.function.Consumer;
 
 /**
- * Managed guild message - Useful when working with messages in guilds which can be saved into JSON<br>
- * Safe to use with {@link com.google.gson.Gson#toJson(Object)} if you use {@link com.google.gson.GsonBuilder} and {@link GsonBuilder#excludeFieldsWithoutExposeAnnotation()}
+ * Managed guild message - Useful when working with messages in guilds which can be saved into JSON<br> Safe to use with
+ * {@link com.google.gson.Gson#toJson(Object)} if you use {@link com.google.gson.GsonBuilder} and
+ * {@link GsonBuilder#excludeFieldsWithoutExposeAnnotation()}
  */
 public class ManagedGuildMessage {
 
@@ -80,37 +82,42 @@ public class ManagedGuildMessage {
     // Others
 
     /**
-     * Updates all entries in {@link ManagedGuildMessage} with supplied {@link JDA}, false, false, true, restActionMethod.COMPLETE,
-     * empty success lambda, empty failure lambda
+     * Updates all entries in {@link ManagedGuildMessage} with supplied {@link JDA}, false, false, true, restActionMethod.COMPLETE, empty success
+     * lambda, empty failure lambda
      *
      * @param jda Non-null {@link JDA}
      */
     public void updateEntries(@NonNull JDA jda) {
-        updateEntries(jda, false, true, RestActionMethod.COMPLETE, success -> {}, failure -> {});
+        updateEntries(jda, false, true, RestActionMethod.COMPLETE, success -> {
+        }, failure -> {
+        });
     }
 
     /**
-     * Updates all entries in {@link ManagedGuildMessage} with supplied {@link ShardManager}, false, false, true, restActionMethod.COMPLETE,
-     * empty success lambda, empty failure lambda
+     * Updates all entries in {@link ManagedGuildMessage} with supplied {@link ShardManager}, false, false, true, restActionMethod.COMPLETE, empty
+     * success lambda, empty failure lambda
      *
      * @param shardManager Non-null {@link ShardManager}
      */
     public void updateEntries(@NonNull ShardManager shardManager) {
-        updateEntriesEx(null, shardManager, false, true, RestActionMethod.COMPLETE, success -> {}, failure -> {});
+        updateEntriesEx(null, shardManager, false, true, RestActionMethod.COMPLETE, success -> {
+        }, failure -> {
+        });
     }
 
     /**
-     * Updates all entries in {@link ManagedGuildMessage} with supplied {@link JDA}, false, false, supplied {@link RestActionMethod},
-     * supplied success lambda, supplied failure lambda
+     * Updates all entries in {@link ManagedGuildMessage} with supplied {@link JDA}, false, false, supplied {@link RestActionMethod}, supplied success
+     * lambda, supplied failure lambda
      *
      * @param jda              Non-null {@link JDA}
      * @param restActionMethod Determines which method should RestAction use (#queue() or #complete)
      * @param success          This consumer is called with non-null {@link CallbackResult} if entries were updated successfully
      * @param failure          This consumer is called with non-null {@link Exception} if updating entries failed. If there is Non-Discord Exception
-     *                         (e.g. HTTP 500 error, SocketTimeoutException, etc.), {@link NonDiscordException} is supplied - In this case, you should try calling this method again.
+     *                         (e.g. HTTP 500 error, SocketTimeoutException, etc.), {@link NonDiscordException} is supplied - In this case, you should
+     *                         try calling this method again.
      */
     public void updateEntries(@NonNull JDA jda, @NonNull RestActionMethod restActionMethod, @NonNull Consumer<CallbackResult> success,
-            @NonNull Consumer<Exception> failure) {
+                              @NonNull Consumer<Exception> failure) {
         updateEntries(jda, false, true, restActionMethod, success, failure);
     }
 
@@ -122,10 +129,11 @@ public class ManagedGuildMessage {
      * @param restActionMethod Determines which method should RestAction use (#queue() or #complete)
      * @param success          This consumer is called with non-null {@link CallbackResult} if entries were updated successfully
      * @param failure          This consumer is called with non-null {@link Exception} if updating entries failed. If there is Non-Discord Exception
-     *                         (e.g. HTTP 500 error, SocketTimeoutException, etc.), {@link NonDiscordException} is supplied - In this case, you should try calling this method again.
+     *                         (e.g. HTTP 500 error, SocketTimeoutException, etc.), {@link NonDiscordException} is supplied - In this case, you should
+     *                         try calling this method again.
      */
     public void updateEntries(@NonNull ShardManager shardManager, @NonNull RestActionMethod restActionMethod, @NonNull Consumer<CallbackResult> success,
-            @NonNull Consumer<Exception> failure) {
+                              @NonNull Consumer<Exception> failure) {
         updateEntriesEx(null, shardManager, false, true, restActionMethod, success, failure);
     }
 
@@ -137,11 +145,12 @@ public class ManagedGuildMessage {
      * @param sendNewMessageIfNotFound Determines if new message will be sent if current message cannot be found
      * @param restActionMethod         Determines which method should RestAction use (#queue() or #complete)
      * @param success                  This consumer is called with non-null {@link CallbackResult} if entries were updated successfully
-     * @param failure                  This consumer is called with non-null {@link Exception} if updating entries failed. If there is Non-Discord Exception
-     *                                 (e.g. HTTP 500 error, SocketTimeoutException, etc.), {@link NonDiscordException} is supplied - In this case, you should try calling this method again.
+     * @param failure                  This consumer is called with non-null {@link Exception} if updating entries failed. If there is Non-Discord
+     *                                 Exception (e.g. HTTP 500 error, SocketTimeoutException, etc.), {@link NonDiscordException} is supplied - In
+     *                                 this case, you should try calling this method again.
      */
     public void updateEntries(@NonNull JDA jda, boolean force, boolean sendNewMessageIfNotFound, @NonNull RestActionMethod restActionMethod,
-            @NonNull Consumer<CallbackResult> success, @NonNull Consumer<Exception> failure) {
+                              @NonNull Consumer<CallbackResult> success, @NonNull Consumer<Exception> failure) {
         updateEntriesEx(jda, null, force, sendNewMessageIfNotFound, restActionMethod, success, failure);
     }
 
@@ -153,20 +162,21 @@ public class ManagedGuildMessage {
      * @param sendNewMessageIfNotFound Determines if new message will be sent if current message cannot be found
      * @param restActionMethod         Determines which method should RestAction use (#queue() or #complete)
      * @param success                  This consumer is called with non-null {@link CallbackResult} if entries were updated successfully
-     * @param failure                  This consumer is called with non-null {@link Exception} if updating entries failed. If there is Non-Discord Exception
-     *                                 (e.g. HTTP 500 error, SocketTimeoutException, etc.), {@link NonDiscordException} is supplied - In this case, you should try calling this method again.
+     * @param failure                  This consumer is called with non-null {@link Exception} if updating entries failed. If there is Non-Discord
+     *                                 Exception (e.g. HTTP 500 error, SocketTimeoutException, etc.), {@link NonDiscordException} is supplied - In
+     *                                 this case, you should try calling this method again.
      */
     public void updateEntries(@NonNull ShardManager shardManager, boolean force, boolean sendNewMessageIfNotFound, @NonNull RestActionMethod restActionMethod,
-            @NonNull Consumer<CallbackResult> success, @NonNull Consumer<Exception> failure) {
+                              @NonNull Consumer<CallbackResult> success, @NonNull Consumer<Exception> failure) {
         updateEntriesEx(null, shardManager, force, sendNewMessageIfNotFound, restActionMethod, success, failure);
     }
 
     private void updateEntriesEx(JDA jda, ShardManager shardManager, boolean force, boolean sendNewMessageIfNotFound, @NonNull RestActionMethod restActionMethod,
-            @NonNull Consumer<CallbackResult> success, @NonNull Consumer<Exception> failure) {
+                                 @NonNull Consumer<CallbackResult> success, @NonNull Consumer<Exception> failure) {
         Runnable sendNewMessageRunnable = () -> {
             switch (restActionMethod) {
                 case QUEUE: {
-                    textChannel.sendMessage(DiscordUtils.getDefaultMessageBuilder().build()).queue(message -> {
+                    textChannel.sendMessage(DiscordUtils.getDefaultMessageCreateBuilder().build()).queue(message -> {
                         setMessage(message);
                         success.accept(CallbackResult.SENT);
                     }, exception -> {
@@ -178,7 +188,7 @@ public class ManagedGuildMessage {
                 }
                 case COMPLETE: {
                     try {
-                        setMessage(textChannel.sendMessage(DiscordUtils.getDefaultMessageBuilder().build()).complete());
+                        setMessage(textChannel.sendMessage(DiscordUtils.getDefaultMessageCreateBuilder().build()).complete());
                         success.accept(CallbackResult.SENT);
                     } catch (Exception exception) {
                         handleException(exception, failure, () -> {
@@ -265,33 +275,38 @@ public class ManagedGuildMessage {
     }
 
     /**
-     * Calls {@link #sendOrEditMessage(Message, RestActionMethod, Consumer, Consumer)} with arguments: null, provided message, false, RestActionMethod.COMPLETE, empty lambda, empty lambda<br>
-     * Ignores if message was not successfully sent, if not found.
+     * Calls {@link #sendOrEditMessage(MessageEditBuilder, RestActionMethod, Consumer, Consumer)} with arguments: null, provided message, false,
+     * RestActionMethod.COMPLETE, empty lambda, empty lambda<br> Ignores if message was not successfully sent, if not found.
      *
-     * @param message Non-null {@link Message} (can be from {@link MessageBuilder}
+     * @param messageEditBuilder Non-null {@link MessageEditBuilder}
      */
-    public void sendOrEditMessage(@NonNull Message message) {
-        sendOrEditMessage(message, RestActionMethod.COMPLETE, success -> {}, failure -> {});
+    public void sendOrEditMessage(@NonNull MessageEditBuilder messageEditBuilder) {
+        sendOrEditMessage(messageEditBuilder, RestActionMethod.COMPLETE, success -> {
+        }, failure -> {
+        });
     }
 
     /**
-     * Edits current message in {@link ManagedGuildMessage}, if failed, tries to send new message into current {@link ManagedGuildMessage#textChannel}
+     * Edits current message in {@link ManagedGuildMessage}, if failed, tries to send new message into current
+     * {@link ManagedGuildMessage#textChannel}
      *
-     * @param message          Non-null {@link Message} (can be from {@link MessageBuilder}
-     * @param restActionMethod Determines which method should RestAction use (#queue() or #complete)
-     * @param success          This consumer is called with non-null {@link CallbackResult} if message was successfully edited or sent
-     * @param failure          This consumer is called with non-null {@link Exception} if editing or sending failed. These exceptions are possible:
-     *                         {@link CannotSendNewMessageException} and {@link InvalidMessageIDException}. If there is Non-Discord Exception
-     *                         (e.g. HTTP 500 error, SocketTimeoutException, etc.), {@link NonDiscordException} is supplied - In this case, you should try calling this method again.
+     * @param messageEditBuilder Non-null {@link MessageEditBuilder}
+     * @param restActionMethod   Determines which method should RestAction use (#queue() or #complete)
+     * @param success            This consumer is called with non-null {@link CallbackResult} if message was successfully edited or sent
+     * @param failure            This consumer is called with non-null {@link Exception} if editing or sending failed. These exceptions are possible:
+     *                           {@link CannotSendNewMessageException} and {@link InvalidMessageIDException}. If there is Non-Discord Exception (e.g.
+     *                           HTTP 500 error, SocketTimeoutException, etc.), {@link NonDiscordException} is supplied - In this case, you should try
+     *                           calling this method again.
      */
-    public void sendOrEditMessage(@NonNull Message message, @NonNull RestActionMethod restActionMethod, @NonNull Consumer<CallbackResult> success,
-            @NonNull Consumer<Exception> failure) {
+    public void sendOrEditMessage(@NonNull MessageEditBuilder messageEditBuilder, @NonNull RestActionMethod restActionMethod, @NonNull Consumer<CallbackResult> success,
+                                  @NonNull Consumer<Exception> failure) {
         Consumer<Message> sendNewMessageConsumer = (messageToSend) -> {
             boolean textChannelValid = isTextChannelValid();
 
             if (textChannelValid) {
                 try {
-                    RestAction<Message> messageRestAction = textChannel.sendMessage(messageToSend);
+                    RestAction<Message> messageRestAction = textChannel.sendMessage(MessageCreateBuilder.fromEdit(messageEditBuilder.build())
+                                                                                                        .build());
 
                     switch (restActionMethod) {
                         case QUEUE: {
@@ -334,7 +349,7 @@ public class ManagedGuildMessage {
         boolean messageValid = isMessageValid();
 
         if (messageValid) {
-            RestAction<Message> messageRestAction = this.message.editMessage(message);
+            RestAction<Message> messageRestAction = this.message.editMessage(messageEditBuilder.build());
 
             switch (restActionMethod) {
                 case QUEUE: {
@@ -369,7 +384,8 @@ public class ManagedGuildMessage {
     }
 
     /**
-     * Checks if {@link ManagedGuildMessage#guild} is not null and if {@link ManagedGuildMessage#rawGuildID} equals to {@link ManagedGuildMessage#guild}'s ID
+     * Checks if {@link ManagedGuildMessage#guild} is not null and if {@link ManagedGuildMessage#rawGuildID} equals to
+     * {@link ManagedGuildMessage#guild}'s ID
      *
      * @return True if applies, false otherwise
      */
@@ -382,7 +398,8 @@ public class ManagedGuildMessage {
     }
 
     /**
-     * Checks if {@link ManagedGuildMessage#textChannel} is not null and if {@link ManagedGuildMessage#rawTextChannelID} equals to {@link ManagedGuildMessage#textChannel}'s ID
+     * Checks if {@link ManagedGuildMessage#textChannel} is not null and if {@link ManagedGuildMessage#rawTextChannelID} equals to
+     * {@link ManagedGuildMessage#textChannel}'s ID
      *
      * @return True if applies, false otherwise
      */
@@ -395,7 +412,8 @@ public class ManagedGuildMessage {
     }
 
     /**
-     * Checks if {@link ManagedGuildMessage#message} is not null and if {@link ManagedGuildMessage#rawMessageID} equals to {@link ManagedGuildMessage#message}'s ID
+     * Checks if {@link ManagedGuildMessage#message} is not null and if {@link ManagedGuildMessage#rawMessageID} equals to
+     * {@link ManagedGuildMessage#message}'s ID
      *
      * @return True if applies, false otherwise
      */
@@ -410,9 +428,9 @@ public class ManagedGuildMessage {
     // Getters / Setters
 
     /**
-     * Sets specified value to {@link ManagedGuildMessage#rawGuildID}.<br>
-     * This automatically nulls {@link ManagedGuildMessage#guild}, {@link ManagedGuildMessage#textChannel} and {@link ManagedGuildMessage#message}<br>
-     * You will have to run {@link #updateEntries(JDA)} method to update them
+     * Sets specified value to {@link ManagedGuildMessage#rawGuildID}.<br> This automatically nulls {@link ManagedGuildMessage#guild},
+     * {@link ManagedGuildMessage#textChannel} and {@link ManagedGuildMessage#message}<br> You will have to run {@link #updateEntries(JDA)} method to
+     * update them
      *
      * @param rawGuildID Raw Guild ID
      */
@@ -425,9 +443,8 @@ public class ManagedGuildMessage {
     }
 
     /**
-     * Sets specified value to {@link ManagedGuildMessage#rawTextChannelID}.<br>
-     * This automatically nulls {@link ManagedGuildMessage#textChannel} and {@link ManagedGuildMessage#message}<br>
-     * You will have to run {@link #updateEntries(JDA)} method to update them
+     * Sets specified value to {@link ManagedGuildMessage#rawTextChannelID}.<br> This automatically nulls {@link ManagedGuildMessage#textChannel} and
+     * {@link ManagedGuildMessage#message}<br> You will have to run {@link #updateEntries(JDA)} method to update them
      *
      * @param rawTextChannelID Raw Message channel ID
      */
@@ -439,9 +456,8 @@ public class ManagedGuildMessage {
     }
 
     /**
-     * Sets specified value to {@link ManagedGuildMessage#rawMessageID}.<br>
-     * This automatically nulls {@link ManagedGuildMessage#message}<br>
-     * You will have to run {@link #updateEntries(JDA)} method to update it
+     * Sets specified value to {@link ManagedGuildMessage#rawMessageID}.<br> This automatically nulls {@link ManagedGuildMessage#message}<br> You will
+     * have to run {@link #updateEntries(JDA)} method to update it
      *
      * @param rawMessageID Raw Message ID
      */
@@ -452,8 +468,7 @@ public class ManagedGuildMessage {
     }
 
     /**
-     * Sets {@link Guild} object<br>
-     * This automatically also sets {@link ManagedGuildMessage#rawGuildID} to {@link Guild}'s ID
+     * Sets {@link Guild} object<br> This automatically also sets {@link ManagedGuildMessage#rawGuildID} to {@link Guild}'s ID
      *
      * @param guild Non-null {@link Guild}
      *
@@ -466,8 +481,7 @@ public class ManagedGuildMessage {
     }
 
     /**
-     * Sets {@link TextChannel} object<br>
-     * This automatically also sets {@link ManagedGuildMessage#rawTextChannelID} to {@link TextChannel}'s ID
+     * Sets {@link TextChannel} object<br> This automatically also sets {@link ManagedGuildMessage#rawTextChannelID} to {@link TextChannel}'s ID
      *
      * @param textChannel Non-null {@link TextChannel}
      *
@@ -480,8 +494,8 @@ public class ManagedGuildMessage {
     }
 
     /**
-     * Sets {@link Message} object<br>
-     * This automatically also sets {@link ManagedGuildMessage#rawMessageID} to {@link Message}'s ID if not null, otherwise sets {@link ManagedGuildMessage#rawMessageID} to 0
+     * Sets {@link Message} object<br> This automatically also sets {@link ManagedGuildMessage#rawMessageID} to {@link Message}'s ID if not null,
+     * otherwise sets {@link ManagedGuildMessage#rawMessageID} to 0
      *
      * @param message Nullable {@link Message}
      *

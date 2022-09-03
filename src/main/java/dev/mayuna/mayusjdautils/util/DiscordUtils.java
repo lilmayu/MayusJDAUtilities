@@ -4,9 +4,10 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.exceptions.*;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 
 import java.time.Instant;
 
@@ -17,7 +18,8 @@ public class DiscordUtils {
                                                                          .setTitle("Loading...")
                                                                          .setDescription("Please wait.");
 
-    private static @Getter @Setter MessageBuilder defaultMessageBuilder = new MessageBuilder().setEmbeds(getDefaultEmbed().build());
+    private static @Getter @Setter MessageCreateBuilder defaultMessageCreateBuilder = new MessageCreateBuilder().setEmbeds(getDefaultEmbed().build());
+    private static @Getter @Setter MessageEditBuilder defaultMessageEditBuilder = new MessageEditBuilder().setEmbeds(getDefaultEmbed().build());
 
     /**
      * Checks if specified string is qualified as User mention

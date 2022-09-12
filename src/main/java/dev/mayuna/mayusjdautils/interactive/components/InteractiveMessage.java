@@ -47,6 +47,7 @@ public class InteractiveMessage implements Interactable {
     private @Getter Pair<Long, TimeUnit> expireAfter = new MutablePair<>(5L, TimeUnit.MINUTES);
     private @Getter Runnable expiredRunnable;
     private @Getter @Setter boolean preventForeignReactions;
+    private @Getter @Setter boolean acknowledgeInteractions = true;
     // Discord
     private @Getter Message message;
 
@@ -374,13 +375,15 @@ public class InteractiveMessage implements Interactable {
             }
 
             if (isApplicable(interaction, event)) {
-                if (event.isButtonInteraction()) {
-                    if (!event.getButtonInteractionEvent().isAcknowledged()) {
-                        event.getButtonInteractionEvent().deferEdit().queue();
-                    }
-                } else if (event.isSelectMenuInteraction()) {
-                    if (!event.getSelectMenuInteractionEvent().isAcknowledged()) {
-                        event.getSelectMenuInteractionEvent().deferEdit().queue();
+                if (acknowledgeInteractions) {
+                    if (event.isButtonInteraction()) {
+                        if (!event.getButtonInteractionEvent().isAcknowledged()) {
+                            event.getButtonInteractionEvent().deferEdit().queue();
+                        }
+                    } else if (event.isSelectMenuInteraction()) {
+                        if (!event.getSelectMenuInteractionEvent().isAcknowledged()) {
+                            event.getSelectMenuInteractionEvent().deferEdit().queue();
+                        }
                     }
                 }
 

@@ -4,6 +4,7 @@ import dev.mayuna.mayusjdautils.interactive.GroupedInteractionEvent;
 import dev.mayuna.mayusjdautils.interactive.InteractiveListener;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -26,6 +27,7 @@ public class InteractiveModal implements Interactable {
 
     // Settings
     private final @Getter Modal.Builder modalBuilder;
+    private @Getter @Setter boolean acknowledgeInteractions = true;
     // Other
     private final long createdTime = System.currentTimeMillis();
     private @Getter Pair<Long, TimeUnit> expireAfter = new MutablePair<>(5L, TimeUnit.MINUTES);
@@ -106,8 +108,10 @@ public class InteractiveModal implements Interactable {
             return;
         }
 
-        if (!modalInteractionEvent.isAcknowledged()) {
-            modalInteractionEvent.deferEdit().queue();
+        if (acknowledgeInteractions) {
+            if (!modalInteractionEvent.isAcknowledged()) {
+                modalInteractionEvent.deferEdit().queue();
+            }
         }
 
         modalClosedConsumer.accept(modalInteractionEvent);

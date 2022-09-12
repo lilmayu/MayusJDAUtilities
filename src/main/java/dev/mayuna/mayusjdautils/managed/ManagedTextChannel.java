@@ -1,7 +1,5 @@
 package dev.mayuna.mayusjdautils.managed;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import dev.mayuna.mayusjdautils.exceptions.InvalidGuildIDException;
 import dev.mayuna.mayusjdautils.exceptions.InvalidTextChannelIDException;
@@ -15,18 +13,18 @@ import net.dv8tion.jda.api.sharding.ShardManager;
 
 /**
  * Managed text channel - Useful when working with text channels in guilds which can be saved into JSON<br>
- * Safe to use with {@link com.google.gson.Gson#toJson(Object)} if you use {@link com.google.gson.GsonBuilder} and {@link GsonBuilder#excludeFieldsWithoutExposeAnnotation()}
+ * Safe to use with {@link com.google.gson.Gson#toJson(Object)}
  */
 public class ManagedTextChannel {
 
     // Raw data
-    private @Getter @Setter @Expose String name;
-    private @Getter @Expose @SerializedName("guildID") long rawGuildID;
-    private @Getter @Expose @SerializedName(value = "textChannelID", alternate = {"messageChannelID"}) long rawTextChannelID; // messageChannelID for backwards compatibility
+    private @Getter @Setter String name;
+    private @Getter @SerializedName("guildID") long rawGuildID;
+    private @Getter @SerializedName(value = "textChannelID", alternate = {"messageChannelID"}) long rawTextChannelID; // messageChannelID for backwards compatibility
 
     // Discord data
-    private @Getter @Expose(serialize = false, deserialize = false) Guild guild;
-    private @Getter @Expose(serialize = false, deserialize = false) TextChannel textChannel;
+    private transient @Getter Guild guild;
+    private transient @Getter TextChannel textChannel;
 
     /**
      * Constructs {@link ManagedTextChannel} with specified objects

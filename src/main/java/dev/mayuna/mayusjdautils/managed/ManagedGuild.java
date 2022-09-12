@@ -1,7 +1,5 @@
 package dev.mayuna.mayusjdautils.managed;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import dev.mayuna.mayusjdautils.exceptions.InvalidGuildIDException;
 import lombok.Getter;
@@ -11,18 +9,20 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.sharding.ShardManager;
 
+import java.io.Serializable;
+
 /**
  * Managed guild - Useful when working with guilds which can be saved into JSON<br>
- * Safe to use with {@link com.google.gson.Gson#toJson(Object)} if you use {@link com.google.gson.GsonBuilder} and {@link GsonBuilder#excludeFieldsWithoutExposeAnnotation()}
+ * Safe to use with {@link com.google.gson.Gson#toJson(Object)}
  */
-public class ManagedGuild {
+public class ManagedGuild implements Serializable {
 
     // Raw data
-    private @Getter @Setter @Expose String name;
-    private @Getter @Expose @SerializedName("guildID") long rawGuildID;
+    private @Getter @Setter String name;
+    private @Getter @SerializedName("guildID") long rawGuildID;
 
     // Discord data
-    private @Getter @Expose(serialize = false, deserialize = false) Guild guild;
+    private transient @Getter Guild guild;
 
     /**
      * Constructs {@link ManagedGuild} with specified objects

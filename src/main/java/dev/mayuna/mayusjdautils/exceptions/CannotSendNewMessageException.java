@@ -2,7 +2,7 @@ package dev.mayuna.mayusjdautils.exceptions;
 
 import lombok.Getter;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 
 public class CannotSendNewMessageException extends RuntimeException {
 

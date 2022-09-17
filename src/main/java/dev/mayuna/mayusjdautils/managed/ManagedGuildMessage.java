@@ -11,7 +11,7 @@ import lombok.Setter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
@@ -302,7 +302,7 @@ public class ManagedGuildMessage {
 
             if (textChannelValid) {
                 try {
-                    RestAction<Message> messageRestAction = textChannel.sendMessage(MessageCreateBuilder.fromEdit(messageEditBuilder.build())
+                    RestAction<Message> messageRestAction = textChannel.sendMessage(MessageCreateBuilder.fromEditData(messageEditBuilder.build())
                                                                                                         .build());
 
                     switch (restActionMethod) {

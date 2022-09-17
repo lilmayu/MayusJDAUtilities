@@ -209,12 +209,12 @@ public class InteractiveMessage implements Interactable {
         MessageEditData messageEditData = messageEditBuilder.build();
 
         if (messageChannelUnion != null) {
-            createMessageAction = messageChannelUnion.sendMessage(MessageCreateBuilder.fromEdit(messageEditData).build());
+            createMessageAction = messageChannelUnion.sendMessage(MessageCreateBuilder.fromEditData(messageEditData).build());
         } else if (interactionHook != null) {
             if (editOriginal) {
                 hookMessageUpdateAction = interactionHook.setEphemeral(ephemeral).editOriginal(messageEditData);
             } else {
-                hookMessageAction = interactionHook.setEphemeral(ephemeral).sendMessage(MessageCreateBuilder.fromEdit(messageEditData).build());
+                hookMessageAction = interactionHook.setEphemeral(ephemeral).sendMessage(MessageCreateBuilder.fromEditData(messageEditData).build());
             }
         } else {
             editMessageAction = messageToEdit.editMessage(messageEditData);

@@ -6,9 +6,9 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
-import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
-import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 
 public class GroupedInteractionEvent {
@@ -16,7 +16,8 @@ public class GroupedInteractionEvent {
     private @Getter MessageReactionAddEvent reactionAddEvent = null;
 
     private @Getter ButtonInteractionEvent buttonInteractionEvent = null;
-    private @Getter SelectMenuInteractionEvent selectMenuInteractionEvent = null;
+    private @Getter StringSelectInteractionEvent stringSelectInteractionEvent = null;
+    private @Getter EntitySelectInteractionEvent entitySelectInteractionEvent = null;
     private @Getter ModalInteractionEvent modalInteractionEvent = null;
 
     //////////////////
@@ -31,12 +32,16 @@ public class GroupedInteractionEvent {
         this.buttonInteractionEvent = buttonInteractionEvent;
     }
 
-    public GroupedInteractionEvent(SelectMenuInteractionEvent selectMenuInteractionEvent) {
-        this.selectMenuInteractionEvent = selectMenuInteractionEvent;
-    }
-
     public GroupedInteractionEvent(ModalInteractionEvent modalInteractionEvent) {
         this.modalInteractionEvent = modalInteractionEvent;
+    }
+
+    public GroupedInteractionEvent(StringSelectInteractionEvent stringSelectInteractionEvent) {
+        this.stringSelectInteractionEvent = stringSelectInteractionEvent;
+    }
+
+    public GroupedInteractionEvent(EntitySelectInteractionEvent entitySelectInteractionEvent) {
+        this.entitySelectInteractionEvent = entitySelectInteractionEvent;
     }
 
     /////////////
@@ -57,8 +62,12 @@ public class GroupedInteractionEvent {
             return InteractionType.BUTTON_CLICK;
         }
 
-        if (isSelectMenuInteraction()) {
-            return InteractionType.SELECT_MENU_OPTION_CLICK;
+        if (isStringSelectMenuInteraction()) {
+            return InteractionType.STRING_SELECT_MENU_OPTION_CLICK;
+        }
+
+        if (isEntitySelectMenuInteraction()) {
+            return InteractionType.ENTITY_SELECT_MENU_OPTION_CLICK;
         }
 
         if (isModalInteraction()) {
@@ -72,20 +81,20 @@ public class GroupedInteractionEvent {
         return reactionAddEvent != null;
     }
 
-    public boolean isReactionRemoveInteraction() {
-        return reactionAddEvent != null;
-    }
-
     public boolean isReactionInteraction() {
-        return isReactionAddInteraction() || isReactionRemoveInteraction();
+        return isReactionAddInteraction();
     }
 
     public boolean isButtonInteraction() {
         return buttonInteractionEvent != null;
     }
 
-    public boolean isSelectMenuInteraction() {
-        return selectMenuInteractionEvent != null;
+    public boolean isStringSelectMenuInteraction() {
+        return stringSelectInteractionEvent != null;
+    }
+
+    public boolean isEntitySelectMenuInteraction() {
+        return entitySelectInteractionEvent != null;
     }
 
     public boolean isModalInteraction() {
@@ -93,8 +102,7 @@ public class GroupedInteractionEvent {
     }
 
     /**
-     * Gets {@link InteractionHook} from {@link ButtonInteractionEvent} or {@link SelectMenuInteractionEvent} (depends on which of these are not
-     * null)
+     * Gets {@link InteractionHook} from corresponding event
      *
      * @return Nullable {@link InteractionHook} (null if {@link GroupedInteractionEvent} is of type {@link InteractionType#REACTION_ADD}
      */
@@ -102,8 +110,10 @@ public class GroupedInteractionEvent {
         switch (getInteractionType()) {
             case BUTTON_CLICK:
                 return buttonInteractionEvent.getHook();
-            case SELECT_MENU_OPTION_CLICK:
-                return selectMenuInteractionEvent.getHook();
+            case STRING_SELECT_MENU_OPTION_CLICK:
+                return stringSelectInteractionEvent.getHook();
+            case ENTITY_SELECT_MENU_OPTION_CLICK:
+                return entitySelectInteractionEvent.getHook();
             case MODAL_SUBMITTED:
                 return modalInteractionEvent.getHook();
         }
@@ -123,8 +133,10 @@ public class GroupedInteractionEvent {
                 return reactionAddEvent.getMessageIdLong();
             case BUTTON_CLICK:
                 return buttonInteractionEvent.getMessageIdLong();
-            case SELECT_MENU_OPTION_CLICK:
-                return selectMenuInteractionEvent.getMessageIdLong();
+            case STRING_SELECT_MENU_OPTION_CLICK:
+                return stringSelectInteractionEvent.getMessageIdLong();
+            case ENTITY_SELECT_MENU_OPTION_CLICK:
+                return entitySelectInteractionEvent.getMessageIdLong();
         }
 
         return 0;
@@ -133,15 +145,17 @@ public class GroupedInteractionEvent {
     /**
      * Returns {@link Message} of interacted message.
      *
-     * @return {@link Message} of interacted message, if the {@link GroupedInteractionEvent} is of type {@link InteractionType#REACTION_ADD} (this
-     * one only has Message ID - You need it to retrieve it) or {@link InteractionType#MODAL_SUBMITTED} null is returned
+     * @return {@link Message} of interacted message, if the {@link GroupedInteractionEvent} is of type {@link InteractionType#REACTION_ADD} (this one
+     * only has Message ID - You need it to retrieve it) or {@link InteractionType#MODAL_SUBMITTED} null is returned
      */
     public Message getInteractedMessage() {
         switch (getInteractionType()) {
             case BUTTON_CLICK:
                 return buttonInteractionEvent.getMessage();
-            case SELECT_MENU_OPTION_CLICK:
-                return selectMenuInteractionEvent.getMessage();
+            case STRING_SELECT_MENU_OPTION_CLICK:
+                return stringSelectInteractionEvent.getMessage();
+            case ENTITY_SELECT_MENU_OPTION_CLICK:
+                return entitySelectInteractionEvent.getMessage();
         }
 
         return null;
@@ -158,8 +172,10 @@ public class GroupedInteractionEvent {
                 return reactionAddEvent.getChannel();
             case BUTTON_CLICK:
                 return buttonInteractionEvent.getChannel();
-            case SELECT_MENU_OPTION_CLICK:
-                return selectMenuInteractionEvent.getChannel();
+            case STRING_SELECT_MENU_OPTION_CLICK:
+                return stringSelectInteractionEvent.getChannel();
+            case ENTITY_SELECT_MENU_OPTION_CLICK:
+                return entitySelectInteractionEvent.getChannel();
             case MODAL_SUBMITTED:
                 return modalInteractionEvent.getChannel();
         }
@@ -178,8 +194,10 @@ public class GroupedInteractionEvent {
                 return reactionAddEvent.getUser();
             case BUTTON_CLICK:
                 return buttonInteractionEvent.getUser();
-            case SELECT_MENU_OPTION_CLICK:
-                return selectMenuInteractionEvent.getUser();
+            case STRING_SELECT_MENU_OPTION_CLICK:
+                return stringSelectInteractionEvent.getUser();
+            case ENTITY_SELECT_MENU_OPTION_CLICK:
+                return entitySelectInteractionEvent.getUser();
             case MODAL_SUBMITTED:
                 return modalInteractionEvent.getUser();
         }

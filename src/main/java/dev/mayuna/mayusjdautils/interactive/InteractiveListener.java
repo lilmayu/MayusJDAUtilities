@@ -4,7 +4,8 @@ import dev.mayuna.mayusjdautils.interactive.components.Interactable;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
-import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
@@ -78,7 +79,17 @@ public class InteractiveListener extends ListenerAdapter {
     }
 
     @Override
-    public void onSelectMenuInteraction(SelectMenuInteractionEvent event) {
+    public void onStringSelectInteraction(StringSelectInteractionEvent event) {
+        if (!ensureUserIsValidAndNotBot(event.getUser())) {
+            return;
+        }
+
+        GroupedInteractionEvent interactionEvent = new GroupedInteractionEvent(event);
+        processEvent(interactionEvent);
+    }
+
+    @Override
+    public void onEntitySelectInteraction(EntitySelectInteractionEvent event) {
         if (!ensureUserIsValidAndNotBot(event.getUser())) {
             return;
         }

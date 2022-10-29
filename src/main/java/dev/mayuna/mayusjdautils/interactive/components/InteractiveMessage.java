@@ -13,11 +13,12 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.entities.emoji.EmojiUnion;
+import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
-import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
+import net.dv8tion.jda.api.interactions.components.selections.*;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
@@ -40,14 +41,19 @@ public class InteractiveMessage implements Interactable {
 
     // Settings
     private final List<Long> whitelistedUsers = new LinkedList<>();
+
     // Other
     private final long createdTime = System.currentTimeMillis();
     private @Getter @Setter MessageEditBuilder messageEditBuilder;
-    private @Getter @Setter SelectMenu.Builder selectMenuBuilder;
+    private @Getter @Setter SelectMenu.Builder<?, ?> selectMenuBuilder;
     private @Getter Pair<Long, TimeUnit> expireAfter = new MutablePair<>(5L, TimeUnit.MINUTES);
     private @Getter Runnable expiredRunnable;
     private @Getter @Setter boolean preventForeignReactions;
     private @Getter @Setter boolean acknowledgeInteractions = true;
+
+    private @Getter Consumer<StringSelectInteractionEvent> stringSelectInteractionEventConsumer = event -> {};
+    private @Getter Consumer<EntitySelectInteractionEvent> entitySelectInteractionEventConsumer = event -> {};
+
     // Discord
     private @Getter Message message;
 
@@ -64,7 +70,7 @@ public class InteractiveMessage implements Interactable {
         this.messageEditBuilder = messageEditBuilder;
     }
 
-    private InteractiveMessage(MessageEditBuilder messageEditBuilder, SelectMenu.Builder selectMenuBuilder) {
+    private InteractiveMessage(MessageEditBuilder messageEditBuilder, SelectMenu.Builder<?, ?> selectMenuBuilder) {
         this.messageEditBuilder = messageEditBuilder;
         this.selectMenuBuilder = selectMenuBuilder;
     }
@@ -102,7 +108,20 @@ public class InteractiveMessage implements Interactable {
     }
 
     /**
-     * Creates {@link InteractiveMessage} object with {@link MessageEditBuilder} and randomly created {@link SelectMenu.Builder} with specified
+     * Creates {@link InteractiveMessage} object with {@link MessageEditBuilder} and specified {@link SelectMenu.Builder}. <strong>The ID of select menu will be randomized.</strong>
+     *
+     * @param messageEditBuilder  Non-null {@link MessageEditBuilder}
+     * @param selectMenuBuilder Non-null {@link SelectMenu.Builder}
+     *
+     * @return {@link InteractiveMessage}
+     */
+    public static InteractiveMessage createSelectMenu(@NonNull MessageEditBuilder messageEditBuilder, @NonNull SelectMenu.Builder<?, ?> selectMenuBuilder) {
+        selectMenuBuilder.setId(UUID.randomUUID().toString());
+        return new InteractiveMessage(messageEditBuilder, selectMenuBuilder);
+    }
+
+    /**
+     * Creates {@link InteractiveMessage} object with {@link MessageEditBuilder} and randomly created {@link StringSelectMenu.Builder} with specified
      * placeholder
      *
      * @param messageEditBuilder  Non-null {@link MessageEditBuilder}
@@ -110,8 +129,32 @@ public class InteractiveMessage implements Interactable {
      *
      * @return {@link InteractiveMessage}
      */
-    public static InteractiveMessage createSelectMenu(@NonNull MessageEditBuilder messageEditBuilder, @NonNull String selectMenuPlaceholder) {
-        SelectMenu.Builder selectMenuBuilder = SelectMenu.create(UUID.randomUUID().toString());
+    public static InteractiveMessage createStringSelectMenu(@NonNull MessageEditBuilder messageEditBuilder, @NonNull String selectMenuPlaceholder) {
+        StringSelectMenu.Builder selectMenuBuilder = StringSelectMenu.create(UUID.randomUUID().toString());
+        selectMenuBuilder.setPlaceholder(selectMenuPlaceholder);
+        return new InteractiveMessage(messageEditBuilder, selectMenuBuilder);
+    }
+
+    /**
+     * Creates {@link InteractiveMessage} object with {@link MessageEditBuilder} and randomly created {@link EntitySelectMenu.Builder} with specified
+     * placeholder
+     *
+     * @param messageEditBuilder  Non-null {@link MessageEditBuilder}
+     * @param selectMenuPlaceholder Non-null Select menu placeholder
+     * @param selectTarget  Non-null {@link net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu.SelectTarget}
+     * @param selectTargets {@link net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu.SelectTarget} array
+     *
+     * @return {@link InteractiveMessage}
+     */
+    public static InteractiveMessage createEntitySelectMenu(@NonNull MessageEditBuilder messageEditBuilder, @NonNull String selectMenuPlaceholder, @NonNull EntitySelectMenu.SelectTarget selectTarget, EntitySelectMenu.SelectTarget... selectTargets) {
+        EntitySelectMenu.Builder selectMenuBuilder;
+
+        if (selectTargets != null) {
+            selectMenuBuilder = EntitySelectMenu.create(UUID.randomUUID().toString(), EnumSet.of(selectTarget, selectTargets));
+        } else {
+            selectMenuBuilder = EntitySelectMenu.create(UUID.randomUUID().toString(), selectTarget);
+        }
+
         selectMenuBuilder.setPlaceholder(selectMenuPlaceholder);
         return new InteractiveMessage(messageEditBuilder, selectMenuBuilder);
     }
@@ -122,9 +165,9 @@ public class InteractiveMessage implements Interactable {
 
     public InteractiveMessage addInteraction(Interaction interaction, Consumer<GroupedInteractionEvent> onInteracted) {
         Map<Interaction, Consumer<GroupedInteractionEvent>> interactionsButtons = getInteractionByType(InteractionType.BUTTON_CLICK);
-        Map<Interaction, Consumer<GroupedInteractionEvent>> interactionsSelectOptions = getInteractionByType(InteractionType.SELECT_MENU_OPTION_CLICK);
+        Map<Interaction, Consumer<GroupedInteractionEvent>> interactionsSelectOptions = getInteractionByType(InteractionType.STRING_SELECT_MENU_OPTION_CLICK);
 
-        if (interactionsButtons.size() != 0 && interaction.getType() == InteractionType.SELECT_MENU_OPTION_CLICK) {
+        if (interactionsButtons.size() != 0 && (interaction.getType() == InteractionType.STRING_SELECT_MENU_OPTION_CLICK)) {
             throw new CannotAddInteractionException("Cannot add Select Option interaction! Message can only have Buttons or Select Menu.", interaction);
         }
 
@@ -144,8 +187,18 @@ public class InteractiveMessage implements Interactable {
             throw new CannotAddInteractionException("Cannot add Reaction interaction! Maximum number of reactions for message is 20.", interaction);
         }
 
+        if (interaction.getType() == InteractionType.STRING_SELECT_MENU_OPTION_CLICK) {
+            if (selectMenuBuilder instanceof EntitySelectMenu.Builder) {
+                throw new CannotAddInteractionException("You cannot add interaction to entity select menu! Please, use #onEntitySelectMenuInteracted() method to handle selected values!", interaction);
+            }
+        }
+
         interactions.put(interaction, onInteracted);
         return this;
+    }
+
+    public InteractiveMessage addInteractionEmpty(Interaction interaction) {
+        return addInteraction(interaction, ignored -> {});
     }
 
     public InteractiveMessage addUserToWhitelist(User user) {
@@ -155,6 +208,16 @@ public class InteractiveMessage implements Interactable {
 
     public InteractiveMessage removeUserFromWhitelist(User user) {
         whitelistedUsers.remove(user.getIdLong());
+        return this;
+    }
+
+    public InteractiveMessage onStringSelectMenuInteracted(@NonNull Consumer<StringSelectInteractionEvent> onInteracted) {
+        stringSelectInteractionEventConsumer = onInteracted;
+        return this;
+    }
+
+    public InteractiveMessage onEntitySelectMenuInteracted(@NonNull Consumer<EntitySelectInteractionEvent> onInteracted) {
+        entitySelectInteractionEventConsumer = onInteracted;
         return this;
     }
 
@@ -239,9 +302,13 @@ public class InteractiveMessage implements Interactable {
         } else {
             if (selectMenuBuilder != null) {
                 if (!selectOptions.isEmpty()) {
-                    selectMenuBuilder.addOptions(selectOptions);
-                    actionRows.add(ActionRow.of(selectMenuBuilder.build()));
+
+                    if (selectMenuBuilder instanceof StringSelectMenu.Builder) {
+                        ((StringSelectMenu.Builder)selectMenuBuilder).addOptions(selectOptions);
+                    }
                 }
+
+                actionRows.add(ActionRow.of(selectMenuBuilder.build()));
             }
         }
 
@@ -329,9 +396,9 @@ public class InteractiveMessage implements Interactable {
                 }
 
                 return buttonClickedId.equals(buttonInteractionId);
-            case SELECT_MENU_OPTION_CLICK:
+            case STRING_SELECT_MENU_OPTION_CLICK:
                 String selectOptionValueInteraction = interaction.getSelectOption().getValue();
-                for (SelectOption selectedOption : event.getSelectMenuInteractionEvent().getInteraction().getSelectedOptions()) {
+                for (SelectOption selectedOption : event.getStringSelectInteractionEvent().getInteraction().getSelectedOptions()) {
                     if (selectOptionValueInteraction.equals(selectedOption.getValue())) {
                         return true;
                     }
@@ -367,6 +434,26 @@ public class InteractiveMessage implements Interactable {
             return;
         }
 
+        if (event.isEntitySelectMenuInteraction()) {
+            if (selectMenuBuilder instanceof EntitySelectMenu.Builder) {
+                if (acknowledgeInteractions) {
+                    if (!event.getEntitySelectInteractionEvent().isAcknowledged()) {
+                        event.getEntitySelectInteractionEvent().deferEdit().queue();
+                    }
+                }
+
+                entitySelectInteractionEventConsumer.accept(event.getEntitySelectInteractionEvent());
+
+                return;
+            }
+
+            // We should not get here. Like, never ever.
+        }
+
+        if (selectMenuBuilder instanceof StringSelectMenu.Builder) {
+            stringSelectInteractionEventConsumer.accept(event.getStringSelectInteractionEvent());
+        }
+
         for (Map.Entry<Interaction, Consumer<GroupedInteractionEvent>> entry : interactions.entrySet()) {
             Interaction interaction = entry.getKey();
 
@@ -380,9 +467,9 @@ public class InteractiveMessage implements Interactable {
                         if (!event.getButtonInteractionEvent().isAcknowledged()) {
                             event.getButtonInteractionEvent().deferEdit().queue();
                         }
-                    } else if (event.isSelectMenuInteraction()) {
-                        if (!event.getSelectMenuInteractionEvent().isAcknowledged()) {
-                            event.getSelectMenuInteractionEvent().deferEdit().queue();
+                    } else if (event.isStringSelectMenuInteraction()) {
+                        if (!event.getStringSelectInteractionEvent().isAcknowledged()) {
+                            event.getStringSelectInteractionEvent().deferEdit().queue();
                         }
                     }
                 }

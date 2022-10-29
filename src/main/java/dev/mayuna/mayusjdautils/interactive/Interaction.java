@@ -150,7 +150,7 @@ public class Interaction {
         }
 
         if (isSelectOption()) {
-            return InteractionType.SELECT_MENU_OPTION_CLICK;
+            return InteractionType.STRING_SELECT_MENU_OPTION_CLICK;
         }
 
         return InteractionType.UNKNOWN;

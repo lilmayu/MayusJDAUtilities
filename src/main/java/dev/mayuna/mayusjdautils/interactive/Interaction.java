@@ -33,14 +33,14 @@ public class Interaction {
     }
 
     /**
-     * Creates {@link Interaction} with Button
+     * Creates {@link Interaction} with Button, the ID will be randomized
      *
      * @param button Button, see JDA's wiki for how to construct Button
      *
      * @return {@link Interaction} object
      */
     public static Interaction asButton(@NonNull Button button) {
-        return new Interaction(button);
+        return new Interaction(button.withId(UUID.randomUUID().toString()));
     }
 
     public static Interaction asButton(@NonNull ButtonStyle buttonStyle, String label) {
@@ -56,18 +56,34 @@ public class Interaction {
     }
 
     /**
-     * Creates {@link Interaction} with Select Option
+     * Creates {@link Interaction} with Select Option, the value will be randomized
      *
      * @param selectOption Select Option, see JDA's wiki for how to construct Select Option
      *
      * @return {@link Interaction} object
      */
-    public static Interaction asSelectOption(@NonNull SelectOption selectOption) {
-        return new Interaction(selectOption);
+    public static Interaction asSelectOption(@NonNull SelectOption selectOption) {;
+        return new Interaction(selectOption.withValue(UUID.randomUUID().toString()));
     }
 
     public static Interaction asSelectOption(@NonNull String label) {
         return new Interaction(SelectOption.of(label, UUID.randomUUID().toString()));
+    }
+
+    public static Interaction asSelectOption(@NonNull String label, @NonNull String description) {
+        return new Interaction(SelectOption.of(label, UUID.randomUUID().toString()).withDescription(description));
+    }
+
+    public static Interaction asSelectOption(@NonNull String label, @NonNull String description, boolean isDefault) {
+        return new Interaction(SelectOption.of(label, UUID.randomUUID().toString()).withDescription(description).withDefault(isDefault));
+    }
+
+    public static Interaction asSelectOption(@NonNull String label, @NonNull String description, boolean isDefault, @NonNull Emoji emoji) {
+        return new Interaction(SelectOption.of(label, UUID.randomUUID().toString()).withDescription(description).withDefault(isDefault).withEmoji(emoji));
+    }
+
+    public static Interaction asSelectOption(@NonNull String label, @NonNull String description, @NonNull Emoji emoji) {
+        return new Interaction(SelectOption.of(label, UUID.randomUUID().toString()).withDescription(description).withEmoji(emoji));
     }
 
     public boolean isEmoji() {

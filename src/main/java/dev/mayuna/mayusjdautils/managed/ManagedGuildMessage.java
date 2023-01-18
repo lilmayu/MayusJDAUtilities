@@ -12,6 +12,8 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
@@ -28,12 +30,12 @@ public class ManagedGuildMessage {
     // Raw data
     private @Getter @Setter String name;
     private @Getter @SerializedName("guildID") long rawGuildID;
-    private @Getter @SerializedName(value = "textChannelID", alternate = {"messageChannelID"}) long rawTextChannelID; // messageChannelID for backwards compatibility
+    private @Getter @SerializedName(value = "guildMessageChannel", alternate = {"messageChannelID", "textChannelID"}) long rawGuildMessageChannelID; // messageChannelID for backwards compatibility
     private @Getter @SerializedName("messageID") long rawMessageID;
 
     // Discord data
     private transient @Getter Guild guild;
-    private transient @Getter TextChannel textChannel;
+    private transient @Getter GuildMessageChannel guildMessageChannel;
     private transient @Getter Message message;
 
     /**
@@ -41,13 +43,13 @@ public class ManagedGuildMessage {
      *
      * @param name        Name of {@link ManagedGuildMessage}
      * @param guild       Non-null {@link Guild} object
-     * @param textChannel Non-null {@link TextChannel} object
-     * @param message     Nullable {@link TextChannel} object
+     * @param guildMessageChannel Non-null {@link GuildMessageChannel} object
+     * @param message     Nullable {@link GuildMessageChannel} object
      */
-    public ManagedGuildMessage(String name, @NonNull Guild guild, @NonNull TextChannel textChannel, Message message) {
+    public ManagedGuildMessage(String name, @NonNull Guild guild, @NonNull GuildMessageChannel guildMessageChannel, Message message) {
         this.name = name;
         setGuild(guild);
-        setTextChannel(textChannel);
+        setGuildMessageChannel(guildMessageChannel);
         setMessage(message);
     }
 
@@ -56,23 +58,23 @@ public class ManagedGuildMessage {
      *
      * @param name             Name of {@link ManagedGuildMessage}
      * @param rawGuildID       Raw Guild ID, must not be 0
-     * @param rawTextChannelID Raw Text channel ID, must not be 0
+     * @param rawGuildMessageChannelID Raw Guild Message channel ID, must not be 0
      * @param rawMessageID     Raw Message ID, can be 0
      *
-     * @throws IllegalArgumentException if rawGuildID is zero or rawTextChannelID is zero
+     * @throws IllegalArgumentException if rawGuildID is zero or rawGuildMessageChannelID is zero
      */
-    public ManagedGuildMessage(String name, long rawGuildID, long rawTextChannelID, long rawMessageID) {
+    public ManagedGuildMessage(String name, long rawGuildID, long rawGuildMessageChannelID, long rawMessageID) {
         if (rawGuildID <= 0) {
             throw new IllegalArgumentException("rawGuildID must not be 0!");
         }
 
-        if (rawTextChannelID <= 0) {
-            throw new IllegalArgumentException("rawTextChannelID must not be 0!");
+        if (rawGuildMessageChannelID <= 0) {
+            throw new IllegalArgumentException("rawGuildMessageChannelID must not be 0!");
         }
 
         this.name = name;
         this.rawGuildID = rawGuildID;
-        this.rawTextChannelID = rawTextChannelID;
+        this.rawGuildMessageChannelID = rawGuildMessageChannelID;
         this.rawMessageID = rawMessageID;
     }
 
@@ -173,23 +175,23 @@ public class ManagedGuildMessage {
         Runnable sendNewMessageRunnable = () -> {
             switch (restActionMethod) {
                 case QUEUE: {
-                    textChannel.sendMessage(DiscordUtils.getDefaultMessageCreateBuilder().build()).queue(message -> {
+                    guildMessageChannel.sendMessage(DiscordUtils.getDefaultMessageCreateBuilder().build()).queue(message -> {
                         setMessage(message);
                         success.accept(CallbackResult.SENT);
                     }, exception -> {
                         handleException(exception, failure, () -> {
-                            failure.accept(new CannotSendNewMessageException(exception, guild, textChannel));
+                            failure.accept(new CannotSendNewMessageException(exception, guild, guildMessageChannel));
                         });
                     });
                     return;
                 }
                 case COMPLETE: {
                     try {
-                        setMessage(textChannel.sendMessage(DiscordUtils.getDefaultMessageCreateBuilder().build()).complete());
+                        setMessage(guildMessageChannel.sendMessage(DiscordUtils.getDefaultMessageCreateBuilder().build()).complete());
                         success.accept(CallbackResult.SENT);
                     } catch (Exception exception) {
                         handleException(exception, failure, () -> {
-                            failure.accept(new CannotSendNewMessageException(exception, guild, textChannel));
+                            failure.accept(new CannotSendNewMessageException(exception, guild, guildMessageChannel));
                         });
                     }
                     return;
@@ -201,7 +203,7 @@ public class ManagedGuildMessage {
             }
         };
 
-        boolean valid = isGuildValid() && isTextChannelValid() && isMessageValid();
+        boolean valid = isGuildValid() && isGuildMessageChannelValid() && isMessageValid();
 
         if (valid) {
             if (!force) {
@@ -221,16 +223,22 @@ public class ManagedGuildMessage {
             return;
         }
 
-        textChannel = guild.getTextChannelById(rawTextChannelID);
-        if (textChannel == null) {
-            failure.accept(new InvalidTextChannelIDException(guild, rawTextChannelID));
+        GuildChannel channel = guild.getGuildChannelById(rawGuildMessageChannelID);
+
+        if (!(channel instanceof GuildMessageChannel)) {
+            channel = null;
+        }
+
+        guildMessageChannel = (GuildMessageChannel) channel;
+        if (guildMessageChannel == null) {
+            failure.accept(new InvalidTextChannelIDException(guild, rawGuildMessageChannelID));
             return;
         }
 
         switch (restActionMethod) {
             case QUEUE: {
                 try {
-                    textChannel.retrieveMessageById(rawMessageID).queue(message -> {
+                    guildMessageChannel.retrieveMessageById(rawMessageID).queue(message -> {
                         setMessage(message);
                         success.accept(CallbackResult.RETRIEVED);
                     }, exception -> {
@@ -238,27 +246,27 @@ public class ManagedGuildMessage {
                             if (sendNewMessageIfNotFound) {
                                 sendNewMessageRunnable.run();
                             } else {
-                                failure.accept(new InvalidMessageIDException(exception, guild, textChannel, rawMessageID));
+                                failure.accept(new InvalidMessageIDException(exception, guild, guildMessageChannel, rawMessageID));
                             }
                         });
                     });
                 } catch (Exception exception) {
                     handleException(exception, failure, () -> {
-                        failure.accept(new InvalidMessageIDException(exception, guild, textChannel, rawMessageID));
+                        failure.accept(new InvalidMessageIDException(exception, guild, guildMessageChannel, rawMessageID));
                     });
                 }
                 return;
             }
             case COMPLETE: {
                 try {
-                    setMessage(textChannel.retrieveMessageById(rawMessageID).complete());
+                    setMessage(guildMessageChannel.retrieveMessageById(rawMessageID).complete());
                     success.accept(CallbackResult.RETRIEVED);
                 } catch (Exception exception) {
                     handleException(exception, failure, () -> {
                         if (sendNewMessageIfNotFound) {
                             sendNewMessageRunnable.run();
                         } else {
-                            failure.accept(new InvalidMessageIDException(exception, guild, textChannel, rawMessageID));
+                            failure.accept(new InvalidMessageIDException(exception, guild, guildMessageChannel, rawMessageID));
                         }
                     });
                 }
@@ -285,7 +293,7 @@ public class ManagedGuildMessage {
 
     /**
      * Edits current message in {@link ManagedGuildMessage}, if failed, tries to send new message into current
-     * {@link ManagedGuildMessage#textChannel}
+     * {@link ManagedGuildMessage#guildMessageChannel}
      *
      * @param messageEditBuilder Non-null {@link MessageEditBuilder}
      * @param restActionMethod   Determines which method should RestAction use (#queue() or #complete)
@@ -298,12 +306,12 @@ public class ManagedGuildMessage {
     public void sendOrEditMessage(@NonNull MessageEditBuilder messageEditBuilder, @NonNull RestActionMethod restActionMethod, @NonNull Consumer<CallbackResult> success,
                                   @NonNull Consumer<Exception> failure) {
         Consumer<Message> sendNewMessageConsumer = (messageToSend) -> {
-            boolean textChannelValid = isTextChannelValid();
+            boolean textChannelValid = isGuildMessageChannelValid();
 
             if (textChannelValid) {
                 try {
-                    RestAction<Message> messageRestAction = textChannel.sendMessage(MessageCreateBuilder.fromEditData(messageEditBuilder.build())
-                                                                                                        .build());
+                    RestAction<Message> messageRestAction = guildMessageChannel.sendMessage(MessageCreateBuilder.fromEditData(messageEditBuilder.build())
+                                                                                                                .build());
 
                     switch (restActionMethod) {
                         case QUEUE: {
@@ -312,7 +320,7 @@ public class ManagedGuildMessage {
                                 success.accept(CallbackResult.SENT);
                             }, exception -> {
                                 handleException(exception, failure, () -> {
-                                    failure.accept(new CannotSendNewMessageException(exception, guild, textChannel));
+                                    failure.accept(new CannotSendNewMessageException(exception, guild, guildMessageChannel));
                                 });
                             });
                             return;
@@ -323,7 +331,7 @@ public class ManagedGuildMessage {
                                 success.accept(CallbackResult.SENT);
                             } catch (Exception exception) {
                                 handleException(exception, failure, () -> {
-                                    failure.accept(new CannotSendNewMessageException(exception, guild, textChannel));
+                                    failure.accept(new CannotSendNewMessageException(exception, guild, guildMessageChannel));
                                 });
                             }
                             return;
@@ -335,11 +343,11 @@ public class ManagedGuildMessage {
                     }
                 } catch (Exception exception) {
                     handleException(exception, failure, () -> {
-                        failure.accept(new CannotSendNewMessageException(exception, guild, textChannel));
+                        failure.accept(new CannotSendNewMessageException(exception, guild, guildMessageChannel));
                     });
                 }
             } else {
-                failure.accept(new InvalidTextChannelIDException(guild, rawTextChannelID));
+                failure.accept(new InvalidTextChannelIDException(guild, rawGuildMessageChannelID));
             }
         };
 
@@ -395,14 +403,14 @@ public class ManagedGuildMessage {
     }
 
     /**
-     * Checks if {@link ManagedGuildMessage#textChannel} is not null and if {@link ManagedGuildMessage#rawTextChannelID} equals to
-     * {@link ManagedGuildMessage#textChannel}'s ID
+     * Checks if {@link ManagedGuildMessage#guildMessageChannel} is not null and if {@link ManagedGuildMessage#rawGuildMessageChannelID} equals to
+     * {@link ManagedGuildMessage#guildMessageChannel}'s ID
      *
      * @return True if applies, false otherwise
      */
-    public boolean isTextChannelValid() {
-        if (textChannel != null) {
-            return rawTextChannelID == textChannel.getIdLong();
+    public boolean isGuildMessageChannelValid() {
+        if (guildMessageChannel != null) {
+            return rawGuildMessageChannelID == guildMessageChannel.getIdLong();
         }
 
         return false;
@@ -426,7 +434,7 @@ public class ManagedGuildMessage {
 
     /**
      * Sets specified value to {@link ManagedGuildMessage#rawGuildID}.<br> This automatically nulls {@link ManagedGuildMessage#guild},
-     * {@link ManagedGuildMessage#textChannel} and {@link ManagedGuildMessage#message}<br> You will have to run {@link #updateEntries(JDA)} method to
+     * {@link ManagedGuildMessage#guildMessageChannel} and {@link ManagedGuildMessage#message}<br> You will have to run {@link #updateEntries(JDA)} method to
      * update them
      *
      * @param rawGuildID Raw Guild ID
@@ -435,20 +443,20 @@ public class ManagedGuildMessage {
         this.rawGuildID = rawGuildID;
 
         guild = null;
-        textChannel = null;
+        guildMessageChannel = null;
         message = null;
     }
 
     /**
-     * Sets specified value to {@link ManagedGuildMessage#rawTextChannelID}.<br> This automatically nulls {@link ManagedGuildMessage#textChannel} and
+     * Sets specified value to {@link ManagedGuildMessage#rawGuildMessageChannelID}.<br> This automatically nulls {@link ManagedGuildMessage#guildMessageChannel} and
      * {@link ManagedGuildMessage#message}<br> You will have to run {@link #updateEntries(JDA)} method to update them
      *
-     * @param rawTextChannelID Raw Message channel ID
+     * @param rawGuildMessageChannelID Raw Message channel ID
      */
-    public void setRawTextChannelID(long rawTextChannelID) {
-        this.rawTextChannelID = rawTextChannelID;
+    public void setRawGuildMessageChannelID(long rawGuildMessageChannelID) {
+        this.rawGuildMessageChannelID = rawGuildMessageChannelID;
 
-        textChannel = null;
+        guildMessageChannel = null;
         message = null;
     }
 
@@ -478,15 +486,15 @@ public class ManagedGuildMessage {
     }
 
     /**
-     * Sets {@link TextChannel} object<br> This automatically also sets {@link ManagedGuildMessage#rawTextChannelID} to {@link TextChannel}'s ID
+     * Sets {@link GuildMessageChannel} object<br> This automatically also sets {@link ManagedGuildMessage#rawGuildMessageChannelID} to {@link GuildMessageChannel}'s ID
      *
-     * @param textChannel Non-null {@link TextChannel}
+     * @param guildMessageChannel Non-null {@link GuildMessageChannel}
      *
      * @return Non-null {@link ManagedGuildMessage}
      */
-    public ManagedGuildMessage setTextChannel(@NonNull TextChannel textChannel) {
-        this.textChannel = textChannel;
-        this.rawTextChannelID = textChannel.getIdLong();
+    public ManagedGuildMessage setGuildMessageChannel(@NonNull GuildMessageChannel guildMessageChannel) {
+        this.guildMessageChannel = guildMessageChannel;
+        this.rawGuildMessageChannelID = guildMessageChannel.getIdLong();
         return this;
     }
 

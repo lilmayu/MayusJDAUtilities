@@ -19,7 +19,7 @@ public class ManagedGuild implements Serializable {
 
     // Raw data
     private @Getter @Setter String name;
-    private @Getter @SerializedName("guildID") long rawGuildID;
+    private @Getter @SerializedName("guildID") long rawGuildId;
 
     // Discord data
     private transient @Getter Guild guild;
@@ -39,17 +39,17 @@ public class ManagedGuild implements Serializable {
      * Constructs {@link ManagedGuild} with specified raw IDs
      *
      * @param name       Name of {@link ManagedGuild}
-     * @param rawGuildID Raw Guild ID, must not be 0
+     * @param rawGuildId Raw Guild ID, must not be 0
      *
      * @throws IllegalArgumentException if rawGuildID is zero
      */
-    public ManagedGuild(String name, long rawGuildID) {
-        if (rawGuildID <= 0) {
+    public ManagedGuild(String name, long rawGuildId) {
+        if (rawGuildId <= 0) {
             throw new IllegalArgumentException("rawGuildID must not be 0!");
         }
 
         this.name = name;
-        this.rawGuildID = rawGuildID;
+        this.rawGuildId = rawGuildId;
     }
 
     // Others
@@ -111,26 +111,26 @@ public class ManagedGuild implements Serializable {
 
 
         if (jda != null) {
-            guild = jda.getGuildById(rawGuildID);
+            guild = jda.getGuildById(rawGuildId);
         } else {
-            guild = shardManager.getGuildById(rawGuildID);
+            guild = shardManager.getGuildById(rawGuildId);
         }
 
         if (guild == null) {
-            throw new InvalidGuildIDException(rawGuildID);
+            throw new InvalidGuildIDException(rawGuildId);
         }
 
         return true;
     }
 
     /**
-     * Checks if {@link ManagedGuild#guild} is not null and if {@link ManagedGuild#rawGuildID} equals to {@link ManagedGuild#guild}'s ID
+     * Checks if {@link ManagedGuild#guild} is not null and if {@link ManagedGuild#rawGuildId} equals to {@link ManagedGuild#guild}'s ID
      *
      * @return True if applies, false otherwise
      */
     public boolean isGuildValid() {
         if (guild != null) {
-            return rawGuildID == guild.getIdLong();
+            return rawGuildId == guild.getIdLong();
         }
 
         return false;
@@ -139,16 +139,16 @@ public class ManagedGuild implements Serializable {
     // Setters
 
     /**
-     * Sets specified value to {@link ManagedGuild#rawGuildID}.<br>
+     * Sets specified value to {@link ManagedGuild#rawGuildId}.<br>
      * This automatically nulls {@link ManagedGuild#guild}<br>
      * You will have to run {@link #updateEntries(JDA)} method to update them
      *
-     * @param rawGuildID Raw Guild ID
+     * @param rawGuildId Raw Guild ID
      *
      * @return Non-null {@link ManagedGuild}
      */
-    public ManagedGuild setRawGuildID(long rawGuildID) {
-        this.rawGuildID = rawGuildID;
+    public ManagedGuild setRawGuildId(long rawGuildId) {
+        this.rawGuildId = rawGuildId;
         guild = null;
 
         return this;
@@ -156,7 +156,7 @@ public class ManagedGuild implements Serializable {
 
     /**
      * Sets {@link Guild} object<br>
-     * This automatically also sets {@link ManagedGuild#rawGuildID} to {@link Guild}'s ID
+     * This automatically also sets {@link ManagedGuild#rawGuildId} to {@link Guild}'s ID
      *
      * @param guild Non-null {@link Guild}
      *
@@ -164,7 +164,7 @@ public class ManagedGuild implements Serializable {
      */
     public ManagedGuild setGuild(@NonNull Guild guild) {
         this.guild = guild;
-        this.rawGuildID = guild.getIdLong();
+        this.rawGuildId = guild.getIdLong();
 
         return this;
     }

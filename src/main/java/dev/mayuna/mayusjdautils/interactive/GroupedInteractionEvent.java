@@ -49,7 +49,8 @@ public class GroupedInteractionEvent {
     /////////////
 
     /**
-     * Returns type of this interaction event.<br>This method DOES NOT return JDA's {@link net.dv8tion.jda.api.interactions.InteractionType}!
+     * Returns type of this interaction event.<br>
+     * This method DOES NOT return JDA's {@link net.dv8tion.jda.api.interactions.InteractionType}!
      *
      * @return Non-null {@link InteractionType}
      */

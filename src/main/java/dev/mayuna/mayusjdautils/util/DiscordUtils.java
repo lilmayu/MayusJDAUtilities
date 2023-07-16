@@ -13,13 +13,13 @@ import java.time.Instant;
 
 public class DiscordUtils {
 
-    private static @Setter EmbedBuilder defaultEmbed = new EmbedBuilder().setFooter("Powered by Mayu's JDA Utilities")
-                                                                         .setTimestamp(Instant.now())
-                                                                         .setTitle("Loading...")
-                                                                         .setDescription("Please wait.");
+    private static @Setter EmbedBuilder defaultEmbedStyle = new EmbedBuilder().setFooter("Powered by Mayu's JDA Utilities")
+                                                                              .setTimestamp(Instant.now())
+                                                                              .setTitle("Loading...")
+                                                                              .setDescription("Please wait.");
 
-    private static @Getter @Setter MessageCreateBuilder defaultMessageCreateBuilder = new MessageCreateBuilder().setEmbeds(getDefaultEmbed().build());
-    private static @Getter @Setter MessageEditBuilder defaultMessageEditBuilder = new MessageEditBuilder().setEmbeds(getDefaultEmbed().build());
+    private static @Getter @Setter MessageCreateBuilder defaultMessageCreateBuilder = new MessageCreateBuilder().setEmbeds(getDefaultEmbedStyle().build());
+    private static @Getter @Setter MessageEditBuilder defaultMessageEditBuilder = new MessageEditBuilder().setEmbeds(getDefaultEmbedStyle().build());
 
     /**
      * Checks if specified string is qualified as User mention
@@ -81,8 +81,8 @@ public class DiscordUtils {
      *
      * @return Non-null {@link EmbedBuilder}
      */
-    public static EmbedBuilder getDefaultEmbed() {
-        return new EmbedBuilder(defaultEmbed).setTimestamp(Instant.now());
+    public static EmbedBuilder getDefaultEmbedStyle() {
+        return new EmbedBuilder(defaultEmbedStyle).setTimestamp(Instant.now());
     }
 
     public static boolean isDiscordException(Throwable throwable) {

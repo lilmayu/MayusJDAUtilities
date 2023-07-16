@@ -11,7 +11,6 @@ import lombok.Setter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.requests.RestAction;
@@ -29,9 +28,9 @@ public class ManagedGuildMessage {
 
     // Raw data
     private @Getter @Setter String name;
-    private @Getter @SerializedName("guildID") long rawGuildID;
-    private @Getter @SerializedName(value = "guildMessageChannel", alternate = {"messageChannelID", "textChannelID"}) long rawGuildMessageChannelID; // messageChannelID for backwards compatibility
-    private @Getter @SerializedName("messageID") long rawMessageID;
+    private @Getter @SerializedName("guildID") long rawGuildId;
+    private @Getter @SerializedName(value = "guildMessageChannel", alternate = {"messageChannelID", "textChannelID"}) long rawGuildMessageChannelId; // messageChannelID for backwards compatibility
+    private @Getter @SerializedName("messageID") long rawMessageId;
 
     // Discord data
     private transient @Getter Guild guild;
@@ -57,14 +56,14 @@ public class ManagedGuildMessage {
      * Constructs {@link ManagedGuildMessage} with specified raw IDs
      *
      * @param name             Name of {@link ManagedGuildMessage}
-     * @param rawGuildID       Raw Guild ID, must not be 0
+     * @param rawGuildId       Raw Guild ID, must not be 0
      * @param rawGuildMessageChannelID Raw Guild Message channel ID, must not be 0
-     * @param rawMessageID     Raw Message ID, can be 0
+     * @param rawMessageId     Raw Message ID, can be 0
      *
      * @throws IllegalArgumentException if rawGuildID is zero or rawGuildMessageChannelID is zero
      */
-    public ManagedGuildMessage(String name, long rawGuildID, long rawGuildMessageChannelID, long rawMessageID) {
-        if (rawGuildID <= 0) {
+    public ManagedGuildMessage(String name, long rawGuildId, long rawGuildMessageChannelID, long rawMessageId) {
+        if (rawGuildId <= 0) {
             throw new IllegalArgumentException("rawGuildID must not be 0!");
         }
 
@@ -73,9 +72,9 @@ public class ManagedGuildMessage {
         }
 
         this.name = name;
-        this.rawGuildID = rawGuildID;
-        this.rawGuildMessageChannelID = rawGuildMessageChannelID;
-        this.rawMessageID = rawMessageID;
+        this.rawGuildId = rawGuildId;
+        this.rawGuildMessageChannelId = rawGuildMessageChannelID;
+        this.rawMessageId = rawMessageId;
     }
 
     // Others
@@ -213,17 +212,17 @@ public class ManagedGuildMessage {
         }
 
         if (jda != null) {
-            guild = jda.getGuildById(rawGuildID);
+            guild = jda.getGuildById(rawGuildId);
         } else {
-            guild = shardManager.getGuildById(rawGuildID);
+            guild = shardManager.getGuildById(rawGuildId);
         }
 
         if (guild == null) {
-            failure.accept(new InvalidGuildIDException(rawGuildID));
+            failure.accept(new InvalidGuildIDException(rawGuildId));
             return;
         }
 
-        GuildChannel channel = guild.getGuildChannelById(rawGuildMessageChannelID);
+        GuildChannel channel = guild.getGuildChannelById(rawGuildMessageChannelId);
 
         if (!(channel instanceof GuildMessageChannel)) {
             channel = null;
@@ -231,14 +230,14 @@ public class ManagedGuildMessage {
 
         guildMessageChannel = (GuildMessageChannel) channel;
         if (guildMessageChannel == null) {
-            failure.accept(new InvalidTextChannelIDException(guild, rawGuildMessageChannelID));
+            failure.accept(new InvalidTextChannelIDException(guild, rawGuildMessageChannelId));
             return;
         }
 
         switch (restActionMethod) {
             case QUEUE: {
                 try {
-                    guildMessageChannel.retrieveMessageById(rawMessageID).queue(message -> {
+                    guildMessageChannel.retrieveMessageById(rawMessageId).queue(message -> {
                         setMessage(message);
                         success.accept(CallbackResult.RETRIEVED);
                     }, exception -> {
@@ -246,27 +245,27 @@ public class ManagedGuildMessage {
                             if (sendNewMessageIfNotFound) {
                                 sendNewMessageRunnable.run();
                             } else {
-                                failure.accept(new InvalidMessageIDException(exception, guild, guildMessageChannel, rawMessageID));
+                                failure.accept(new InvalidMessageIDException(exception, guild, guildMessageChannel, rawMessageId));
                             }
                         });
                     });
                 } catch (Exception exception) {
                     handleException(exception, failure, () -> {
-                        failure.accept(new InvalidMessageIDException(exception, guild, guildMessageChannel, rawMessageID));
+                        failure.accept(new InvalidMessageIDException(exception, guild, guildMessageChannel, rawMessageId));
                     });
                 }
                 return;
             }
             case COMPLETE: {
                 try {
-                    setMessage(guildMessageChannel.retrieveMessageById(rawMessageID).complete());
+                    setMessage(guildMessageChannel.retrieveMessageById(rawMessageId).complete());
                     success.accept(CallbackResult.RETRIEVED);
                 } catch (Exception exception) {
                     handleException(exception, failure, () -> {
                         if (sendNewMessageIfNotFound) {
                             sendNewMessageRunnable.run();
                         } else {
-                            failure.accept(new InvalidMessageIDException(exception, guild, guildMessageChannel, rawMessageID));
+                            failure.accept(new InvalidMessageIDException(exception, guild, guildMessageChannel, rawMessageId));
                         }
                     });
                 }
@@ -347,7 +346,7 @@ public class ManagedGuildMessage {
                     });
                 }
             } else {
-                failure.accept(new InvalidTextChannelIDException(guild, rawGuildMessageChannelID));
+                failure.accept(new InvalidTextChannelIDException(guild, rawGuildMessageChannelId));
             }
         };
 
@@ -389,42 +388,42 @@ public class ManagedGuildMessage {
     }
 
     /**
-     * Checks if {@link ManagedGuildMessage#guild} is not null and if {@link ManagedGuildMessage#rawGuildID} equals to
+     * Checks if {@link ManagedGuildMessage#guild} is not null and if {@link ManagedGuildMessage#rawGuildId} equals to
      * {@link ManagedGuildMessage#guild}'s ID
      *
      * @return True if applies, false otherwise
      */
     public boolean isGuildValid() {
         if (guild != null) {
-            return rawGuildID == guild.getIdLong();
+            return rawGuildId == guild.getIdLong();
         }
 
         return false;
     }
 
     /**
-     * Checks if {@link ManagedGuildMessage#guildMessageChannel} is not null and if {@link ManagedGuildMessage#rawGuildMessageChannelID} equals to
+     * Checks if {@link ManagedGuildMessage#guildMessageChannel} is not null and if {@link ManagedGuildMessage#rawGuildMessageChannelId} equals to
      * {@link ManagedGuildMessage#guildMessageChannel}'s ID
      *
      * @return True if applies, false otherwise
      */
     public boolean isGuildMessageChannelValid() {
         if (guildMessageChannel != null) {
-            return rawGuildMessageChannelID == guildMessageChannel.getIdLong();
+            return rawGuildMessageChannelId == guildMessageChannel.getIdLong();
         }
 
         return false;
     }
 
     /**
-     * Checks if {@link ManagedGuildMessage#message} is not null and if {@link ManagedGuildMessage#rawMessageID} equals to
+     * Checks if {@link ManagedGuildMessage#message} is not null and if {@link ManagedGuildMessage#rawMessageId} equals to
      * {@link ManagedGuildMessage#message}'s ID
      *
      * @return True if applies, false otherwise
      */
     public boolean isMessageValid() {
         if (message != null) {
-            return rawMessageID == message.getIdLong();
+            return rawMessageId == message.getIdLong();
         }
 
         return false;
@@ -433,14 +432,14 @@ public class ManagedGuildMessage {
     // Getters / Setters
 
     /**
-     * Sets specified value to {@link ManagedGuildMessage#rawGuildID}.<br> This automatically nulls {@link ManagedGuildMessage#guild},
+     * Sets specified value to {@link ManagedGuildMessage#rawGuildId}.<br> This automatically nulls {@link ManagedGuildMessage#guild},
      * {@link ManagedGuildMessage#guildMessageChannel} and {@link ManagedGuildMessage#message}<br> You will have to run {@link #updateEntries(JDA)} method to
      * update them
      *
-     * @param rawGuildID Raw Guild ID
+     * @param rawGuildId Raw Guild ID
      */
-    public void setRawGuildID(long rawGuildID) {
-        this.rawGuildID = rawGuildID;
+    public void setRawGuildId(long rawGuildId) {
+        this.rawGuildId = rawGuildId;
 
         guild = null;
         guildMessageChannel = null;
@@ -448,32 +447,32 @@ public class ManagedGuildMessage {
     }
 
     /**
-     * Sets specified value to {@link ManagedGuildMessage#rawGuildMessageChannelID}.<br> This automatically nulls {@link ManagedGuildMessage#guildMessageChannel} and
+     * Sets specified value to {@link ManagedGuildMessage#rawGuildMessageChannelId}.<br> This automatically nulls {@link ManagedGuildMessage#guildMessageChannel} and
      * {@link ManagedGuildMessage#message}<br> You will have to run {@link #updateEntries(JDA)} method to update them
      *
-     * @param rawGuildMessageChannelID Raw Message channel ID
+     * @param rawGuildMessageChannelId Raw Message channel ID
      */
-    public void setRawGuildMessageChannelID(long rawGuildMessageChannelID) {
-        this.rawGuildMessageChannelID = rawGuildMessageChannelID;
+    public void setRawGuildMessageChannelId(long rawGuildMessageChannelId) {
+        this.rawGuildMessageChannelId = rawGuildMessageChannelId;
 
         guildMessageChannel = null;
         message = null;
     }
 
     /**
-     * Sets specified value to {@link ManagedGuildMessage#rawMessageID}.<br> This automatically nulls {@link ManagedGuildMessage#message}<br> You will
+     * Sets specified value to {@link ManagedGuildMessage#rawMessageId}.<br> This automatically nulls {@link ManagedGuildMessage#message}<br> You will
      * have to run {@link #updateEntries(JDA)} method to update it
      *
-     * @param rawMessageID Raw Message ID
+     * @param rawMessageId Raw Message ID
      */
-    public void setRawMessageID(long rawMessageID) {
-        this.rawMessageID = rawMessageID;
+    public void setRawMessageId(long rawMessageId) {
+        this.rawMessageId = rawMessageId;
 
         message = null;
     }
 
     /**
-     * Sets {@link Guild} object<br> This automatically also sets {@link ManagedGuildMessage#rawGuildID} to {@link Guild}'s ID
+     * Sets {@link Guild} object<br> This automatically also sets {@link ManagedGuildMessage#rawGuildId} to {@link Guild}'s ID
      *
      * @param guild Non-null {@link Guild}
      *
@@ -481,12 +480,12 @@ public class ManagedGuildMessage {
      */
     public ManagedGuildMessage setGuild(@NonNull Guild guild) {
         this.guild = guild;
-        this.rawGuildID = guild.getIdLong();
+        this.rawGuildId = guild.getIdLong();
         return this;
     }
 
     /**
-     * Sets {@link GuildMessageChannel} object<br> This automatically also sets {@link ManagedGuildMessage#rawGuildMessageChannelID} to {@link GuildMessageChannel}'s ID
+     * Sets {@link GuildMessageChannel} object<br> This automatically also sets {@link ManagedGuildMessage#rawGuildMessageChannelId} to {@link GuildMessageChannel}'s ID
      *
      * @param guildMessageChannel Non-null {@link GuildMessageChannel}
      *
@@ -494,13 +493,13 @@ public class ManagedGuildMessage {
      */
     public ManagedGuildMessage setGuildMessageChannel(@NonNull GuildMessageChannel guildMessageChannel) {
         this.guildMessageChannel = guildMessageChannel;
-        this.rawGuildMessageChannelID = guildMessageChannel.getIdLong();
+        this.rawGuildMessageChannelId = guildMessageChannel.getIdLong();
         return this;
     }
 
     /**
-     * Sets {@link Message} object<br> This automatically also sets {@link ManagedGuildMessage#rawMessageID} to {@link Message}'s ID if not null,
-     * otherwise sets {@link ManagedGuildMessage#rawMessageID} to 0
+     * Sets {@link Message} object<br> This automatically also sets {@link ManagedGuildMessage#rawMessageId} to {@link Message}'s ID if not null,
+     * otherwise sets {@link ManagedGuildMessage#rawMessageId} to 0
      *
      * @param message Nullable {@link Message}
      *
@@ -509,10 +508,10 @@ public class ManagedGuildMessage {
     public ManagedGuildMessage setMessage(Message message) {
         if (message == null) {
             this.message = null;
-            this.rawMessageID = 0;
+            this.rawMessageId = 0;
         } else {
             this.message = message;
-            this.rawMessageID = message.getIdLong();
+            this.rawMessageId = message.getIdLong();
         }
 
         return this;

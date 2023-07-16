@@ -43,14 +43,37 @@ public class Interaction {
         return new Interaction(button.withId(UUID.randomUUID().toString()));
     }
 
+    /**
+     * Creates {@link Interaction} with Button, the ID will be randomized
+     *
+     * @param buttonStyle Button Style
+     * @param label Button Label
+     * @return {@link Interaction} object
+     */
     public static Interaction asButton(@NonNull ButtonStyle buttonStyle, String label) {
         return new Interaction(Button.of(buttonStyle, UUID.randomUUID().toString(), label));
     }
 
+
+    /**
+     * Creates {@link Interaction} with Button, the ID will be randomized
+     *
+     * @param buttonStyle Button Style
+     * @param label Button Label
+     * @param emoji Button Emoji
+     * @return {@link Interaction} object
+     */
     public static Interaction asButton(@NonNull ButtonStyle buttonStyle, String label, Emoji emoji) {
         return new Interaction(Button.of(buttonStyle, UUID.randomUUID().toString(), label, emoji));
     }
 
+    /**
+     * Creates {@link Interaction} with Button, the ID will be randomized
+     *
+     * @param buttonStyle Button Style
+     * @param emoji Button Emoji
+     * @return {@link Interaction} object
+     */
     public static Interaction asButton(@NonNull ButtonStyle buttonStyle, Emoji emoji) {
         return new Interaction(Button.of(buttonStyle, UUID.randomUUID().toString(), emoji));
     }
@@ -66,42 +89,95 @@ public class Interaction {
         return new Interaction(selectOption.withValue(UUID.randomUUID().toString()));
     }
 
+    /**
+     * Creates {@link Interaction} with Select Option, the value will be randomized
+     * @param label Select Option Label
+     * @return {@link Interaction} object
+     */
     public static Interaction asSelectOption(@NonNull String label) {
         return new Interaction(SelectOption.of(label, UUID.randomUUID().toString()));
     }
 
+    /**
+     * Creates {@link Interaction} with Select Option, the value will be randomized
+     * @param label Select Option Label
+     * @param description Select Option description
+     * @return {@link Interaction} object
+     */
     public static Interaction asSelectOption(@NonNull String label, @NonNull String description) {
         return new Interaction(SelectOption.of(label, UUID.randomUUID().toString()).withDescription(description));
     }
 
+    /**
+     * Creates {@link Interaction} with Select Option, the value will be randomized
+     * @param label Select Option Label
+     * @param description Select Option description
+     * @param isDefault {@link SelectOption}'s {@link SelectOption#isDefault()
+     * @return {@link Interaction} object
+     */
     public static Interaction asSelectOption(@NonNull String label, @NonNull String description, boolean isDefault) {
         return new Interaction(SelectOption.of(label, UUID.randomUUID().toString()).withDescription(description).withDefault(isDefault));
     }
 
+    /**
+     * Creates {@link Interaction} with Select Option, the value will be randomized
+     * @param label Select Option Label
+     * @param description Select Option description
+     * @param isDefault {@link SelectOption}'s {@link SelectOption#isDefault()
+     * @param emoji Select Option Emoji
+     * @return {@link Interaction} object
+     */
     public static Interaction asSelectOption(@NonNull String label, @NonNull String description, boolean isDefault, @NonNull Emoji emoji) {
         return new Interaction(SelectOption.of(label, UUID.randomUUID().toString()).withDescription(description).withDefault(isDefault).withEmoji(emoji));
     }
 
+    /**
+     * Creates {@link Interaction} with Select Option, the value will be randomized
+     * @param label Select Option Label
+     * @param description Select Option description
+     * @param emoji Select Option Emoji
+     * @return {@link Interaction} object
+     */
     public static Interaction asSelectOption(@NonNull String label, @NonNull String description, @NonNull Emoji emoji) {
         return new Interaction(SelectOption.of(label, UUID.randomUUID().toString()).withDescription(description).withEmoji(emoji));
     }
 
+    /**
+     * Determines if {@link Interaction} is Emoji
+     * @return true if {@link Interaction} is Emoji
+     */
     public boolean isEmoji() {
         return emoji != null;
     }
 
+    /**
+     * Determines if {@link Interaction} is Unicode Emoji
+     * @return true if {@link Interaction} is Unicode Emoji
+     */
     public boolean isUnicodeEmoji() {
         return emoji != null && emoji.getType() == Emoji.Type.UNICODE;
     }
 
+    /**
+     * Determines if {@link Interaction} is Custom Emoji
+     * @return true if {@link Interaction} is Custom Emoji
+     */
     public boolean isCustomEmoji() {
         return emoji != null && emoji.getType() == Emoji.Type.CUSTOM;
     }
 
+    /**
+     * Determines if {@link Interaction} is Button
+     * @return true if {@link Interaction} is Button
+     */
     public boolean isButton() {
         return button != null;
     }
 
+    /**
+     * Determines if {@link Interaction} is Select Option
+     * @return true if {@link Interaction} is Select Option
+     */
     public boolean isSelectOption() {
         return selectOption != null;
     }

@@ -23,7 +23,7 @@ public class ManagedUser {
 
     // Raw data
     private @Getter @Setter String name;
-    private @Getter @SerializedName("userID") long rawUserID;
+    private @Getter @SerializedName("userID") long rawUserId;
 
     // Discord data
     private transient @Getter User user;
@@ -43,13 +43,13 @@ public class ManagedUser {
      * Constructs {@link ManagedUser} with specified raw IDs
      *
      * @param name      Name of {@link ManagedUser}
-     * @param rawUserID Raw User ID, must not be 0
+     * @param rawUserId Raw User ID, must not be 0
      *
      * @throws IllegalArgumentException if rawUserID is zero
      */
-    public ManagedUser(String name, long rawUserID) {
+    public ManagedUser(String name, long rawUserId) {
         this.name = name;
-        this.rawUserID = rawUserID;
+        this.rawUserId = rawUserId;
     }
 
     // Others
@@ -125,28 +125,28 @@ public class ManagedUser {
                 };
                 Consumer<? super Throwable> exceptionConsumer = exception -> {
                     handleException(exception, failure, () -> {
-                        failure.accept(new CannotRetrieveUserException(exception, rawUserID));
+                        failure.accept(new CannotRetrieveUserException(exception, rawUserId));
                     });
                 };
 
                 if (jda != null) {
-                    jda.retrieveUserById(rawUserID).queue(userConsumer, exceptionConsumer);
+                    jda.retrieveUserById(rawUserId).queue(userConsumer, exceptionConsumer);
                 } else {
-                    shardManager.retrieveUserById(rawUserID).queue(userConsumer, exceptionConsumer);
+                    shardManager.retrieveUserById(rawUserId).queue(userConsumer, exceptionConsumer);
                 }
                 return;
             }
             case COMPLETE: {
                 try {
                     if (jda != null) {
-                        setUser(jda.retrieveUserById(rawUserID).complete());
+                        setUser(jda.retrieveUserById(rawUserId).complete());
                     } else {
-                        setUser(shardManager.retrieveUserById(rawUserID).complete());
+                        setUser(shardManager.retrieveUserById(rawUserId).complete());
                     }
                     success.accept(CallbackResult.RETRIEVED);
                 } catch (Exception exception) {
                     handleException(exception, failure, () -> {
-                        failure.accept(new CannotRetrieveUserException(exception, rawUserID));
+                        failure.accept(new CannotRetrieveUserException(exception, rawUserId));
                     });
                 }
                 return;
@@ -155,13 +155,13 @@ public class ManagedUser {
     }
 
     /**
-     * Checks if {@link ManagedUser#user} is not null and if {@link ManagedUser#rawUserID} equals to {@link ManagedUser#user}'s ID
+     * Checks if {@link ManagedUser#user} is not null and if {@link ManagedUser#rawUserId} equals to {@link ManagedUser#user}'s ID
      *
      * @return True if applies, false otherwise
      */
     public boolean isUserValid() {
         if (user != null) {
-            return rawUserID == user.getIdLong();
+            return rawUserId == user.getIdLong();
         }
 
         return false;
@@ -170,16 +170,16 @@ public class ManagedUser {
     // Setters
 
     /**
-     * Sets specified value to {@link ManagedUser#rawUserID}.<br>
+     * Sets specified value to {@link ManagedUser#rawUserId}.<br>
      * This automatically nulls {@link ManagedUser#user}<br>
      * You will have to run {@link #updateEntries(JDA)} method to update them
      *
-     * @param rawUserID Raw User ID
+     * @param rawUserId Raw User ID
      *
      * @return Non-null {@link ManagedUser}
      */
-    public ManagedUser setRawUserID(long rawUserID) {
-        this.rawUserID = rawUserID;
+    public ManagedUser setRawUserId(long rawUserId) {
+        this.rawUserId = rawUserId;
         user = null;
 
         return this;
@@ -187,14 +187,14 @@ public class ManagedUser {
 
     /**
      * Sets {@link User} object<br>
-     * This automatically also sets {@link ManagedUser#rawUserID} to {@link User}'s ID
+     * This automatically also sets {@link ManagedUser#rawUserId} to {@link User}'s ID
      *
      * @param user Non-null {@link User}
      *
      * @return Non-null {@link ManagedUser}
      */
     public ManagedUser setUser(@NonNull User user) {
-        this.rawUserID = user.getIdLong();
+        this.rawUserId = user.getIdLong();
         this.user = user;
 
         return this;

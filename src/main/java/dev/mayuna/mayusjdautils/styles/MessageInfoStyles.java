@@ -22,10 +22,6 @@ public class MessageInfoStyles implements Styles {
 
     protected final MayusJDAUtilities mayusJDAUtilities;
 
-    protected EmbedBuilder defaultEmbedStyle = new EmbedBuilder().setFooter("Powered by Mayu's JDA Utilities")
-                                                               .setTitle("Loading...")
-                                                               .setDescription("Please wait.");
-
     protected @Getter boolean useUnicodeEmotes = true;
 
     public MessageInfoStyles(MayusJDAUtilities mayusJDAUtilities) {
@@ -38,16 +34,9 @@ public class MessageInfoStyles implements Styles {
      * @return EmbedBuilder
      */
     public @NotNull EmbedBuilder getDefaultEmbedStyle() {
-        return defaultEmbedStyle;
-    }
-
-    /**
-     * Sets default embed style
-     *
-     * @param embedBuilder Notnull embed builder
-     */
-    public void setDefaultEmbedStyle(@NotNull EmbedBuilder embedBuilder) {
-        this.defaultEmbedStyle = embedBuilder;
+        return new EmbedBuilder().setFooter("Powered by Mayu's JDA Utilities")
+                                 .setTitle("Loading...")
+                                 .setDescription("Please wait.");
     }
 
     /**
@@ -56,7 +45,7 @@ public class MessageInfoStyles implements Styles {
      * @return EmbedBuilder
      */
     public @NotNull EmbedBuilder getDefaultEmbedStyleWithTimestamp() {
-        return defaultEmbedStyle.setTimestamp(Instant.now());
+        return getDefaultEmbedStyle().setTimestamp(Instant.now());
     }
 
     /**

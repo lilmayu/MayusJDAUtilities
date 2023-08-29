@@ -71,7 +71,6 @@ public class MessageInfoStyles implements Styles {
 
         MessageInfoStyles otherMessageInfoStyles = (MessageInfoStyles) styles;
 
-        defaultEmbedStyle = otherMessageInfoStyles.defaultEmbedStyle;
         useUnicodeEmotes = otherMessageInfoStyles.useUnicodeEmotes;
     }
 

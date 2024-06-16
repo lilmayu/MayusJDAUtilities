@@ -18,10 +18,5 @@ public interface Interactable {
     void process(GroupedInteractionEvent interactionEvent);
 
     default void onExpire() {
-        InteractiveListener.removeInteractable(this);
-    }
-
-    default void forceExpire() {
-        onExpire();
     }
 }

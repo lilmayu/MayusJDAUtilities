@@ -10,7 +10,10 @@ import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 
 import java.util.UUID;
 
-public class Interaction {
+/**
+ * Interaction that can be added to interactive messages
+ */
+public final class Interaction {
 
     private Emoji emoji;
     private Button button;
@@ -160,33 +163,6 @@ public class Interaction {
     }
 
     /**
-     * Determines if {@link Interaction} is Emoji
-     *
-     * @return true if {@link Interaction} is Emoji
-     */
-    public boolean isEmoji() {
-        return emoji != null;
-    }
-
-    /**
-     * Determines if {@link Interaction} is Unicode Emoji
-     *
-     * @return true if {@link Interaction} is Unicode Emoji
-     */
-    public boolean isUnicodeEmoji() {
-        return emoji != null && emoji.getType() == Emoji.Type.UNICODE;
-    }
-
-    /**
-     * Determines if {@link Interaction} is Custom Emoji
-     *
-     * @return true if {@link Interaction} is Custom Emoji
-     */
-    public boolean isCustomEmoji() {
-        return emoji != null && emoji.getType() == Emoji.Type.CUSTOM;
-    }
-
-    /**
      * Determines if {@link Interaction} is Button
      *
      * @return true if {@link Interaction} is Button
@@ -202,33 +178,6 @@ public class Interaction {
      */
     public boolean isSelectOption() {
         return selectOption != null;
-    }
-
-    /**
-     * Gets unicode Emoji
-     *
-     * @return Returns null, if {@link Interaction} is not Unicode Emoji
-     */
-    public UnicodeEmoji getUnicodeEmoji() {
-        return isUnicodeEmoji() ? (UnicodeEmoji) emoji : null;
-    }
-
-    /**
-     * Gets Emote
-     *
-     * @return Returns null, if {@link Interaction} is not Custom Emoji
-     */
-    public CustomEmoji getCustomEmoji() {
-        return isCustomEmoji() ? (CustomEmoji) emoji : null;
-    }
-
-    /**
-     * Gets Emoji or Emote
-     *
-     * @return Returns null if {@link Interaction} is not emoji (custom or unicode)
-     */
-    public Emoji getEmoji() {
-        return isEmoji() ? emoji : null;
     }
 
     /**
@@ -252,13 +201,9 @@ public class Interaction {
     /**
      * Gets {@link Interaction}'s type
      *
-     * @return Non-null {@link InteractionType}, if {@link Interaction} is unicode or emoji, always returns {@link InteractionType#REACTION_ADD}
+     * @return Non-null {@link InteractionType}
      */
     public InteractionType getType() {
-        if (isEmoji()) {
-            return InteractionType.REACTION_ADD;
-        }
-
         if (isButton()) {
             return InteractionType.BUTTON_CLICK;
         }

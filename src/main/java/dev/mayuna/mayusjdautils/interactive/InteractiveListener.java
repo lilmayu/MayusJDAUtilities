@@ -1,71 +1,73 @@
 package dev.mayuna.mayusjdautils.interactive;
 
 import dev.mayuna.mayusjdautils.interactive.components.Interactable;
+import lombok.NonNull;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
-import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 /**
  * Register this class into your JDA/ShardManager to ensure everything related to interactive in this library will work.
  */
 public class InteractiveListener extends ListenerAdapter {
 
-    private final static List<Interactable> interactables = new CopyOnWriteArrayList<>();
-    private final static Timer expireCheckerTimer = new Timer("INTERACTABLE-EXPIRE-CHECKER");
+    private final static Object lock = new Object();
 
+    private final static List<Interactable> interactables = Collections.synchronizedList(new LinkedList<>());
+    private final static Timer expireCheckerTimer = new Timer("Interactable-Expire-Checker");
+    private Executor eventProcessorExecutor = Executors.newCachedThreadPool();
+
+    /**
+     * Creates new instance of {@link InteractiveListener}
+     */
     public InteractiveListener() {
         expireCheckerTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                List<Interactable> toRemove = new LinkedList<>();
-
-                interactables.forEach(interactable -> {
+                interactables.removeIf(interactable -> {
                     if (interactable.isExpired()) {
                         interactable.onExpire();
-                        toRemove.add(interactable);
+                        return true;
+                    } else {
+                        return false;
                     }
                 });
-
-                interactables.removeAll(toRemove);
             }
         }, 0, 1000);
     }
 
-    /////////
-    // API //
-    /////////
-
+    /**
+     * Adds interactable to the list
+     *
+     * @param interactable {@link Interactable}
+     */
     public static void addInteractable(Interactable interactable) {
         interactables.add(interactable);
     }
 
+    /**
+     * Removes interactable from the list
+     *
+     * @param interactable {@link Interactable}
+     */
     public static void removeInteractable(Interactable interactable) {
         interactables.remove(interactable);
     }
 
-    public static List<Interactable> getIntractables() {
-        return Collections.unmodifiableList(interactables);
-    }
-
-    /////////////////////
-    // Event Listeners //
-    /////////////////////
-
-    @Override
-    public void onMessageReactionAdd(MessageReactionAddEvent event) {
-        if (!ensureUserIsValidAndNotBot(event.getUser())) {
-            return;
-        }
-
-        GroupedInteractionEvent interactionEvent = new GroupedInteractionEvent(event);
-        processEvent(interactionEvent);
+    /**
+     * Sets {@link Executor} for event processing
+     *
+     * @param eventProcessorExecutor {@link Executor}
+     */
+    public void setEventProcessorExecutor(@NonNull Executor eventProcessorExecutor) {
+        this.eventProcessorExecutor = eventProcessorExecutor;
     }
 
     @Override
@@ -113,7 +115,7 @@ public class InteractiveListener extends ListenerAdapter {
     ////////////////
 
     private void processEvent(GroupedInteractionEvent interactionEvent) {
-        interactables.forEach(interactable -> interactable.process(interactionEvent));
+        interactables.forEach(interactable -> eventProcessorExecutor.execute(() -> interactable.process(interactionEvent)));
     }
 
     //////////

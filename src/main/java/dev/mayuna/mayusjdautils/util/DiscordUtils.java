@@ -11,7 +11,7 @@ import net.dv8tion.jda.api.utils.messages.MessageEditBuilder;
 
 import java.time.Instant;
 
-public class DiscordUtils {
+public final class DiscordUtils {
 
     private static @Setter EmbedBuilder defaultEmbedStyle = new EmbedBuilder().setFooter("Powered by Mayu's JDA Utilities")
                                                                               .setTimestamp(Instant.now())
@@ -20,6 +20,9 @@ public class DiscordUtils {
 
     private static @Getter @Setter MessageCreateBuilder defaultMessageCreateBuilder = new MessageCreateBuilder().setEmbeds(getDefaultEmbedStyle().build());
     private static @Getter @Setter MessageEditBuilder defaultMessageEditBuilder = new MessageEditBuilder().setEmbeds(getDefaultEmbedStyle().build());
+
+    private DiscordUtils() {
+    }
 
     /**
      * Checks if specified string is qualified as User mention

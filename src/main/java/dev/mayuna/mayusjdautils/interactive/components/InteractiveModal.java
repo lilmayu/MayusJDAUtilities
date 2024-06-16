@@ -20,18 +20,23 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-public class InteractiveModal implements Interactable {
+public final class InteractiveModal implements Interactable {
 
     // Interaction
     private final @Getter Consumer<ModalInteractionEvent> modalClosedConsumer;
 
     // Settings
     private final @Getter Modal.Builder modalBuilder;
-    private @Getter @Setter boolean acknowledgeInteractions = true;
     // Other
     private final long createdTime = System.currentTimeMillis();
     private @Getter Pair<Long, TimeUnit> expireAfter = new MutablePair<>(5L, TimeUnit.MINUTES);
     private @Getter Runnable expiredRunnable;
+
+    private InteractiveModal(String modalTitle, Consumer<Modal.Builder> modalBuilder, Consumer<ModalInteractionEvent> modalClosedConsumer) {
+        this.modalBuilder = Modal.create(UUID.randomUUID().toString(), modalTitle);
+        modalBuilder.accept(this.modalBuilder);
+        this.modalClosedConsumer = modalClosedConsumer;
+    }
 
     private InteractiveModal(Modal.Builder modalBuilder, Consumer<ModalInteractionEvent> modalClosedConsumer) {
         this.modalBuilder = modalBuilder;
@@ -52,29 +57,37 @@ public class InteractiveModal implements Interactable {
      * @param onModalClosed Non-null {@link Consumer} with {@link ModalInteractionEvent}
      *
      * @return Non-null {@link InteractiveModal}
+     *
+     * @deprecated Use {@link #createTitled(String, Consumer, Consumer)} instead
      */
+    @Deprecated
     public static @NonNull InteractiveModal create(@NonNull Modal.Builder modalBuilder, @NonNull Consumer<ModalInteractionEvent> onModalClosed) {
         return new InteractiveModal(modalBuilder, onModalClosed);
     }
 
     /**
-     * Creates new {@link InteractiveModal} with {@link Modal.Builder} without any consumer which would be called when the modal window closes.<br>The
-     * {@link Modal.Builder} will have random UUID as ID upon replying - your ID will be replaced by it.
+     * Creates new {@link InteractiveModal} with specified title and {@link Consumer} with {@link ModalInteractionEvent} which is called when
+     * the modal window is closed
      *
-     * @param modalBuilder Non-null {@link Modal.Builder}
+     * @param title         Non-null title
+     * @param modalBuilder  Non-null {@link Consumer} with {@link Modal.Builder}
+     * @param onModalClosed Non-null {@link Consumer} with {@link ModalInteractionEvent}
      *
      * @return Non-null {@link InteractiveModal}
      */
-    public static @NonNull InteractiveModal create(@NonNull Modal.Builder modalBuilder) {
-        return new InteractiveModal(modalBuilder);
+    public static @NonNull InteractiveModal createTitled(@NonNull String title, @NonNull Consumer<Modal.Builder> modalBuilder, @NonNull Consumer<ModalInteractionEvent> onModalClosed) {
+        return new InteractiveModal(title, modalBuilder, onModalClosed);
     }
 
     /**
-     * Replies to {@link IModalCallback} with this interactive modal. {@link IModalCallback} is for example {@link SlashCommandInteraction} or {@link ButtonInteractionEvent}
+     * Replies to {@link IModalCallback} with this interactive modal. {@link IModalCallback} is for example {@link SlashCommandInteraction} or
+     * {@link ButtonInteractionEvent}
+     *
      * @param modalCallback Non-null {@link IModalCallback}
+     *
      * @return Non-null {@link ModalCallbackAction}
      */
-    public ModalCallbackAction reply(@NonNull IModalCallback modalCallback) {
+    public ModalCallbackAction replyModal(@NonNull IModalCallback modalCallback) {
         modalBuilder.setId(UUID.randomUUID().toString());
         InteractiveListener.addInteractable(this);
         return modalCallback.replyModal(modalBuilder.build());
@@ -106,12 +119,6 @@ public class InteractiveModal implements Interactable {
 
         if (!modalBuilder.getId().equals(modalInteractionEvent.getModalId())) {
             return;
-        }
-
-        if (acknowledgeInteractions) {
-            if (!modalInteractionEvent.isAcknowledged()) {
-                modalInteractionEvent.deferEdit().queue();
-            }
         }
 
         modalClosedConsumer.accept(modalInteractionEvent);

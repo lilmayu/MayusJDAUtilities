@@ -5,6 +5,8 @@ plugins {
     id 'maven-publish'
     id "com.github.johnrengelman.shadow" version "8.1.1"
     id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
+    id 'jacoco'
+    id 'jacoco-report-aggregation'
 }
 
 group 'dev.mayuna'
@@ -13,21 +15,20 @@ version '3.3.1'
 repositories {
     mavenCentral()
     maven { url 'https://jitpack.io' }
+    maven { url "https://m2.chew.pro/snapshots" }
+    maven { url "https://s01.oss.sonatype.org/content/repositories/releases" }
 }
 
 dependencies {
     // JDA
-    compileOnlyApi 'net.dv8tion:JDA:5.0.0-beta.12'
+    api 'net.dv8tion:JDA:5.0.0-beta.24'
 
     // GSon
-    api 'com.google.code.gson:gson:2.10'
-
-    // Mayu's Library
-    api 'dev.mayuna:mayus-library:2.0.1'
+    api 'com.google.code.gson:gson:2.11.0'
 
     // Lombok
-    compileOnly 'org.projectlombok:lombok:1.18.24'
-    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    compileOnly 'org.projectlombok:lombok:1.18.+'
+    annotationProcessor 'org.projectlombok:lombok:1.18.+'
 }
 
 // == Quick tasks == //
@@ -42,7 +43,13 @@ shadowJar {
 }
 
 test {
-    useJUnit();
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+// UTF-8
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
 }
 
 // == Maven publishing == //
@@ -89,8 +96,8 @@ publishing {
         repositories {
             maven {
                 credentials {
-                    username = "$ossrhUsername"
-                    password = "$ossrhPassword"
+                    username = project.properties['ossrhUsername'] ?: System.getenv('ossrhUsername')
+                    password = project.properties['ossrhPassword'] ?: System.getenv('ossrhPassword')
                 }
 
                 url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
@@ -100,6 +107,9 @@ publishing {
 }
 
 signing {
+    def signingKey = findProperty("signingKey")
+    def signingPassword = findProperty("signingPassword")
+    useInMemoryPgpKeys(signingKey, signingPassword)
     sign publishing.publications.shadow
 }
 
@@ -108,8 +118,8 @@ nexusPublishing {
         sonatype {
             nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
             snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
-            username = "$ossrhUsername"
-            password = "$ossrhPassword"
+            username = project.properties['ossrhUsername'] ?: System.getenv('ossrhUsername')
+            password = project.properties['ossrhPassword'] ?: System.getenv('ossrhPassword')
         }
     }
 }

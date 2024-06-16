@@ -10,8 +10,6 @@ import lombok.Setter;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
-import net.dv8tion.jda.api.entities.emoji.Emoji;
-import net.dv8tion.jda.api.entities.emoji.EmojiUnion;
 import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.interactions.InteractionHook;
@@ -25,6 +23,7 @@ import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
@@ -37,11 +36,13 @@ import net.dv8tion.jda.internal.utils.tuple.MutablePair;
 import net.dv8tion.jda.internal.utils.tuple.Pair;
 
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-public class InteractiveRowedMessage implements Interactable{
+/**
+ * Interactive message that supports multiple action rows and interactions with different components
+ */
+public final class InteractiveRowedMessage implements Interactable {
 
     private static final String randomFillerValue = UUID.randomUUID().toString();
 
@@ -59,11 +60,6 @@ public class InteractiveRowedMessage implements Interactable{
     private @Getter @Setter MessageEditBuilder messageEditBuilder;
     private @Getter Pair<Long, TimeUnit> expireAfter = new MutablePair<>(5L, TimeUnit.MINUTES);
     private @Getter Runnable expiredRunnable;
-    private @Getter @Setter boolean preventForeignReactions;
-    private @Getter @Setter boolean acknowledgeInteractions = true;
-
-    // Discord
-    private @Getter Message message;
 
     private InteractiveRowedMessage() {
         for (int i = 0; i < Message.MAX_COMPONENT_COUNT; i++) {
@@ -76,22 +72,19 @@ public class InteractiveRowedMessage implements Interactable{
         }
     }
 
-    public static InteractionBuilder builder() {
-        return new InteractionBuilder();
+    /**
+     * Creates new instance of {@link Builder}
+     *
+     * @return {@link Builder}
+     */
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
     public void process(GroupedInteractionEvent event) {
         if (event.isModalInteraction()) {
             return;
-        }
-
-        long messageId = event.getInteractedMessageId();
-
-        if (message != null) {
-            if (message.getIdLong() != messageId) {
-                return;
-            }
         }
 
         User user = event.getUser();
@@ -106,14 +99,7 @@ public class InteractiveRowedMessage implements Interactable{
             Consumer<EntitySelectInteractionEvent> consumer = entitySelectInteractionEventConsumerMap.get(componentId);
 
             if (consumer != null) {
-                if (acknowledgeInteractions) {
-                    if (!event.getEntitySelectInteractionEvent().isAcknowledged()) {
-                        event.getEntitySelectInteractionEvent().deferEdit().queue();
-                    }
-                }
-
                 consumer.accept(event.getEntitySelectInteractionEvent());
-
                 return;
             }
         }
@@ -124,12 +110,6 @@ public class InteractiveRowedMessage implements Interactable{
             Consumer<StringSelectInteractionEvent> consumer = stringSelectInteractionEventConsumerMap.get(componentId);
 
             if (consumer != null) {
-                if (acknowledgeInteractions) {
-                    if (!event.getStringSelectInteractionEvent().isAcknowledged()) {
-                        event.getStringSelectInteractionEvent().deferEdit().queue();
-                    }
-                }
-
                 consumer.accept(event.getStringSelectInteractionEvent());
                 return;
             }
@@ -143,18 +123,6 @@ public class InteractiveRowedMessage implements Interactable{
             }
 
             if (isApplicable(interaction, event)) {
-                if (acknowledgeInteractions) {
-                    if (event.isButtonInteraction()) {
-                        if (!event.getButtonInteractionEvent().isAcknowledged()) {
-                            event.getButtonInteractionEvent().deferEdit().queue();
-                        }
-                    } else if (event.isStringSelectMenuInteraction()) {
-                        if (!event.getStringSelectInteractionEvent().isAcknowledged()) {
-                            event.getStringSelectInteractionEvent().deferEdit().queue();
-                        }
-                    }
-                }
-
                 entry.getValue().accept(event);
             }
         }
@@ -169,11 +137,6 @@ public class InteractiveRowedMessage implements Interactable{
             case UNKNOWN:
             case MODAL_SUBMITTED:
                 return false;
-            case REACTION_ADD:
-                EmojiUnion emojiReacted = event.getReactionAddEvent().getEmoji();
-                Emoji emojiInteraction = interaction.getEmoji();
-
-                return emojiReacted.getAsReactionCode().equals(emojiInteraction.getAsReactionCode());
             case BUTTON_CLICK:
                 Button buttonClicked = event.getButtonInteractionEvent().getButton();
                 Button buttonInteraction = interaction.getButton();
@@ -262,14 +225,169 @@ public class InteractiveRowedMessage implements Interactable{
         return actionRows.get(index);
     }
 
-    public static class InteractionBuilder {
+
+    /////////////////////
+    // Sending n Stuff //
+    /////////////////////
+
+    /**
+     * Sends the interactive message to the specified {@link MessageChannelUnion}
+     *
+     * @param messageChannelUnion Non-null {@link MessageChannelUnion}
+     *
+     * @return {@link RestAction} of {@link Message}
+     */
+    public RestAction<Message> sendMessage(@NonNull MessageChannelUnion messageChannelUnion) {
+        return sendEx(messageChannelUnion, null, false, false, null, null);
+    }
+
+    /**
+     * Edits specified {@link Message} with the interactive message
+     *
+     * @param message Non-null {@link Message}
+     *
+     * @return {@link RestAction} of {@link Message}
+     */
+    public RestAction<Message> editMessage(@NonNull Message message) {
+        return sendEx(null, null, false, false, message, null);
+    }
+
+    /**
+     * Replies to the specified {@link Message}
+     *
+     * @param message Non-null {@link Message}
+     *
+     * @return {@link RestAction} of {@link Message}
+     */
+    public RestAction<Message> replyTo(@NonNull Message message) {
+        return sendEx(null, null, false, false, null, message);
+    }
+
+    /**
+     * Sends the interactive message to the specified {@link InteractionHook}
+     *
+     * @param interactionHook Non-null {@link InteractionHook}
+     *
+     * @return {@link RestAction} of {@link Message}
+     */
+    public RestAction<Message> sendMessage(@NonNull InteractionHook interactionHook) {
+        return sendEx(null, interactionHook, false, false, null, null);
+    }
+
+    /**
+     * Sends the interactive message to the specified {@link InteractionHook} with specified ephemeral
+     *
+     * @param interactionHook Non-null {@link InteractionHook}
+     * @param ephemeral       Ephemeral
+     *
+     * @return {@link RestAction} of {@link Message}
+     */
+    public RestAction<Message> sendMessage(@NonNull InteractionHook interactionHook, boolean ephemeral) {
+        return sendEx(null, interactionHook.setEphemeral(ephemeral), ephemeral, false, null, null);
+    }
+
+    /**
+     * Edits the original message of the specified {@link InteractionHook}
+     *
+     * @param interactionHook Non-null {@link InteractionHook}
+     *
+     * @return {@link RestAction} of {@link Message}
+     */
+    public RestAction<Message> editOriginal(@NonNull InteractionHook interactionHook) {
+        return sendEx(null, interactionHook, false, true, null, null);
+    }
+
+    /**
+     * Edits the original message of the specified {@link InteractionHook} with specified ephemeral
+     *
+     * @param interactionHook Non-null {@link InteractionHook}
+     * @param ephemeral       Ephemeral
+     *
+     * @return {@link RestAction} of {@link Message}
+     */
+    public RestAction<Message> editOriginal(@NonNull InteractionHook interactionHook, boolean ephemeral) {
+        return sendEx(null, interactionHook.setEphemeral(ephemeral), ephemeral, true, null, null);
+    }
+
+    private RestAction<Message> sendEx(MessageChannelUnion messageChannelUnion, InteractionHook interactionHook, boolean ephemeral, boolean editOriginal, Message messageToEdit, Message messageToReplyTo) {
+        List<Interaction> reactions = new LinkedList<>();
+        List<Button> buttons = new LinkedList<>();
+        List<SelectOption> selectOptions = new LinkedList<>();
+
+        interactions.forEach(((interaction, groupedInteractionEventConsumer) -> {
+            if (interaction.isButton()) {
+                buttons.add(interaction.getButton());
+            } else if (interaction.isSelectOption()) {
+                selectOptions.add(interaction.getSelectOption());
+            }
+        }));
+
+        MessageCreateAction createMessageAction = null; // Channel#sendMessage() / Channel#sendMessage()
+        MessageEditAction editMessageAction = null; // Channel#sendMessage() / Channel#editMessage()
+        WebhookMessageCreateAction<Message> hookMessageAction = null; // InteractionHook#sendMessage()
+        WebhookMessageEditAction<Message> hookMessageUpdateAction = null; // InteractionHook#editOriginal()
+
+        MessageEditData messageEditData = messageEditBuilder.build();
+
+        if (messageChannelUnion != null) {
+            createMessageAction = messageChannelUnion.sendMessage(MessageCreateBuilder.fromEditData(messageEditData).build());
+        } else if (interactionHook != null) {
+            if (editOriginal) {
+                hookMessageUpdateAction = interactionHook.setEphemeral(ephemeral).editOriginal(messageEditData);
+            } else {
+                hookMessageAction = interactionHook.setEphemeral(ephemeral).sendMessage(MessageCreateBuilder.fromEditData(messageEditData).build());
+            }
+        } else if (messageToEdit != null) {
+            editMessageAction = messageToEdit.editMessage(messageEditData);
+        } else {
+            createMessageAction = messageToReplyTo.reply(MessageCreateBuilder.fromEditData(messageEditData).build());
+        }
+
+        List<ActionRow> actionRowsCopy = new ArrayList<>(5);
+
+        for (int i = 0; i < actionRows.size(); i++) {
+            ActionRow actionRow = getActionRowByIndex(i);
+
+            if (!actionRow.getComponents().isEmpty()) {
+                actionRowsCopy.add(actionRow);
+            }
+        }
+
+        RestAction<Message> restAction;
+
+        if (createMessageAction != null) {
+            restAction = createMessageAction.setComponents(actionRowsCopy);
+        } else if (editMessageAction != null) {
+            restAction = editMessageAction.setComponents(actionRowsCopy);
+        } else {
+            if (hookMessageUpdateAction != null) {
+                restAction = hookMessageUpdateAction.setComponents(actionRowsCopy);
+            } else {
+                restAction = hookMessageAction.setComponents(actionRowsCopy);
+            }
+        }
+
+        InteractiveListener.addInteractable(this);
+
+        return restAction;
+    }
+
+    public static class Builder {
 
         private final InteractiveRowedMessage interactiveRowedMessage = new InteractiveRowedMessage();
 
-        public InteractionBuilder createSelectMenu(int actionRowIndex, SelectMenu.Builder<?, ?> selectMenu) {
+        /**
+         * Adds a SelectMenu to the specified action row index
+         *
+         * @param actionRowIndex Index of the action row
+         * @param selectMenu     SelectMenu to add
+         *
+         * @return Builder
+         */
+        protected Builder addSelectMenu(int actionRowIndex, SelectMenu.Builder<?, ?> selectMenu) {
             ActionRow actionRow = interactiveRowedMessage.getActionRowByIndex(actionRowIndex);
 
-            if (actionRow.getComponents().size() >= 1) {
+            if (!actionRow.getComponents().isEmpty()) {
                 throw new IllegalArgumentException("On action row index " + actionRowIndex + " are already some components. Cannot add Select Menu!");
             }
 
@@ -279,71 +397,152 @@ public class InteractiveRowedMessage implements Interactable{
             return this;
         }
 
-        public InteractionBuilder createStringSelectMenu(int actionRowIndex, String selectMenuPlaceholder) {
-            ActionRow actionRow = interactiveRowedMessage.getActionRowByIndex(actionRowIndex);
-
-            if (actionRow.getComponents().size() >= 1) {
-                throw new IllegalArgumentException("On action row index " + actionRowIndex + " are already some components. Cannot add Select Menu!");
-            }
-
-            StringSelectMenu.Builder selectMenu = StringSelectMenu.create(UUID.randomUUID().toString());
-            selectMenu.setPlaceholder(selectMenuPlaceholder);
-
-            selectMenu.addOption("filler", randomFillerValue); // Because we can't have empty Select Menu, they said.
-
-            actionRow.getComponents().add(selectMenu.build());
-            return this;
-        }
-
-        public InteractionBuilder createEntitySelectMenu(int actionRowIndex, String selectMenuPlaceholder, EntitySelectMenu.SelectTarget selectTarget, EntitySelectMenu.SelectTarget... selectTargets) {
-            ActionRow actionRow = interactiveRowedMessage.getActionRowByIndex(actionRowIndex);
-
-            if (actionRow.getComponents().size() >= 1) {
-                throw new IllegalArgumentException("On action row index " + actionRowIndex + " are already some components. Cannot add Select Menu!");
-            }
-
-            EntitySelectMenu.Builder selectMenuBuilder;
-
-            if (selectTargets != null) {
-                selectMenuBuilder = EntitySelectMenu.create(UUID.randomUUID().toString(), EnumSet.of(selectTarget, selectTargets));
-            } else {
-                selectMenuBuilder = EntitySelectMenu.create(UUID.randomUUID().toString(), selectTarget);
-            }
-
+        /**
+         * Adds string SelectMenu to the specified action row index
+         *
+         * @param actionRowIndex        Index of the action row
+         * @param selectMenuPlaceholder Placeholder for the SelectMenu
+         * @param buildSelectMenu       Consumer for building the SelectMenu
+         * @param onInteracted          Consumer for handling the interaction
+         *
+         * @return Builder
+         */
+        public Builder addStringSelectMenu(int actionRowIndex, String selectMenuPlaceholder, Consumer<StringSelectMenu.Builder> buildSelectMenu, Consumer<StringSelectInteractionEvent> onInteracted) {
+            StringSelectMenu.Builder selectMenuBuilder = StringSelectMenu.create(UUID.randomUUID().toString());
             selectMenuBuilder.setPlaceholder(selectMenuPlaceholder);
 
-            actionRow.getComponents().add(selectMenuBuilder.build());
+            if (buildSelectMenu != null) {
+                buildSelectMenu.accept(selectMenuBuilder);
+            }
+
+            addSelectMenu(actionRowIndex, selectMenuBuilder);
+
+            if (onInteracted != null) {
+                onStringSelectMenuInteracted(actionRowIndex, onInteracted);
+            }
+
             return this;
         }
 
-        public InteractionBuilder onStringSelectMenuInteracted(int actionRowIndex, @NonNull Consumer<StringSelectInteractionEvent> onInteracted) {
+        /**
+         * Adds string SelectMenu to the specified action row index
+         *
+         * @param actionRowIndex        Index of the action row
+         * @param selectMenuPlaceholder Placeholder for the SelectMenu
+         * @param buildSelectMenu       Consumer for building the SelectMenu
+         *
+         * @return Builder
+         */
+        public Builder addStringSelectMenu(int actionRowIndex, String selectMenuPlaceholder, Consumer<StringSelectMenu.Builder> buildSelectMenu) {
+            addStringSelectMenu(actionRowIndex, selectMenuPlaceholder, buildSelectMenu, null);
+            return this;
+        }
+
+        /**
+         * Adds string SelectMenu to the specified action row index
+         *
+         * @param actionRowIndex        Index of the action row
+         * @param selectMenuPlaceholder Placeholder for the SelectMenu
+         *
+         * @return Builder
+         */
+        public Builder addStringSelectMenu(int actionRowIndex, String selectMenuPlaceholder) {
+            addStringSelectMenu(actionRowIndex, selectMenuPlaceholder, null, null);
+            return this;
+        }
+
+        /**
+         * Adds entity SelectMenu to the specified action row index
+         *
+         * @param actionRowIndex        Index of the action row
+         * @param selectMenuPlaceholder Placeholder for the SelectMenu
+         * @param selectTargets         SelectTargets
+         * @param onInteracted          Consumer for handling the interaction
+         * @param buildSelectMenu       Consumer for building the SelectMenu
+         *
+         * @return Builder
+         */
+        public Builder addEntitySelectMenu(int actionRowIndex, String selectMenuPlaceholder, Collection<EntitySelectMenu.SelectTarget> selectTargets, Consumer<EntitySelectMenu.Builder> buildSelectMenu, Consumer<EntitySelectInteractionEvent> onInteracted) {
+            EntitySelectMenu.Builder selectMenuBuilder = EntitySelectMenu.create(UUID.randomUUID().toString(), selectTargets);
+            selectMenuBuilder.setPlaceholder(selectMenuPlaceholder);
+            buildSelectMenu.accept(selectMenuBuilder);
+            addSelectMenu(actionRowIndex, selectMenuBuilder);
+
+            if (onInteracted != null) {
+                onEntitySelectMenuInteracted(actionRowIndex, onInteracted);
+            }
+
+            return this;
+        }
+
+        /**
+         * Adds entity SelectMenu to the specified action row index
+         *
+         * @param actionRowIndex        Index of the action row
+         * @param selectMenuPlaceholder Placeholder for the SelectMenu
+         * @param selectTargets         SelectTargets
+         * @param buildSelectMenu       Consumer for building the SelectMenu
+         *
+         * @return Builder
+         */
+        public Builder addEntitySelectMenu(int actionRowIndex, String selectMenuPlaceholder, List<EntitySelectMenu.SelectTarget> selectTargets, Consumer<EntitySelectMenu.Builder> buildSelectMenu) {
+            addEntitySelectMenu(actionRowIndex, selectMenuPlaceholder, selectTargets, buildSelectMenu, null);
+            return this;
+        }
+
+        /**
+         * Handles interaction with String Select Menu
+         *
+         * @param actionRowIndex Index of the action row
+         * @param onInteracted   Consumer for handling the interaction
+         *
+         * @return Builder
+         */
+        public Builder onStringSelectMenuInteracted(int actionRowIndex, @NonNull Consumer<StringSelectInteractionEvent> onInteracted) {
             ActionRow actionRow = interactiveRowedMessage.getActionRowByIndex(actionRowIndex);
 
             if (actionRow.getComponents().size() != 1 || actionRow.getComponents().get(0).getType() != Component.Type.STRING_SELECT) {
                 throw new IllegalArgumentException("On action row index " + actionRowIndex + " there are other components. Cannot add String Select Menu Interaction!");
             }
 
-            String componentId = ((StringSelectMenu)actionRow.getComponents().get(0)).getId();
+            String componentId = ((StringSelectMenu) actionRow.getComponents().get(0)).getId();
             interactiveRowedMessage.stringSelectInteractionEventConsumerMap.put(componentId, onInteracted);
             return this;
         }
 
-        public InteractionBuilder onEntitySelectMenuInteracted(int actionRowIndex, @NonNull Consumer<EntitySelectInteractionEvent> onInteracted) {
+        /**
+         * Handles interaction with Entity Select Menu
+         *
+         * @param actionRowIndex Index of the action row
+         * @param onInteracted   Consumer for handling the interaction
+         *
+         * @return Builder
+         */
+        public Builder onEntitySelectMenuInteracted(int actionRowIndex, @NonNull Consumer<EntitySelectInteractionEvent> onInteracted) {
             ActionRow actionRow = interactiveRowedMessage.getActionRowByIndex(actionRowIndex);
 
             if (actionRow.getComponents().size() != 1 || !(actionRow.getComponents().get(0) instanceof EntitySelectMenu)) {
                 throw new IllegalArgumentException("On action row index " + actionRowIndex + " there are other components. Cannot add Entity Select Menu Interaction!");
             }
 
-            String componentId = ((EntitySelectMenu)actionRow.getComponents().get(0)).getId();
+            String componentId = ((EntitySelectMenu) actionRow.getComponents().get(0)).getId();
             interactiveRowedMessage.entitySelectInteractionEventConsumerMap.put(componentId, onInteracted);
             return this;
         }
 
-        public InteractionBuilder appendInteractionToRow(int actionRowIndex, Interaction interaction, Consumer<GroupedInteractionEvent> onInteracted) {
+        /**
+         * Appends interaction to the specified action row index, e.g., button or select option
+         *
+         * @param actionRowIndex Index of the action row
+         * @param interaction    Interaction to append
+         * @param onInteracted   Consumer for handling the interaction
+         *
+         * @return Builder
+         */
+        public Builder onInteraction(int actionRowIndex, Interaction interaction, Consumer<GroupedInteractionEvent> onInteracted) {
             ActionRow actionRow = interactiveRowedMessage.getActionRowByIndex(actionRowIndex);
 
-            if (actionRow.getComponents().size() == 0) {
+            if (actionRow.getComponents().isEmpty()) {
                 // Add new component
 
                 switch (interaction.getType()) {
@@ -404,110 +603,13 @@ public class InteractiveRowedMessage implements Interactable{
             return this;
         }
 
+        /**
+         * Builds the {@link InteractiveRowedMessage}
+         *
+         * @return {@link InteractiveRowedMessage}
+         */
         public InteractiveRowedMessage build() {
             return interactiveRowedMessage;
         }
-    }
-
-    /////////////////////
-    // Sending n Stuff //
-    /////////////////////
-
-    public InteractiveRowedMessage sendMessage(@NonNull MessageChannelUnion messageChannelUnion) {
-        return sendEx(messageChannelUnion, null, false, false, null);
-    }
-
-    public InteractiveRowedMessage editMessage(@NonNull Message message) {
-        return sendEx(null, null, false, false, message);
-    }
-
-    public InteractiveRowedMessage sendMessage(@NonNull InteractionHook interactionHook) {
-        return sendEx(null, interactionHook, false, false, null);
-    }
-
-    public InteractiveRowedMessage sendMessage(@NonNull InteractionHook interactionHook, boolean ephemeral) {
-        return sendEx(null, interactionHook.setEphemeral(ephemeral), ephemeral, false, null);
-    }
-
-    public InteractiveRowedMessage editOriginal(@NonNull InteractionHook interactionHook) {
-        return sendEx(null, interactionHook, false, true, null);
-    }
-
-    public InteractiveRowedMessage editOriginal(@NonNull InteractionHook interactionHook, boolean ephemeral) {
-        return sendEx(null, interactionHook.setEphemeral(ephemeral), ephemeral, true, null);
-    }
-
-    private InteractiveRowedMessage sendEx(MessageChannelUnion messageChannelUnion, InteractionHook interactionHook, boolean ephemeral, boolean editOriginal, Message messageToEdit) {
-        List<Interaction> reactions = new LinkedList<>();
-        List<Button> buttons = new LinkedList<>();
-        List<SelectOption> selectOptions = new LinkedList<>();
-
-        interactions.forEach(((interaction, groupedInteractionEventConsumer) -> {
-            if (interaction.isEmoji()) {
-                reactions.add(interaction);
-            } else if (interaction.isButton()) {
-                buttons.add(interaction.getButton());
-            } else if (interaction.isSelectOption()) {
-                selectOptions.add(interaction.getSelectOption());
-            }
-        }));
-
-        MessageCreateAction createMessageAction = null; // Channel#sendMessage() / Channel#sendMessage()
-        MessageEditAction editMessageAction = null; // Channel#sendMessage() / Channel#editMessage()
-        WebhookMessageCreateAction<Message> hookMessageAction = null; // InteractionHook#sendMessage()
-        WebhookMessageEditAction<Message> hookMessageUpdateAction = null; // InteractionHook#editOriginal()
-
-        MessageEditData messageEditData = messageEditBuilder.build();
-
-        if (messageChannelUnion != null) {
-            createMessageAction = messageChannelUnion.sendMessage(MessageCreateBuilder.fromEditData(messageEditData).build());
-        } else if (interactionHook != null) {
-            if (editOriginal) {
-                hookMessageUpdateAction = interactionHook.setEphemeral(ephemeral).editOriginal(messageEditData);
-            } else {
-                hookMessageAction = interactionHook.setEphemeral(ephemeral).sendMessage(MessageCreateBuilder.fromEditData(messageEditData).build());
-            }
-        } else {
-            editMessageAction = messageToEdit.editMessage(messageEditData);
-        }
-
-        List<ActionRow> actionRowsCopy = new ArrayList<>(5);
-
-        for (int i = 0; i < actionRows.size(); i++) {
-            ActionRow actionRow = getActionRowByIndex(i);
-
-            if (!actionRow.getComponents().isEmpty()) {
-                actionRowsCopy.add(actionRow);
-            }
-        }
-
-        Message sentMessage = null;
-
-        if (createMessageAction != null) {
-            createMessageAction = createMessageAction.setComponents(actionRowsCopy);
-            sentMessage = createMessageAction.complete(); // TODO: Možnost queue?
-        } else if (editMessageAction != null) {
-            editMessageAction = editMessageAction.setComponents(actionRowsCopy);
-            sentMessage = editMessageAction.complete(); // TODO: Možnost queue?
-        } else {
-            if (hookMessageUpdateAction != null) {
-                hookMessageUpdateAction = hookMessageUpdateAction.setComponents(actionRowsCopy);
-                sentMessage = hookMessageUpdateAction.complete(); // TODO: Možnost queue?
-            } else {
-                hookMessageAction = hookMessageAction.setComponents(actionRowsCopy);
-                sentMessage = hookMessageAction.complete(); // TODO: Možnost queue?
-            }
-        }
-
-        if (messageToEdit == null && sentMessage != null) {
-            for (Interaction reaction : reactions) {
-                sentMessage.addReaction(reaction.getEmoji()).complete(); // TODO: Možnost queue?
-            }
-        }
-
-        this.message = sentMessage;
-        InteractiveListener.addInteractable(this);
-
-        return this;
     }
 }

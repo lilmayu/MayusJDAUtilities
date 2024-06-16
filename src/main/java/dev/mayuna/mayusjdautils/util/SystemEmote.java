@@ -1,7 +1,6 @@
 package dev.mayuna.mayusjdautils.util;
 
 import lombok.Getter;
-import lombok.Setter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.sharding.ShardManager;
@@ -9,7 +8,7 @@ import net.dv8tion.jda.api.sharding.ShardManager;
 /**
  * Few {@link SystemEmote}s that I use in my projects. You can change their name and ID to your liking/custom emotes.
  */
-public class SystemEmote {
+public final class SystemEmote {
 
     public static final SystemEmote WINE = new SystemEmote("wine", 864203521595146260L);
     public static final SystemEmote CLOUD = new SystemEmote("cloudicon", 864203519771148308L);
@@ -31,15 +30,27 @@ public class SystemEmote {
     public static final SystemEmote MESSAGE = new SystemEmote("message", 864203519871025173L);
     public static final SystemEmote KEYS = new SystemEmote("keys", 864203521750597662L);
 
-    private @Getter @Setter String name;
-    private @Getter @Setter long id;
+    private @Getter String name;
+    private @Getter long id;
 
     /**
      * Constructs {@link SystemEmote} from name and ID
+     *
      * @param name Name
-     * @param id ID
+     * @param id   ID
      */
     public SystemEmote(String name, long id) {
+        this.name = name;
+        this.id = id;
+    }
+
+    /**
+     * Sets the name and ID of the {@link SystemEmote}
+     *
+     * @param name Name
+     * @param id   ID
+     */
+    public void set(String name, long id) {
         this.name = name;
         this.id = id;
     }

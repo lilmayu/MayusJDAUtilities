@@ -11,22 +11,17 @@ import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionE
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 
-public class GroupedInteractionEvent {
+@Getter
+public final class GroupedInteractionEvent {
 
-    private @Getter MessageReactionAddEvent reactionAddEvent = null;
-
-    private @Getter ButtonInteractionEvent buttonInteractionEvent = null;
-    private @Getter StringSelectInteractionEvent stringSelectInteractionEvent = null;
-    private @Getter EntitySelectInteractionEvent entitySelectInteractionEvent = null;
-    private @Getter ModalInteractionEvent modalInteractionEvent = null;
+    private ButtonInteractionEvent buttonInteractionEvent = null;
+    private StringSelectInteractionEvent stringSelectInteractionEvent = null;
+    private EntitySelectInteractionEvent entitySelectInteractionEvent = null;
+    private ModalInteractionEvent modalInteractionEvent = null;
 
     //////////////////
     // Constructors //
     //////////////////
-
-    public GroupedInteractionEvent(MessageReactionAddEvent reactionAddEvent) {
-        this.reactionAddEvent = reactionAddEvent;
-    }
 
     public GroupedInteractionEvent(ButtonInteractionEvent buttonInteractionEvent) {
         this.buttonInteractionEvent = buttonInteractionEvent;
@@ -55,10 +50,6 @@ public class GroupedInteractionEvent {
      * @return Non-null {@link InteractionType}
      */
     public InteractionType getInteractionType() {
-        if (isReactionInteraction()) {
-            return InteractionType.REACTION_ADD;
-        }
-
         if (isButtonInteraction()) {
             return InteractionType.BUTTON_CLICK;
         }
@@ -76,14 +67,6 @@ public class GroupedInteractionEvent {
         }
 
         return InteractionType.UNKNOWN;
-    }
-
-    public boolean isReactionAddInteraction() {
-        return reactionAddEvent != null;
-    }
-
-    public boolean isReactionInteraction() {
-        return isReactionAddInteraction();
     }
 
     public boolean isButtonInteraction() {
@@ -105,7 +88,7 @@ public class GroupedInteractionEvent {
     /**
      * Gets {@link InteractionHook} from corresponding event
      *
-     * @return Nullable {@link InteractionHook} (null if {@link GroupedInteractionEvent} is of type {@link InteractionType#REACTION_ADD}
+     * @return Nullable {@link InteractionHook}
      */
     public InteractionHook getInteractionHook() {
         switch (getInteractionType()) {
@@ -130,8 +113,6 @@ public class GroupedInteractionEvent {
      */
     public long getInteractedMessageId() {
         switch (getInteractionType()) {
-            case REACTION_ADD:
-                return reactionAddEvent.getMessageIdLong();
             case BUTTON_CLICK:
                 return buttonInteractionEvent.getMessageIdLong();
             case STRING_SELECT_MENU_OPTION_CLICK:
@@ -146,8 +127,7 @@ public class GroupedInteractionEvent {
     /**
      * Returns {@link Message} of interacted message.
      *
-     * @return {@link Message} of interacted message, if the {@link GroupedInteractionEvent} is of type {@link InteractionType#REACTION_ADD} (this one
-     * only has Message ID - You need it to retrieve it) or {@link InteractionType#MODAL_SUBMITTED} null is returned
+     * @return {@link Message} of interacted message or if the interaction type is of {@link InteractionType#MODAL_SUBMITTED}, null is returned
      */
     public Message getInteractedMessage() {
         switch (getInteractionType()) {
@@ -169,8 +149,6 @@ public class GroupedInteractionEvent {
      */
     public MessageChannelUnion getInteractedChannel() {
         switch (getInteractionType()) {
-            case REACTION_ADD:
-                return reactionAddEvent.getChannel();
             case BUTTON_CLICK:
                 return buttonInteractionEvent.getChannel();
             case STRING_SELECT_MENU_OPTION_CLICK:
@@ -191,8 +169,6 @@ public class GroupedInteractionEvent {
      */
     public User getUser() {
         switch (getInteractionType()) {
-            case REACTION_ADD:
-                return reactionAddEvent.getUser();
             case BUTTON_CLICK:
                 return buttonInteractionEvent.getUser();
             case STRING_SELECT_MENU_OPTION_CLICK:

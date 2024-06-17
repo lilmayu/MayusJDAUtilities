@@ -31,10 +31,6 @@ public final class Interaction {
         this.selectOption = selectOption;
     }
 
-    public static Interaction asReactionAdd(@NonNull Emoji emoji) {
-        return new Interaction(emoji);
-    }
-
     /**
      * Creates {@link Interaction} with Button, the ID will be randomized
      *

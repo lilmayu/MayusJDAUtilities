@@ -172,11 +172,11 @@ public final class InteractiveMessage implements Interactable {
         Map<Interaction, Consumer<GroupedInteractionEvent>> interactionsButtons = getInteractionByType(InteractionType.BUTTON_CLICK);
         Map<Interaction, Consumer<GroupedInteractionEvent>> interactionsSelectOptions = getInteractionByType(InteractionType.STRING_SELECT_MENU_OPTION_CLICK);
 
-        if (interactionsButtons.size() != 0 && (interaction.getType() == InteractionType.STRING_SELECT_MENU_OPTION_CLICK)) {
+        if (!interactionsButtons.isEmpty() && (interaction.getType() == InteractionType.STRING_SELECT_MENU_OPTION_CLICK)) {
             throw new CannotAddInteractionException("Cannot add Select Option interaction! Message can only have Buttons or Select Menu.", interaction);
         }
 
-        if (interactionsSelectOptions.size() != 0 && interaction.getType() == InteractionType.BUTTON_CLICK) {
+        if (!interactionsSelectOptions.isEmpty() && interaction.getType() == InteractionType.BUTTON_CLICK) {
             throw new CannotAddInteractionException("Cannot add Button interaction! Message can only have Buttons or Select Menu.", interaction);
         }
 

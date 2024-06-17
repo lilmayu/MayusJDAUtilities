@@ -1,6 +1,7 @@
 package dev.mayuna.mayusjdautils.interactive;
 
 import lombok.Getter;
+import lombok.NonNull;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
@@ -8,8 +9,13 @@ import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
-import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.interactions.InteractionHook;
+import net.dv8tion.jda.api.interactions.components.ComponentInteraction;
+import net.dv8tion.jda.api.interactions.modals.Modal;
+import net.dv8tion.jda.api.requests.restaction.interactions.MessageEditCallbackAction;
+import net.dv8tion.jda.api.requests.restaction.interactions.ModalCallbackAction;
+import net.dv8tion.jda.api.requests.restaction.interactions.PremiumRequiredCallbackAction;
+import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 
 @Getter
 public final class GroupedInteractionEvent {
@@ -37,6 +43,105 @@ public final class GroupedInteractionEvent {
 
     public GroupedInteractionEvent(EntitySelectInteractionEvent entitySelectInteractionEvent) {
         this.entitySelectInteractionEvent = entitySelectInteractionEvent;
+    }
+
+    /**
+     * Defers reply to the interaction event<br>
+     * Returns null if the interaction type is {@link InteractionType#UNKNOWN}
+     *
+     * @return Nullable {@link ReplyCallbackAction}
+     */
+    public ReplyCallbackAction deferReply() {
+        switch (getInteractionType()) {
+            case BUTTON_CLICK:
+                return buttonInteractionEvent.deferReply();
+            case STRING_SELECT_MENU_OPTION_CLICK:
+                return stringSelectInteractionEvent.deferReply();
+            case ENTITY_SELECT_MENU_OPTION_CLICK:
+                return entitySelectInteractionEvent.deferReply();
+            case MODAL_SUBMITTED:
+                return modalInteractionEvent.deferReply();
+        }
+
+        return null;
+    }
+
+    /**
+     * Defers reply to the interaction event<br>
+     * Returns null if the interaction type is {@link InteractionType#UNKNOWN}
+     *
+     * @param ephemeral if true, the reply will be ephemeral
+     *
+     * @return Nullable {@link ReplyCallbackAction}
+     */
+    public ReplyCallbackAction deferReply(boolean ephemeral) {
+        switch (getInteractionType()) {
+            case BUTTON_CLICK:
+                return buttonInteractionEvent.deferReply(ephemeral);
+            case STRING_SELECT_MENU_OPTION_CLICK:
+                return stringSelectInteractionEvent.deferReply(ephemeral);
+            case ENTITY_SELECT_MENU_OPTION_CLICK:
+                return entitySelectInteractionEvent.deferReply(ephemeral);
+            case MODAL_SUBMITTED:
+                return modalInteractionEvent.deferReply(ephemeral);
+        }
+
+        return null;
+    }
+
+    /**
+     * Defers edit to the interaction event<br>
+     * Returns null if the interaction type is {@link InteractionType#UNKNOWN}
+     *
+     * @return Nullable {@link MessageEditCallbackAction}
+     */
+    public MessageEditCallbackAction deferEdit() {
+        switch (getInteractionType()) {
+            case BUTTON_CLICK:
+                return buttonInteractionEvent.deferEdit();
+            case STRING_SELECT_MENU_OPTION_CLICK:
+                return stringSelectInteractionEvent.deferEdit();
+            case ENTITY_SELECT_MENU_OPTION_CLICK:
+                return entitySelectInteractionEvent.deferEdit();
+            case MODAL_SUBMITTED:
+                return modalInteractionEvent.deferEdit();
+        }
+
+        return null;
+    }
+
+    /**
+     * Replies to the interaction event with a modal<br>
+     * Returns null if the interaction type is {@link InteractionType#MODAL_SUBMITTED} or {@link InteractionType#UNKNOWN}
+     *
+     * @param modal Modal to reply with
+     *
+     * @return Nullable {@link ModalCallbackAction}
+     */
+    public ModalCallbackAction replyModal(@NonNull Modal modal) {
+        ComponentInteraction interaction = getComponentInteraction();
+
+        if (interaction == null) {
+            return null;
+        }
+
+        return interaction.replyModal(modal);
+    }
+
+    /**
+     * Replies to the interaction event with a premium required<br>
+     * Returns null if the interaction type is {@link InteractionType#MODAL_SUBMITTED} or {@link InteractionType#UNKNOWN}
+     *
+     * @return Nullable {@link PremiumRequiredCallbackAction}
+     */
+    public PremiumRequiredCallbackAction replyWithPremiumRequired() {
+        ComponentInteraction interaction = getComponentInteraction();
+
+        if (interaction == null) {
+            return null;
+        }
+
+        return interaction.replyWithPremiumRequired();
     }
 
     /////////////
@@ -177,6 +282,25 @@ public final class GroupedInteractionEvent {
                 return entitySelectInteractionEvent.getUser();
             case MODAL_SUBMITTED:
                 return modalInteractionEvent.getUser();
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns {@link ComponentInteraction} of interacted message<br>
+     * Returns null if {@link InteractionType} is {@link InteractionType#MODAL_SUBMITTED} or {@link InteractionType#UNKNOWN}
+     *
+     * @return Nullable {@link ComponentInteraction}
+     */
+    public ComponentInteraction getComponentInteraction() {
+        switch (getInteractionType()) {
+            case BUTTON_CLICK:
+                return buttonInteractionEvent;
+            case STRING_SELECT_MENU_OPTION_CLICK:
+                return stringSelectInteractionEvent;
+            case ENTITY_SELECT_MENU_OPTION_CLICK:
+                return entitySelectInteractionEvent;
         }
 
         return null;

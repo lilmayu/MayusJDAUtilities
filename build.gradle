@@ -29,6 +29,8 @@ dependencies {
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.+'
     annotationProcessor 'org.projectlombok:lombok:1.18.+'
+    testCompileOnly 'org.projectlombok:lombok:1.18.+'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.+'
 }
 
 // == Quick tasks == //

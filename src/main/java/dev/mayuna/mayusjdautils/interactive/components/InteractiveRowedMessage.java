@@ -77,8 +77,8 @@ public final class InteractiveRowedMessage implements Interactable {
      *
      * @return {@link Builder}
      */
-    public static Builder builder() {
-        return new Builder();
+    public static Builder builder(MessageEditBuilder builder) {
+        return new Builder(builder);
     }
 
     @Override
@@ -310,7 +310,6 @@ public final class InteractiveRowedMessage implements Interactable {
     }
 
     private RestAction<Message> sendEx(MessageChannelUnion messageChannelUnion, InteractionHook interactionHook, boolean ephemeral, boolean editOriginal, Message messageToEdit, Message messageToReplyTo) {
-        List<Interaction> reactions = new LinkedList<>();
         List<Button> buttons = new LinkedList<>();
         List<SelectOption> selectOptions = new LinkedList<>();
 
@@ -375,6 +374,15 @@ public final class InteractiveRowedMessage implements Interactable {
     public static class Builder {
 
         private final InteractiveRowedMessage interactiveRowedMessage = new InteractiveRowedMessage();
+
+        /**
+         * Creates new instance of {@link Builder}
+         *
+         * @param builder {@link MessageEditBuilder}
+         */
+        public Builder(MessageEditBuilder builder) {
+            interactiveRowedMessage.setMessageEditBuilder(builder);
+        }
 
         /**
          * Adds a SelectMenu to the specified action row index

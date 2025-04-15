@@ -1,9 +1,7 @@
 package dev.mayuna.mayusjdautils.interactive;
 
 import lombok.NonNull;
-import net.dv8tion.jda.api.entities.emoji.CustomEmoji;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
-import net.dv8tion.jda.api.entities.emoji.UnicodeEmoji;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
@@ -54,6 +52,19 @@ public final class Interaction {
         return new Interaction(Button.of(buttonStyle, UUID.randomUUID().toString(), label));
     }
 
+    /**
+     * Creates {@link Interaction} with Button, the ID will be randomized
+     *
+     * @param buttonStyle Button Style
+     * @param label       Button Label
+     * @param disabled    {@link Button#isDisabled()}
+     *
+     * @return {@link Interaction} object
+     */
+    public static Interaction asButton(@NonNull ButtonStyle buttonStyle, String label, boolean disabled) {
+        return new Interaction(Button.of(buttonStyle, UUID.randomUUID().toString(), label).withDisabled(disabled));
+    }
+
 
     /**
      * Creates {@link Interaction} with Button, the ID will be randomized
@@ -72,12 +83,39 @@ public final class Interaction {
      * Creates {@link Interaction} with Button, the ID will be randomized
      *
      * @param buttonStyle Button Style
+     * @param label       Button Label
+     * @param emoji       Button Emoji
+     * @param disabled    {@link Button#isDisabled()}
+     *
+     * @return {@link Interaction} object
+     */
+    public static Interaction asButton(@NonNull ButtonStyle buttonStyle, String label, Emoji emoji, boolean disabled) {
+        return new Interaction(Button.of(buttonStyle, UUID.randomUUID().toString(), label, emoji).withDisabled(disabled));
+    }
+
+    /**
+     * Creates {@link Interaction} with Button, the ID will be randomized
+     *
+     * @param buttonStyle Button Style
      * @param emoji       Button Emoji
      *
      * @return {@link Interaction} object
      */
     public static Interaction asButton(@NonNull ButtonStyle buttonStyle, Emoji emoji) {
         return new Interaction(Button.of(buttonStyle, UUID.randomUUID().toString(), emoji));
+    }
+
+    /**
+     * Creates {@link Interaction} with Button, the ID will be randomized
+     *
+     * @param buttonStyle Button Style
+     * @param emoji       Button Emoji
+     * @param disabled    {@link Button#isDisabled()}
+     *
+     * @return {@link Interaction} object
+     */
+    public static Interaction asButton(@NonNull ButtonStyle buttonStyle, Emoji emoji, boolean disabled) {
+        return new Interaction(Button.of(buttonStyle, UUID.randomUUID().toString(), emoji).withDisabled(disabled));
     }
 
     /**

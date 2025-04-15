@@ -3,21 +3,27 @@ package dev.mayuna.mayusjdautils.lang;
 import lombok.Getter;
 import lombok.Setter;
 
+@Getter
+@Setter
 public class LanguageSettings {
 
-    private @Getter @Setter Messages messages = new Messages();
-    private @Getter @Setter Other other = new Other();
+    private Messages messages = new Messages();
+    private Other other = new Other();
 
+    @Getter
+    @Setter
     public static class Messages {
 
-        private @Getter @Setter String exceptionOccurredMessage = "Exception occurred! See stack trace above.";
+        private String exceptionOccurredMessage = "Exception occurred! See stack trace above.";
     }
 
+    @Getter
+    @Setter
     public static class Other {
 
-        private @Getter @Setter String error = "Error";
-        private @Getter @Setter String warning = "Warning";
-        private @Getter @Setter String information = "Information";
-        private @Getter @Setter String success = "Success";
+        private String error = "Error";
+        private String warning = "Warning";
+        private String information = "Information";
+        private String success = "Success";
     }
 }

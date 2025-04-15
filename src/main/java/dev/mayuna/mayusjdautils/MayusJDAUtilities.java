@@ -8,11 +8,16 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * MayusJDAUtilities main class holding styles and language settings for message infos
+ */
+@Setter
+@Getter
 public class MayusJDAUtilities implements Styles {
 
-    private @Getter @Setter ColorStyles colorStyles = new ColorStyles();
-    private @Getter @Setter MessageInfoStyles messageInfoStyles = new MessageInfoStyles(this);
-    private @Getter @Setter LanguageSettings languageSettings = new LanguageSettings();
+    private ColorStyles colorStyles = new ColorStyles();
+    private MessageInfoStyles messageInfoStyles = new MessageInfoStyles(this);
+    private LanguageSettings languageSettings = new LanguageSettings();
 
     /**
      * {@inheritDoc}

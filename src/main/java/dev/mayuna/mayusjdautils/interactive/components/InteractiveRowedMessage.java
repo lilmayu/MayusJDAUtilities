@@ -75,6 +75,8 @@ public final class InteractiveRowedMessage implements Interactable {
     /**
      * Creates new instance of {@link Builder}
      *
+     * @param builder {@link MessageEditBuilder}
+     *
      * @return {@link Builder}
      */
     public static Builder builder(MessageEditBuilder builder) {
